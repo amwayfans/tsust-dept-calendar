@@ -41,9 +41,9 @@ window.APP_CONFIG = {
   CATEGORIES: {
     meeting:  { label: '會議', color: '#2563EB' },
     course:   { label: '課程', color: '#16A34A' },
-    exam:     { label: '考試', color: '#DC2626' },
+    exam:     { label: '考試', color: '#7C3AED' },
     activity: { label: '活動', color: '#F59E0B' },
-    holiday:  { label: '假日', color: '#7C3AED' },
+    holiday:  { label: '假日', color: '#DC2626' },
     other:    { label: '其他', color: '#64748B' }
   },
 

@@ -134,9 +134,9 @@ curl -i -X POST "https://<專案>.supabase.co/rest/v1/events" \
 |---|---|
 | meeting 會議 | `#2563EB` 藍 |
 | course 課程 | `#16A34A` 綠 |
-| exam 考試 | `#DC2626` 紅 |
+| exam 考試 | `#7C3AED` 紫 |
 | activity 活動 | `#F59E0B` 橘 |
-| holiday 假日 | `#7C3AED` 紫 |
+| holiday 假日 | `#DC2626` 紅 |
 | other 其他 | `#64748B` 灰 |
 
 要改顏色或新增類別，編輯 `assets/config.js` 的 `CATEGORIES`，
