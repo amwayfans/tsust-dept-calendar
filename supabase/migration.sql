@@ -2,6 +2,13 @@
 -- 系所行事曆 — 資料庫建置
 -- 在 Supabase 後台 → SQL Editor → 貼上整份 → Run
 -- 可以重複執行（idempotent），不會重複建立。
+--
+-- ⚠️ 這個資料庫是跟 LINE 機器人共用的（同一個 Supabase 專案）。
+--    本檔只做三件事，全部只影響「events」這一張新表：
+--      1. 建立 public.events（新表，不碰 members / classes）
+--      2. 建立 public.events_set_updated_at()（函式名稱有 events_ 前綴，不會撞名）
+--      3. 建立 public.is_admin()（新函式）
+--    RLS 是「逐表」設定，events 開 RLS 不會影響其他表的權限。
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -37,8 +44,10 @@ create index if not exists events_end_at_idx   on public.events (end_at);
 
 -- ------------------------------------------------------------
 -- 3. updated_at 自動更新
+--    函式名稱刻意帶上 events_ 前綴：這個資料庫是跟 LINE 機器人共用的，
+--    避免以後別的模組也用同名的通用函式而互相覆蓋。
 -- ------------------------------------------------------------
-create or replace function public.touch_updated_at()
+create or replace function public.events_set_updated_at()
 returns trigger
 language plpgsql
 as $$
@@ -50,7 +59,7 @@ end $$;
 drop trigger if exists events_touch_updated_at on public.events;
 create trigger events_touch_updated_at
   before update on public.events
-  for each row execute function public.touch_updated_at();
+  for each row execute function public.events_set_updated_at();
 
 -- ------------------------------------------------------------
 -- 4. 管理員判斷函式
