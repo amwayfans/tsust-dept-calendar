@@ -30,6 +30,92 @@
     lg.appendChild(s);
   });
 
+  /* ---------- 統計列 ---------- */
+  /* 只查本學年度（8/1 起）的行程，前端算統計。
+     統計只是加分項：查不到就整列隱藏，不影響月曆。 */
+  var statRows = [];
+
+  /** 'YYYY-MM-DD' → '日一二三四五六'（用 UTC 算，不受瀏覽器時區影響） */
+  function weekdayOf(dateStr) {
+    return '日一二三四五六'.charAt(new Date(dateStr + 'T00:00:00Z').getUTCDay());
+  }
+
+  /** 學年度起始日：8/1 起算 */
+  function academicYearStart(d) {
+    var y = d.getFullYear();
+    var startY = (d.getMonth() + 1 >= 8) ? y : y - 1;
+    return startY + '-08-01';
+  }
+
+  function loadStats() {
+    var el = document.getElementById('stats');
+    if (!el) return;
+    var today = A.tzParts(new Date().toISOString()).date;
+
+    A.sb.from('events')
+      .select('title,start_at,end_at,category')
+      .gte('start_at', academicYearStart(new Date()) + 'T00:00:00+08:00')
+      .order('start_at')
+      .then(function (r) {
+        if (r.error) return;              /* 統計失敗不干擾月曆 */
+        statRows = r.data || [];
+        renderStats(el, today, statRows);
+      });
+  }
+
+  function renderStats(el, today, rows) {
+    var month = today.slice(0, 7);
+
+    var inMonth = rows.filter(function (r) {
+      return A.tzParts(r.start_at).date.slice(0, 7) === month;
+    });
+    document.getElementById('stat-year').textContent = rows.length;
+    document.getElementById('stat-month').textContent = inMonth.length;
+
+    /* 下一個行程（含今天） */
+    var next = null;
+    for (var i = 0; i < rows.length; i++) {
+      if (A.tzParts(rows[i].start_at).date >= today) { next = rows[i]; break; }
+    }
+    var elNext = document.getElementById('stat-next');
+    var elNextDate = document.getElementById('stat-next-date');
+    if (next) {
+      var nd = A.tzParts(next.start_at).date;
+      elNext.textContent = next.title;
+      elNextDate.textContent = A.shortDate(nd) + '（' + weekdayOf(nd) + '）';
+    } else {
+      elNext.textContent = '近期無行程';
+      elNextDate.textContent = '—';
+    }
+
+    /* 最近一次放假 */
+    var hol = null;
+    for (var j = 0; j < rows.length; j++) {
+      if (rows[j].category === 'holiday' &&
+          A.tzParts(rows[j].start_at).date >= today) { hol = rows[j]; break; }
+    }
+    var elHol = document.getElementById('stat-holiday');
+    var elHolDate = document.getElementById('stat-holiday-date');
+    if (hol) {
+      var hd = A.tzParts(hol.start_at).date;
+      /* 加上「還有幾天」，否則當下一個行程本身就是放假時，
+         這張卡會跟第一張寫得一模一樣，看起來像重複。 */
+      var diff = Math.round(
+        (new Date(hd + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000);
+      var when = diff === 0 ? '就是今天' : (diff > 0 ? '還有 ' + diff + ' 天' : '');
+      elHol.textContent = hol.title;
+      elHolDate.textContent = A.shortDate(hd) + '（' + weekdayOf(hd) + '）' +
+                              (when ? '・' + when : '');
+    } else {
+      elHol.textContent = '—';
+      elHolDate.textContent = '—';
+    }
+
+    el.hidden = false;
+  }
+
+  loadStats();
+
   /* ---------- 日期小工具 ---------- */
   function addDays(dateStr, n) {
     var d = new Date(dateStr + 'T00:00:00Z');
@@ -107,6 +193,16 @@
     eventClick: function (info) {
       var r = info.event.extendedProps.row;
       openDetail(r);
+    },
+
+    /* 格子很窄，標題一定會被截斷（加刪節號）。
+       被截斷就等於資訊看不到，所以一定要掛 title 讓滑鼠移上去能讀全名。 */
+    eventDidMount: function (info) {
+      var r = info.event.extendedProps.row || {};
+      var tip = [A.fmtRange(r), r.title].filter(Boolean).join('　');
+      if (r.location) tip += '（' + r.location + '）';
+      var t = info.el.querySelector('.fc-event-title') || info.el;
+      t.setAttribute('title', tip);
     }
   });
 

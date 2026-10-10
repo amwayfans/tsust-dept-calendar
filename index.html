@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>系所行事曆</title>
 <meta name="description" content="機械與自動化工程系系務行事曆">
+<meta name="theme-color" content="#1e3a5f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
@@ -24,7 +28,7 @@
       <a href="admin.html">管理後台</a>
     </nav>
     <span id="admin-badge" class="badge badge-admin" hidden>管理員</span>
-    <a class="btn" id="btn-add" href="admin.html" hidden>＋ 新增事件</a>
+    <a class="btn btn-ghost" id="btn-add" href="admin.html" hidden>＋ 新增事件</a>
     <a class="btn btn-ghost" id="link-admin" href="admin.html">管理員登入</a>
   </div>
 </header>
@@ -38,6 +42,28 @@
     <span class="month-label" id="month-label">—</span>
     <span class="spacer"></span>
     <button class="btn btn-ghost" id="btn-view" type="button" hidden>切換列表</button>
+  </div>
+
+  <!-- 統計列（資料來自 events 表，免登入即可看） -->
+  <div class="stats" id="stats" hidden>
+    <div class="stat stat-highlight">
+      <span class="stat-label">下一個行程</span>
+      <span class="stat-value is-text" id="stat-next">—</span>
+      <span class="stat-sub" id="stat-next-date">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">本月行程</span>
+      <span class="stat-value" id="stat-month">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">本學年度行程</span>
+      <span class="stat-value" id="stat-year">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">最近放假</span>
+      <span class="stat-value is-text" id="stat-holiday">—</span>
+      <span class="stat-sub" id="stat-holiday-date">—</span>
+    </div>
   </div>
 
   <div class="card">

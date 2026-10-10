@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>管理後台 — 系所行事曆</title>
 <meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
@@ -32,11 +35,11 @@
     <form id="login-form" novalidate>
       <div class="field">
         <label for="email">電子郵件</label>
-        <input type="email" id="email" autocomplete="username" required>
+        <input type="email" id="email" autocomplete="username" placeholder="請輸入學校信箱" required>
       </div>
       <div class="field">
         <label for="password">密碼</label>
-        <input type="password" id="password" autocomplete="current-password" required>
+        <input type="password" id="password" autocomplete="current-password" placeholder="請輸入密碼" required>
       </div>
       <div class="field-error" id="login-error" hidden></div>
       <div class="modal-actions" style="justify-content:flex-start">
@@ -129,7 +132,7 @@
 
     <!-- 列表 -->
     <div class="card">
-      <h2 style="margin-top:0">事件列表 <span class="hint" style="font-weight:400;color:var(--c-muted);font-size:13px">（依開始時間，新的在前）</span></h2>
+      <h2 style="margin-top:0">事件列表 <span class="hint" style="font-weight:400;color:var(--c-text-2);font-size:13px">（依開始時間，新的在前）</span></h2>
       <ul class="ev-list" id="list"></ul>
       <div class="empty" id="list-empty" hidden>目前沒有事件</div>
       <div class="error-box" id="list-error" hidden></div>

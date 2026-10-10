@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>教師記錄 — 機械與自動化工程系</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/styles.css">
 <link rel="stylesheet" href="assets/records.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -30,17 +33,17 @@
   <!-- ===================== 登入 ===================== -->
   <section class="card" id="login-card" hidden>
     <h2 style="margin-top:0">教師登入</h2>
-    <p class="hint" style="color:var(--c-muted);font-size:13.5px;margin-top:-6px">
+    <p class="hint" style="color:var(--c-text-2);font-size:13px;margin-top:-6px">
       帳號由系辦建立。忘記密碼或無法登入請洽系辦（分機 2102）。
     </p>
     <form id="login-form" novalidate>
       <div class="field">
         <label for="email">電子郵件</label>
-        <input type="email" id="email" autocomplete="username" required>
+        <input type="email" id="email" autocomplete="username" placeholder="請輸入學校信箱" required>
       </div>
       <div class="field">
         <label for="password">密碼</label>
-        <input type="password" id="password" autocomplete="current-password" required>
+        <input type="password" id="password" autocomplete="current-password" placeholder="請輸入密碼" required>
       </div>
       <div class="field-error" id="login-error" hidden></div>
       <div class="modal-actions" style="justify-content:flex-start">
