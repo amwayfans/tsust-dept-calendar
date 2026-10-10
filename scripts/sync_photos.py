@@ -69,20 +69,38 @@ def api(path, method='GET', body=None, raw=False, timeout=60):
         return r.read() if raw else json.load(r)
 
 
-def list_objects():
-    """列出桶內所有物件（分頁抓完）。"""
+def _list_once(prefix, offset=0, limit=1000):
+    return api(f'/storage/v1/object/list/{BUCKET}', method='POST',
+               body={'prefix': prefix, 'limit': limit, 'offset': offset}) or []
+
+
+def list_objects(prefix='', depth=0):
+    """遞迴列出桶內所有「檔案」。
+
+    ⚠️ Storage 的 list 一次只回一層：prefix='' 只會拿到資料夾本身
+    （id 為 null），**不會**回資料夾裡的檔案。不自己往下走的話，
+    會得到「0 張照片」這種假結果，而且完全不會報錯。
+    """
+    if depth > 4:
+        return []
     out, offset = [], 0
     while True:
-        batch = api(f'/storage/v1/object/list/{BUCKET}', method='POST',
-                    body={'prefix': '', 'limit': 1000, 'offset': offset})
+        batch = _list_once(prefix, offset)
         if not batch:
             break
-        out.extend(batch)
+        for entry in batch:
+            name = entry.get('name')
+            if not name:
+                continue
+            full = f'{prefix}/{name}' if prefix else name
+            if entry.get('id'):
+                out.append(dict(entry, path=full))   # 檔案
+            else:
+                out.extend(list_objects(full, depth + 1))  # 資料夾 → 往下
         if len(batch) < 1000:
             break
         offset += 1000
-    # 只留檔案（資料夾的 id 是 null）
-    return [o for o in out if o.get('id')]
+    return out
 
 
 def fetch_records():
@@ -125,7 +143,9 @@ def remote_listing():
             return set()
         print(f'✗ rclone lsf 失敗：{err}', file=sys.stderr)
         return None
-    return {ln.strip() for ln in r.stdout.splitlines() if ln.strip()}
+    # rclone lsf 會把目錄也列出來（結尾是 /），這裡只留檔案
+    return {ln.strip() for ln in r.stdout.splitlines()
+            if ln.strip() and not ln.strip().endswith('/')}
 
 
 def download(obj_path, dest):
@@ -161,7 +181,7 @@ def main():
 
     todo = []
     for o in objs:
-        p = o['name']
+        p = o['path']
         rel = target_rel(p, recs.get(p))
         if rel not in have:
             todo.append((p, rel))
