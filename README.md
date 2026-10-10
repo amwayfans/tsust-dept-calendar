@@ -1,11 +1,14 @@
 # 系所行事曆 Dashboard
 
+**線上網址：https://amwayfans.github.io/tsust-dept-calendar/**
+**管理後台：https://amwayfans.github.io/tsust-dept-calendar/admin.html**
+
 機械與自動化工程系的系務行事曆。**任何人免登入都能查看**，只有系辦管理員可以新增 / 編輯 / 刪除。
 
 - 前端：純 HTML + CSS + JavaScript（**沒有建置步驟**，可直接在 GitHub 上編輯）
 - 月曆元件：FullCalendar 6（CDN）
 - 資料庫 / 登入：Supabase（Postgres + Auth + RLS）
-- 部署：GitHub Pages（或任何靜態網頁空間）
+- 部署：GitHub Pages（自動，push 後 1–2 分鐘生效）
 
 ---
 
@@ -73,15 +76,17 @@ python3 -m http.server 8080
 
 （直接用 `file://` 開也可以，但用 http 伺服器比較不會遇到瀏覽器限制。）
 
-### 5. 部署到 GitHub Pages
+### 5. 部署到 GitHub Pages（已完成）
 
-1. 把專案 push 到 GitHub
-2. Repo → **Settings → Pages**
-3. Source 選 `Deploy from a branch`，Branch 選 `main` / `root`
-4. 等 1–2 分鐘，網址會是 `https://<帳號>.github.io/<repo>/`
+本專案已部署，push 到 `main` 之後 1–2 分鐘會自動更新：
 
-> 私人 repo 要用 GitHub Pages 需要 GitHub Pro；免費帳號請把 repo 設為 public。
+**https://amwayfans.github.io/tsust-dept-calendar/**
+
+設定方式（供日後參考）：Repo → **Settings → Pages** → Source 選 `Deploy from a branch` → Branch `main` / `root`。
+
+> 私人 repo 要用 GitHub Pages 需要 GitHub Pro；本專案為免費帳號，因此 repo 設為 **public**。
 > 這個網站本來就是公開行事曆，程式碼公開沒有問題——**前提是 `config.js` 裡只有 anon key**。
+> 修改檔案後只要 push，GitHub Pages 會自動重新建置，不需要任何額外步驟。
 
 ---
 
