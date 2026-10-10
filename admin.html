@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理後台 — 系所行事曆</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <h1>系所行事曆 — 管理後台</h1>
+      <p>僅限系辦管理員使用</p>
+    </div>
+    <a class="btn btn-ghost" href="index.html">← 回行事曆</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===== 登入 ===== -->
+  <section class="card" id="login-card" hidden>
+    <h2 style="margin-top:0">管理員登入</h2>
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="email">電子郵件</label>
+        <input type="email" id="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">密碼</label>
+        <input type="password" id="password" autocomplete="current-password" required>
+      </div>
+      <div class="field-error" id="login-error" hidden></div>
+      <div class="modal-actions" style="justify-content:flex-start">
+        <button class="btn btn-primary" type="submit" id="btn-login">登入</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ===== 管理介面 ===== -->
+  <section id="panel" hidden>
+
+    <div class="toolbar">
+      <span class="badge badge-admin" id="who">—</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" id="btn-new" type="button">＋ 新增事件</button>
+      <button class="btn btn-danger" id="btn-logout" type="button">登出</button>
+    </div>
+
+    <!-- 表單 -->
+    <div class="card" id="form-card" hidden>
+      <h2 id="form-title" style="margin-top:0">新增事件</h2>
+      <form id="event-form" novalidate>
+        <input type="hidden" id="f-id">
+
+        <div class="field">
+          <label for="f-title">標題 <span class="hint">（必填，1–100 字）</span></label>
+          <input type="text" id="f-title" maxlength="100" required>
+          <div class="field-error" id="e-title" hidden></div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="f-category">類別</label>
+            <select id="f-category"></select>
+          </div>
+          <div class="field">
+            <label for="f-visibility">可見性</label>
+            <select id="f-visibility">
+              <option value="department">department（所有人可見）</option>
+              <option value="private">private（僅管理員）</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field checkbox">
+          <input type="checkbox" id="f-allday">
+          <label for="f-allday" style="margin:0">全天事件</label>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="f-start-date">開始日期 <span class="hint">（必填）</span></label>
+            <input type="date" id="f-start-date" required>
+          </div>
+          <div class="field" id="wrap-start-time">
+            <label for="f-start-time">開始時間</label>
+            <input type="time" id="f-start-time" value="09:00">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="f-end-date">結束日期 <span class="hint">（必填）</span></label>
+            <input type="date" id="f-end-date" required>
+          </div>
+          <div class="field" id="wrap-end-time">
+            <label for="f-end-time">結束時間</label>
+            <input type="time" id="f-end-time" value="10:00">
+          </div>
+        </div>
+
+        <div class="field-error" id="e-time" hidden></div>
+
+        <div class="field">
+          <label for="f-location">地點 <span class="hint">（選填，0–100 字）</span></label>
+          <input type="text" id="f-location" maxlength="100">
+        </div>
+
+        <div class="field">
+          <label for="f-description">說明 <span class="hint">（選填，0–1000 字）</span></label>
+          <textarea id="f-description" maxlength="1000"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" id="btn-cancel">取消</button>
+          <button class="btn btn-primary" type="submit" id="btn-save">儲存</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 列表 -->
+    <div class="card">
+      <h2 style="margin-top:0">事件列表 <span class="hint" style="font-weight:400;color:var(--c-muted);font-size:13px">（依開始時間，新的在前）</span></h2>
+      <ul class="ev-list" id="list"></ul>
+      <div class="empty" id="list-empty" hidden>目前沒有事件</div>
+      <div class="error-box" id="list-error" hidden></div>
+      <div class="loading" id="list-loading">
+        <div class="skeleton" style="width:70%"></div>
+        <div class="skeleton" style="width:50%"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="card" id="booting">
+    <div class="skeleton" style="width:40%"></div>
+    <div class="skeleton" style="width:65%"></div>
+  </div>
+
+</main>
+
+<!-- 刪除確認 -->
+<div class="modal" id="confirm">
+  <div class="modal-box">
+    <h3>確定要刪除嗎？</h3>
+    <p id="confirm-text">—</p>
+    <div class="modal-actions">
+      <button class="btn" type="button" id="c-no">取消</button>
+      <button class="btn btn-danger" type="button" id="c-yes">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/admin.js"></script>
+</body>
+</html>

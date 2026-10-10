@@ -1,0 +1,24 @@
+# ============================================================
+# ⚠️ 絕對不要提交任何「機密」金鑰
+#    service_role key、資料庫密碼、LINE token、API key 都不可以進來。
+#
+#    assets/config.js 會被提交，這是刻意的：
+#    它裡面只有 publishable / anon key，那個金鑰本來就是設計給瀏覽器用的，
+#    權限由資料庫的 RLS 控制。請不要把 service_role key 加到 config.js。
+# ============================================================
+
+# 環境變數
+.env
+.env.*
+!.env.example
+
+# 本機覆寫（放私密設定用）
+*.local.js
+*.local.css
+
+# 系統 / 編輯器
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

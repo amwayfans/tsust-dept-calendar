@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>系所行事曆</title>
+<meta name="description" content="機械與自動化工程系系務行事曆">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <h1 id="site-title">系所行事曆</h1>
+      <p id="site-subtitle">系務行程公告</p>
+    </div>
+    <span id="admin-badge" class="badge badge-admin" hidden>管理員</span>
+    <a class="btn" id="btn-add" href="admin.html" hidden>＋ 新增事件</a>
+    <a class="btn btn-ghost" id="link-admin" href="admin.html">管理員登入</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="toolbar">
+    <button class="btn" id="btn-prev" type="button" aria-label="上個月">‹ 上月</button>
+    <button class="btn" id="btn-today" type="button">今天</button>
+    <button class="btn" id="btn-next" type="button" aria-label="下個月">下月 ›</button>
+    <span class="month-label" id="month-label">—</span>
+    <span class="spacer"></span>
+    <button class="btn btn-ghost" id="btn-view" type="button" hidden>切換列表</button>
+  </div>
+
+  <div class="card">
+    <div id="calendar"></div>
+    <div class="loading" id="loading">
+      <div class="skeleton" style="width:60%"></div>
+      <div class="skeleton" style="width:85%"></div>
+      <div class="skeleton" style="width:45%"></div>
+    </div>
+    <div class="empty" id="empty" hidden>本月尚無行程</div>
+    <div class="error-box" id="error" hidden></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+</main>
+
+<footer class="site-footer">
+  <div>機械與自動化工程系｜系辦分機 2102</div>
+</footer>
+
+<!-- 事件詳情 -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3 id="m-title">—</h3>
+    <p><strong>時間：</strong><span id="m-time">—</span></p>
+    <p><strong>類別：</strong><span id="m-cat">—</span></p>
+    <p id="m-loc-wrap"><strong>地點：</strong><span id="m-loc">—</span></p>
+    <p id="m-desc-wrap"><strong>說明：</strong><br><span id="m-desc">—</span></p>
+    <div class="modal-actions">
+      <button class="btn" id="m-close" type="button">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/calendar.js"></script>
+</body>
+</html>
