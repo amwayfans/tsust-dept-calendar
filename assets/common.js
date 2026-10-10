@@ -141,6 +141,41 @@
       });
   }
 
+  /* ---------- 頭像 ---------- */
+  /** HTML 逃逸（頭像與姓名都要經過這道） */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /** 沒有照片時的替代色：由姓名決定，同一個人永遠同色 */
+  function avatarColor(name) {
+    var palette = ['#2563EB', '#0891B2', '#059669', '#D97706',
+                   '#DC2626', '#7C3AED', '#DB2777', '#475569'];
+    var s = String(name || ''), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return palette[h % palette.length];
+  }
+
+  /**
+   * 圓形頭像。
+   * 有 avatar_url 就用照片；沒有（例如系辦助理不在系網師資名單裡）
+   * 就用姓名首字加底色 —— 不留空白，也不會出現破圖。
+   */
+  function avatarHtml(name, url, cls) {
+    var n = String(name || '').trim();
+    var c = 'avatar' + (cls ? ' ' + cls : '');
+    if (url) {
+      return '<span class="' + c + '">' +
+               '<img src="' + esc(url) + '" alt="' + esc(n) + '" loading="lazy">' +
+             '</span>';
+    }
+    var ch = n ? n.charAt(0) : '?';
+    return '<span class="' + c + ' avatar-fallback" style="background:' +
+             avatarColor(n) + '" title="' + esc(n) + '">' + esc(ch) + '</span>';
+  }
+
   /* ---------- 小工具 ---------- */
   /** 跳出提示訊息 */
   function toast(msg, kind) {
@@ -176,6 +211,9 @@
     isRecordManager: isRecordManager,
     roleLabel: roleLabel,
     signedUrls: signedUrls,
+    esc: esc,
+    avatarHtml: avatarHtml,
+    avatarColor: avatarColor,
     toast: toast,
     isMissingTable: isMissingTable
   };

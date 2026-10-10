@@ -94,6 +94,33 @@
   border-radius: 8px;
 }
 
+/* ---------- 圓形頭像 ---------- */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e2e8f0;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  /* 用外框做出「貼在卡片上」的乾淨圓邊，不另外加邊框以免壓到照片 */
+  box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 3px var(--c-border);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 工具列：登入者本人 */
+.avatar-lg { width: 46px; height: 46px; font-size: 20px; }
+
+/* 記錄列表：該筆記錄的教師 */
+.avatar-sm { width: 32px; height: 32px; font-size: 14px; margin-right: 9px; }
+
+/* 還沒登入時不佔位 */
+.avatar-slot:empty { display: none; }
+
 /* ---------- 手機 ---------- */
 @media (max-width: 767px) {
   .filters { gap: 8px; }
@@ -101,4 +128,6 @@
   .filters .spacer { display: none; }
   .chart-legend { gap: 12px; font-size: 13px; }
   .ev-photo { width: 76px; height: 76px; }
+  .avatar-lg { width: 40px; height: 40px; font-size: 18px; }
+  .avatar-sm { width: 28px; height: 28px; font-size: 13px; margin-right: 7px; }
 }

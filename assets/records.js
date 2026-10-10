@@ -255,7 +255,7 @@
   });
 
   function loadProfile(uid) {
-    return sb.from('profiles').select('id,email,full_name,role').eq('id', uid)
+    return sb.from('profiles').select('id,email,full_name,role,avatar_url').eq('id', uid)
       .maybeSingle()
       .then(function (res) {
         if (res.error) throw res.error;
@@ -281,6 +281,10 @@
     roleEl.hidden = false;
     roleEl.textContent = A.roleLabel(profile);
 
+    /* 圓形頭像：沒有照片的人（例如系辦助理不在系網師資名單裡）自動用姓名首字 */
+    $('who-avatar').innerHTML =
+      A.avatarHtml(profile.full_name || profile.email, profile.avatar_url, 'avatar-lg');
+
     /* 姓名不在名冊中 → 不能寫入 */
     var onRoster = !!(profile.full_name && profile.full_name.trim());
     if (!onRoster) {
@@ -302,8 +306,10 @@
 
     f.date.value = today();
     f.date.max = today();
-    loadMyRecords();
-    loadAllRecords();
+    loadAvatars().then(function () {
+      loadMyRecords();
+      loadAllRecords();
+    });
   }
 
   $('btn-logout').addEventListener('click', function () {
@@ -623,6 +629,28 @@
     });
   }
 
+  /* ---------- 教師頭像對照表（姓名 → 網址） ---------- */
+  var avatarByName = {};
+
+  /**
+   * 載入所有教師的頭像網址。
+   * 頭像只是裝飾，載入失敗不該擋住記錄列表 —— 所以錯誤一律吞掉，
+   * 讓 recordLi 走「姓名首字」的替代路徑。
+   */
+  function loadAvatars() {
+    return sb.from('profiles').select('full_name,avatar_url')
+      .not('avatar_url', 'is', null)
+      .then(function (res) {
+        if (res.error) return;
+        (res.data || []).forEach(function (p) {
+          if (p.full_name && p.avatar_url) {
+            avatarByName[p.full_name.trim()] = p.avatar_url;
+          }
+        });
+      })
+      .catch(function () { /* 忽略 */ });
+  }
+
   function recordLi(r, showActions, photoUrls) {
     var color = TYPE_COLOR[r.record_type] || '#64748B';
     var canEdit = me && (me.manager || r.teacher_id === me.session.user.id);
@@ -634,6 +662,7 @@
       : '';
     return '<li>' +
       '<span class="ev-dot" style="background:' + color + '"></span>' +
+      A.avatarHtml(r.teacher_name, avatarByName[(r.teacher_name || '').trim()], 'avatar-sm') +
       '<div class="ev-main">' +
         '<strong>' + esc(r.description) + '</strong>' +
         '<small>' +
