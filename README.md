@@ -144,6 +144,56 @@ curl -i -X POST "https://<專案>.supabase.co/rest/v1/events" \
 
 ---
 
+## 介面設計系統
+
+視覺規範由 UI UX Pro Max 產出，風格為 **Swiss Modernism 2.0 × 資料密集型儀表板**，
+色盤為 **學術海軍藍 + 金色點綴**。所有樣式權杖都定義在 `assets/styles.css` 的 `:root`，
+**改顏色只要改這裡**，三頁（行事曆／教師記錄／管理後台）會一起同步。
+
+| 權杖 | 值 | 用途 |
+|---|---|---|
+| `--c-primary` | `#1E3A5F` | 頁首底色、主要按鈕、標題 |
+| `--c-secondary` | `#2563EB` | 連結、次要強調 |
+| `--c-accent` | `#A16207` | 金色點綴（頁首底線、焦點提示） |
+| `--c-bg` | `#F8FAFC` | 頁面底色 |
+| `--c-surface` | `#FFFFFF` | 卡片底色 |
+| `--c-text` | `#0F172A` | 主要文字 |
+| `--c-text-2` | `#475569` | 次要文字、說明 |
+| `--c-muted` | `#64748B` | 淡文字（**注意：是文字色，不是底色**） |
+| `--c-border` | `#CBD5E1` | 框線 |
+| `--c-border-soft` | `#E9EEF5` | 淡框線、分隔線 |
+| `--c-surface-2` | `#F1F5F9` | 淺色區塊底 |
+| `--maxw` / `--gut` | `1180px` / `18px` | 內容寬度與左右留白 |
+| `--ring` | 海軍藍光暈 | 輸入框焦點 |
+
+**字型**：Latin 與數字用 `Inter`（Google Fonts），中文用系統字型
+（`Noto Sans TC` → `PingFang TC` → `Microsoft JhengHei`）。
+數字欄位加 `tabular-nums`，直排時不會跳動。
+
+### 改樣式時的三個地雷
+
+1. **`--c-muted` 是文字色**。它曾經同時被當成「次要文字」和「淺色底」，
+   導致 HTML 內嵌的 `color:var(--c-muted)` 幾乎看不見。淺色底請用 `--c-surface-2`。
+2. **左右留白只能有一個來源**。頁首用 `--gut`、內容用 `--gut`，
+   內容的 `max-width` 要寫成 `calc(var(--maxw) + var(--gut) * 2)`，
+   否則卡片會比頁首內縮一個留白寬度，看起來就是沒對齊。
+3. **卡片標題要用 `.card h2` 不要用 `.card > h2`**。
+   標題若放在 `.toolbar` 裡（例如統計卡）就不是直接子元素，
+   會吃不到樣式而變成瀏覽器預設的超大標題。
+
+### 日曆格子裡的文字
+
+月曆格子很窄，事件標題一定會被截斷，所以：
+
+- `.fc-event-title` 有 `text-overflow: ellipsis`，**不會從字中間切一半**
+- `calendar.js` 的 `eventDidMount` 會把完整資訊（時間範圍、標題、地點）
+  寫進 `title` 屬性，**滑鼠移上去才看得到全名**
+- 跨日事件頭尾有圓角，看得出起迄日
+
+新增事件欄位時，記得同步 `eventDidMount` 裡的 tooltip 組合邏輯。
+
+---
+
 ## 教師記錄分頁（records.html）
 
 老師自行登入後輸入「招生」「公差」記錄，系統即時統計成堆疊柱狀圖，
