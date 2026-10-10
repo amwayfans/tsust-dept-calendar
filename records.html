@@ -102,6 +102,24 @@
           </div>
         </div>
 
+        <div class="field">
+          <label for="f-photo">當日照片 <span class="hint">（選填，1 張）</span></label>
+          <input type="file" id="f-photo" accept="image/*" capture="environment">
+          <div class="hint" style="margin-top:6px">
+            手機可直接拍照；上傳前會自動縮圖（最長邊 1600px），省空間也省流量。
+          </div>
+          <div id="photo-preview-wrap" hidden style="margin-top:10px">
+            <img id="photo-preview" alt="照片預覽"
+                 style="max-width:220px;max-height:220px;border-radius:8px;
+                        border:1px solid var(--c-border);display:block">
+            <div style="margin-top:6px">
+              <button class="btn" type="button" id="btn-photo-clear">移除照片</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-error" id="e-photo" hidden></div>
+
         <div class="field-error" id="e-form" hidden></div>
 
         <div class="modal-actions">

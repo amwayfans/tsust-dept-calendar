@@ -99,6 +99,48 @@
     return (session.user.email || '').toLowerCase() === cfg.ADMIN_EMAIL.toLowerCase();
   }
 
+  /**
+   * 是否可代輸入教師記錄。
+   * 管理員與助理都可以 —— 一律看資料庫的 profiles.role，
+   * 不寫死信箱，日後換人只要改資料庫，前端不必動。
+   * 前端只用於顯示表單，真正把關在 RLS 的 is_record_manager()。
+   */
+  function isRecordManager(profile) {
+    var r = profile && profile.role;
+    return r === 'admin' || r === 'assistant';
+  }
+
+  /** 角色顯示名稱 */
+  function roleLabel(profile) {
+    var r = profile && profile.role;
+    if (r === 'admin') return '系辦管理員';
+    if (r === 'assistant') return '系辦助理';
+    return '教師';
+  }
+
+  /**
+   * 私有桶的簽章網址（一次問一批，避免逐張打 API）。
+   * 回傳 { 路徑: 網址 }。
+   */
+  function signedUrls(bucket, paths, expiresIn) {
+    var uniq = [];
+    (paths || []).forEach(function (p) {
+      if (p && uniq.indexOf(p) < 0) uniq.push(p);
+    });
+    if (!uniq.length) return Promise.resolve({});
+    return sb.storage.from(bucket)
+      .createSignedUrls(uniq, expiresIn || cfg.PHOTO_URL_TTL || 3600)
+      .then(function (r) {
+        if (r.error) throw r.error;
+        var map = {};
+        (r.data || []).forEach(function (d) {
+          var p = d.path || d.pathname;
+          if (p) map[p] = d.signedUrl || d.signedURL || '';
+        });
+        return map;
+      });
+  }
+
   /* ---------- 小工具 ---------- */
   /** 跳出提示訊息 */
   function toast(msg, kind) {
@@ -131,6 +173,9 @@
     signIn: signIn,
     signOut: signOut,
     isAdmin: isAdmin,
+    isRecordManager: isRecordManager,
+    roleLabel: roleLabel,
+    signedUrls: signedUrls,
     toast: toast,
     isMissingTable: isMissingTable
   };

@@ -26,7 +26,16 @@ window.APP_CONFIG = {
   WEEK_STARTS_ON: 1,
 
   // 管理員信箱（僅用於畫面提示，真正的判斷在資料庫的 is_admin()）
+  // 助理的判斷不看這裡，一律以資料庫 profiles.role 為準
+  //（'admin' 或 'assistant' 都能代輸入教師記錄）。
   ADMIN_EMAIL: 'sr0035@tsust.edu.tw',
+
+  // 記錄照片：存在 Supabase Storage 的私有桶，再由排程同步一份到 Google Drive
+  PHOTO_BUCKET: 'record-photos',
+  PHOTO_MAX_MB: 5,        // 單張上限（與資料庫的 file_size_limit 一致）
+  PHOTO_MAX_PX: 1600,     // 上傳前等比縮到這個邊長（手機照片動輒 4000px）
+  PHOTO_QUALITY: 0.82,    // JPEG 壓縮品質
+  PHOTO_URL_TTL: 3600,    // 簽章網址有效秒數（私有桶必須簽章才看得到）
 
   // 事件類別與顏色
   CATEGORIES: {

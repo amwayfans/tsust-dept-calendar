@@ -65,10 +65,40 @@
   white-space: nowrap;
 }
 
+/* ---------- 記錄照片 ---------- */
+.ev-photo-link { display: inline-block; margin-top: 8px; }
+.ev-photo {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: #f1f5f9;
+  transition: transform .12s ease;
+}
+.ev-photo-link:hover .ev-photo { transform: scale(1.04); }
+.ev-photo-loading {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
+/* 表單裡的選檔欄位 */
+#f-photo {
+  width: 100%;
+  padding: 8px;
+  background: #f8fafc;
+  border: 1px dashed var(--c-border);
+  border-radius: 8px;
+}
+
 /* ---------- 手機 ---------- */
 @media (max-width: 767px) {
   .filters { gap: 8px; }
   .filters select { flex: 1; min-width: 0; }
   .filters .spacer { display: none; }
   .chart-legend { gap: 12px; font-size: 13px; }
+  .ev-photo { width: 76px; height: 76px; }
 }

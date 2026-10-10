@@ -2,7 +2,7 @@
  * 教師記錄分頁（records.html）
  *
  * 三個區塊：
- *   A. 我的記錄輸入（登入後）—— 教師寫自己的，管理員可代輸入
+ *   A. 我的記錄輸入（登入後）—— 教師寫自己的，管理員／助理可代輸入
  *   B. 統計堆疊柱狀圖（公開）—— 只給聚合次數，不含任何明細
  *   C. 全部記錄列表（登入後）—— 篩選 + 分頁
  *
@@ -33,16 +33,103 @@
   var elYear = $('year-select');
   var f = {
     id: $('f-id'), type: $('f-type'), date: $('f-date'), desc: $('f-desc'),
-    loc: $('f-loc'), note: $('f-note'), teacher: $('f-teacher')
+    loc: $('f-loc'), note: $('f-note'), teacher: $('f-teacher'),
+    photo: $('f-photo')
   };
 
   /* ---------- 狀態 ---------- */
-  var me = null;          // { session, profile, admin }
+  var me = null;          // { session, profile, admin, manager }
   var roster = [];        // 教師名冊
   var statsRows = [];     // 目前學年度的統計
   var chart = null;
   var allPage = 1, allTotal = 0;
   var pendingDelete = null;
+
+  /* 照片狀態
+   * pendingPhoto   ：這次新選的檔案（已壓縮成 JPEG Blob），null = 沒換
+   * existingPhoto  ：編輯時原本的照片路徑（沒換就沿用，不重複上傳）
+   * removePhoto    ：使用者按了「移除照片」
+   */
+  var pendingPhoto = null;
+  var pendingPhotoName = '';
+  var existingPhotoPath = '';
+  var removePhoto = false;
+
+  /* ---------- 照片處理 ---------- */
+
+  /** 把選到的圖檔等比縮到最長邊 PHOTO_MAX_PX，轉成 JPEG Blob。
+   *  手機照片動輒 4000px、5MB，直接上傳既慢又佔空間。 */
+  function compressImage(file) {
+    return new Promise(function (resolve, reject) {
+      if (!/^image\//.test(file.type || '')) {
+        reject(new Error('請選擇圖片檔案'));
+        return;
+      }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        try {
+          var maxPx = cfg.PHOTO_MAX_PX || 1600;
+          var scale = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
+          var cw = Math.max(1, Math.round(img.naturalWidth * scale));
+          var ch = Math.max(1, Math.round(img.naturalHeight * scale));
+          var cv = document.createElement('canvas');
+          cv.width = cw; cv.height = ch;
+          cv.getContext('2d').drawImage(img, 0, 0, cw, ch);
+          cv.toBlob(function (blob) {
+            if (!blob) { reject(new Error('圖片轉換失敗')); return; }
+            resolve(blob);
+          }, 'image/jpeg', cfg.PHOTO_QUALITY || 0.82);
+        } catch (e) { reject(e); }
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error('這個檔案不是有效的圖片'));
+      };
+      img.src = url;
+    });
+  }
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  function showPhotoPreview(src) {
+    var wrap = $('photo-preview-wrap');
+    if (!wrap) return;
+    if (!src) {
+      wrap.hidden = true;
+      $('photo-preview').removeAttribute('src');
+      return;
+    }
+    $('photo-preview').src = src;
+    wrap.hidden = false;
+  }
+
+  /** 上傳照片到 Storage。路徑 {teacher_id}/{uuid}.jpg
+   *  —— 這個路徑規則同時是 Storage RLS 的判斷依據。 */
+  function uploadPhoto(teacherId, blob, originalName) {
+    var path = teacherId + '/' + uuid() + '.jpg';
+    return sb.storage.from(cfg.PHOTO_BUCKET)
+      .upload(path, blob, { contentType: 'image/jpeg', upsert: false })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return { path: path, name: originalName || '' };
+      });
+  }
+
+  /** 刪除 Storage 上的照片。失敗不擋流程（記錄本身才是重點）。 */
+  function deletePhoto(path) {
+    if (!path) return Promise.resolve(false);
+    return sb.storage.from(cfg.PHOTO_BUCKET).remove([path])
+      .then(function () { return true; })
+      .catch(function () { return false; });
+  }
 
   /* ---------- 小工具 ---------- */
   function esc(s) {
@@ -178,7 +265,12 @@
 
   /* ---------- 進入已登入狀態 ---------- */
   function enter(session, profile) {
-    me = { session: session, profile: profile, admin: A.isAdmin(session) };
+    me = {
+      session: session,
+      profile: profile,
+      admin: A.isAdmin(session),             // 行事曆管理員（只有一位）
+      manager: A.isRecordManager(profile)    // 可代輸入教師記錄（管理員或助理）
+    };
 
     elLogin.hidden = true;
     elMy.hidden = false;
@@ -187,7 +279,7 @@
     $('who').textContent = profile.full_name || profile.email || '（未命名）';
     var roleEl = $('who-role');
     roleEl.hidden = false;
-    roleEl.textContent = me.admin ? '系辦管理員' : '教師';
+    roleEl.textContent = A.roleLabel(profile);
 
     /* 姓名不在名冊中 → 不能寫入 */
     var onRoster = !!(profile.full_name && profile.full_name.trim());
@@ -198,8 +290,8 @@
       warn.textContent = '您的帳號不在教師名冊中，無法新增記錄。請洽系辦（分機 2102）。';
     }
 
-    /* 管理員才顯示「代輸入」的教師選單 */
-    if (me.admin && onRoster) {
+    /* 管理員與助理都顯示「代輸入」的教師選單 */
+    if (me.manager && onRoster) {
       $('wrap-teacher').hidden = false;
       f.teacher.innerHTML = '<option value="">— 選擇教師 —</option>' +
         roster.map(function (r) {
@@ -343,8 +435,18 @@
     f.desc.value = '';
     f.loc.value = '';
     f.note.value = '';
-    if (me && me.admin) f.teacher.value = '';
-    $('form-title').textContent = me && me.admin ? '新增記錄（可代輸入）' : '新增記錄';
+    if (me && me.manager) f.teacher.value = '';
+
+    /* 照片狀態一起清掉，否則編輯完的照片會殘留到下一筆 */
+    pendingPhoto = null;
+    pendingPhotoName = '';
+    existingPhotoPath = '';
+    removePhoto = false;
+    if (f.photo) f.photo.value = '';
+    showPhotoPreview('');
+    $('e-photo').hidden = true;
+
+    $('form-title').textContent = me && me.manager ? '新增記錄（可代輸入）' : '新增記錄';
     $('btn-save').textContent = '新增';
     $('btn-cancel').hidden = true;
     $('e-desc').hidden = true;
@@ -352,6 +454,51 @@
   }
 
   $('btn-cancel').addEventListener('click', resetForm);
+
+  /* ---------- 照片：選檔 → 壓縮 → 預覽 ---------- */
+  f.photo.addEventListener('change', function () {
+    var file = f.photo.files && f.photo.files[0];
+    var errEl = $('e-photo');
+    errEl.hidden = true;
+    if (!file) return;
+
+    var maxBytes = (cfg.PHOTO_MAX_MB || 5) * 1024 * 1024;
+    /* 原始檔超過上限 3 倍就先擋掉，不必浪費時間壓縮 */
+    if (file.size > maxBytes * 3) {
+      errEl.textContent = '照片太大了（超過 ' + (cfg.PHOTO_MAX_MB || 5) +
+                          'MB 的 3 倍），請換一張。';
+      errEl.hidden = false;
+      f.photo.value = '';
+      return;
+    }
+
+    compressImage(file).then(function (blob) {
+      if (blob.size > maxBytes) {
+        errEl.textContent = '壓縮後仍超過 ' + (cfg.PHOTO_MAX_MB || 5) + 'MB，請換一張。';
+        errEl.hidden = false;
+        f.photo.value = '';
+        return;
+      }
+      pendingPhoto = blob;
+      pendingPhotoName = file.name || ('photo-' + Date.now() + '.jpg');
+      removePhoto = false;
+      showPhotoPreview(URL.createObjectURL(blob));
+    }).catch(function (err) {
+      errEl.textContent = (err && err.message) || '照片處理失敗';
+      errEl.hidden = false;
+      f.photo.value = '';
+    });
+  });
+
+  $('btn-photo-clear').addEventListener('click', function () {
+    pendingPhoto = null;
+    pendingPhotoName = '';
+    f.photo.value = '';
+    /* 編輯時按移除 → 標記要刪掉 Storage 上的舊照片 */
+    if (existingPhotoPath) removePhoto = true;
+    showPhotoPreview('');
+    $('e-photo').hidden = true;
+  });
 
   elForm.addEventListener('submit', function (ev) {
     ev.preventDefault();
@@ -366,7 +513,7 @@
     /* 決定這筆記錄屬於誰 */
     var teacherId = me.session.user.id;
     var enteredByAdmin = false;
-    if (me.admin && f.teacher.value) {
+    if (me.manager && f.teacher.value) {
       var picked = roster.filter(function (r) { return r.email === f.teacher.value; })[0];
       if (!picked) { A.toast('請選擇教師', 'error'); return; }
       var prof = null;
@@ -384,38 +531,67 @@
   });
 
   function submitRecord(teacherId, enteredByAdmin) {
-    var payload = {
-      teacher_id: teacherId,
-      record_type: f.type.value,
-      record_date: f.date.value,
-      description: f.desc.value.trim(),
-      location: f.loc.value.trim() || null,
-      note: f.note.value.trim() || null,
-      entered_by_admin: enteredByAdmin
-      /* teacher_name / academic_year 由資料庫 trigger 決定，這裡不送 */
-    };
-    var id = f.id.value;
     var btn = $('btn-save');
+    var id = f.id.value;
+    var oldPath = existingPhotoPath;
     btn.disabled = true;
+    $('e-photo').hidden = true;
 
-    var q = id
-      ? sb.from('teacher_records').update(payload).eq('id', id)
-      : sb.from('teacher_records').insert(payload);
+    /* 先處理照片，再寫記錄 —— 記錄的 photo_path 才知道要指向哪裡 */
+    var sendPhotoName = false;
+    var photoStep;
+    if (pendingPhoto) {
+      sendPhotoName = true;
+      photoStep = uploadPhoto(teacherId, pendingPhoto, pendingPhotoName)
+        .then(function (up) { return { path: up.path, name: up.name }; });
+    } else if (removePhoto && oldPath) {
+      sendPhotoName = true;
+      photoStep = deletePhoto(oldPath).then(function () { return { path: null, name: null }; });
+    } else {
+      /* 沒動照片：沿用原本的路徑，不重複上傳 */
+      photoStep = Promise.resolve({ path: oldPath || null, name: null });
+    }
 
-    return q.select().then(function (res) {
+    return photoStep.then(function (photo) {
+      var payload = {
+        teacher_id: teacherId,
+        record_type: f.type.value,
+        record_date: f.date.value,
+        description: f.desc.value.trim(),
+        location: f.loc.value.trim() || null,
+        note: f.note.value.trim() || null,
+        entered_by_admin: enteredByAdmin,
+        photo_path: photo.path
+        /* teacher_name / academic_year 由資料庫 trigger 決定，這裡不送 */
+      };
+      if (sendPhotoName) payload.photo_name = photo.name;
+
+      var q = id
+        ? sb.from('teacher_records').update(payload).eq('id', id)
+        : sb.from('teacher_records').insert(payload);
+
+      return q.select().then(function (res) {
+        btn.disabled = false;
+        if (res.error) {
+          /* 記錄沒寫成，剛上傳的照片要清掉，避免留下沒人指向的孤兒檔案 */
+          if (pendingPhoto && photo.path) deletePhoto(photo.path);
+          var msg = res.error.message || String(res.error);
+          if (/不在教師名冊/.test(msg)) msg = '您的帳號不在教師名冊中，無法新增記錄。';
+          if (/未來/.test(msg)) msg = '不可填寫未來的日期。';
+          A.toast('儲存失敗：' + msg, 'error');
+          return;
+        }
+        A.toast(id ? '已更新' : '已新增', 'ok');
+        resetForm();
+        loadMyRecords();
+        loadAllRecords();
+        loadYears();
+      });
+    }).catch(function (err) {
       btn.disabled = false;
-      if (res.error) {
-        var msg = res.error.message || String(res.error);
-        if (/不在教師名冊/.test(msg)) msg = '您的帳號不在教師名冊中，無法新增記錄。';
-        if (/未來/.test(msg)) msg = '不可填寫未來的日期。';
-        A.toast('儲存失敗：' + msg, 'error');
-        return;
-      }
-      A.toast(id ? '已更新' : '已新增', 'ok');
-      resetForm();
-      loadMyRecords();
-      loadAllRecords();
-      loadYears();
+      var m = (err && err.message) || String(err);
+      $('e-photo').textContent = '照片上傳失敗：' + m + '（記錄尚未儲存）';
+      $('e-photo').hidden = false;
     });
   }
 
@@ -436,14 +612,20 @@
       var rows = res.data || [];
       $('my-count').textContent = '（' + rows.length + ' 筆）';
       elMyEmpty.hidden = rows.length > 0;
-      elMyList.innerHTML = rows.map(function (r) { return recordLi(r, true); }).join('');
-      bindActions(elMyList);
+      /* 簽章失敗不該讓整個列表消失 —— 照片留白，記錄照常顯示 */
+      return A.signedUrls(cfg.PHOTO_BUCKET,
+                          rows.map(function (r) { return r.photo_path; }))
+        .catch(function () { return {}; })
+        .then(function (map) {
+          elMyList.innerHTML = rows.map(function (r) { return recordLi(r, true, map); }).join('');
+          bindActions(elMyList);
+        });
     });
   }
 
-  function recordLi(r, showActions) {
+  function recordLi(r, showActions, photoUrls) {
     var color = TYPE_COLOR[r.record_type] || '#64748B';
-    var canEdit = me && (me.admin || r.teacher_id === me.session.user.id);
+    var canEdit = me && (me.manager || r.teacher_id === me.session.user.id);
     var acts = (showActions && canEdit)
       ? '<div class="ev-actions">' +
           '<button class="btn" data-act="edit" data-id="' + esc(r.id) + '">編輯</button>' +
@@ -461,8 +643,18 @@
           (r.location ? '｜' + esc(r.location) : '') +
           (r.note ? '｜' + esc(r.note) : '') +
           (r.entered_by_admin ? ' <span class="tag-admin">由管理員代輸入</span>' : '') +
-        '</small>' +
+        '</small>' + photoHtml(r, photoUrls) +
       '</div>' + acts + '</li>';
+  }
+
+  /** 記錄照片的縮圖（私有桶，需簽章網址才看得到） */
+  function photoHtml(r, photoUrls) {
+    if (!r.photo_path) return '';
+    var url = (photoUrls || {})[r.photo_path];
+    if (!url) return '<span class="ev-photo-loading">照片載入中…</span>';
+    return '<a class="ev-photo-link" href="' + esc(url) + '" target="_blank" rel="noopener">' +
+             '<img class="ev-photo" src="' + esc(url) + '" alt="記錄照片" loading="lazy">' +
+           '</a>';
   }
 
   function bindActions(container) {
@@ -485,6 +677,21 @@
       f.desc.value = r.description;
       f.loc.value = r.location || '';
       f.note.value = r.note || '';
+
+      /* 既有照片：只做預覽，pendingPhoto 保持 null —— 沒換檔就沿用舊的，不重複上傳 */
+      pendingPhoto = null;
+      pendingPhotoName = '';
+      removePhoto = false;
+      existingPhotoPath = r.photo_path || '';
+      if (f.photo) f.photo.value = '';
+      if (existingPhotoPath) {
+        A.signedUrls(cfg.PHOTO_BUCKET, [existingPhotoPath])
+          .then(function (map) { showPhotoPreview(map[existingPhotoPath] || ''); })
+          .catch(function () { showPhotoPreview(''); });
+      } else {
+        showPhotoPreview('');
+      }
+
       $('form-title').textContent = '編輯記錄（' + r.teacher_name + '）';
       $('btn-save').textContent = '儲存變更';
       $('btn-cancel').hidden = false;
@@ -504,14 +711,17 @@
     if (!pendingDelete) return;
     var id = pendingDelete, btn = $('c-yes');
     btn.disabled = true;
-    sb.from('teacher_records').delete().eq('id', id).then(function (res) {
-      btn.disabled = false;
-      $('confirm').classList.remove('show');
-      pendingDelete = null;
-      if (res.error) { A.toast('刪除失敗：' + res.error.message, 'error'); return; }
-      A.toast('已刪除', 'ok');
-      loadMyRecords(); loadAllRecords(); loadYears();
-    });
+    /* 先取回照片路徑，記錄刪掉後才不會留下沒人指向的孤兒檔案 */
+    sb.from('teacher_records').delete().eq('id', id).select('photo_path')
+      .then(function (res) {
+        btn.disabled = false;
+        $('confirm').classList.remove('show');
+        pendingDelete = null;
+        if (res.error) { A.toast('刪除失敗：' + res.error.message, 'error'); return; }
+        (res.data || []).forEach(function (r) { deletePhoto(r.photo_path); });
+        A.toast('已刪除', 'ok');
+        loadMyRecords(); loadAllRecords(); loadYears();
+      });
   });
 
   /* ============================================================
@@ -566,7 +776,6 @@
         var rows = res.data || [];
         allTotal = (res.count == null) ? rows.length : res.count;
         elAllEmpty.hidden = rows.length > 0;
-        elAllList.innerHTML = rows.map(function (r) { return recordLi(r, false); }).join('');
         $('all-count').textContent = '共 ' + allTotal + ' 筆';
 
         var pages = Math.max(1, Math.ceil(allTotal / PAGE_SIZE));
@@ -574,6 +783,14 @@
         $('pg-info').textContent = '第 ' + allPage + ' / ' + pages + ' 頁';
         $('pg-prev').disabled = allPage <= 1;
         $('pg-next').disabled = allPage >= pages;
+
+        /* 簽章失敗不該讓整個列表消失 —— 照片留白，記錄照常顯示 */
+        return A.signedUrls(cfg.PHOTO_BUCKET,
+                            rows.map(function (r) { return r.photo_path; }))
+          .catch(function () { return {}; })
+          .then(function (map) {
+            elAllList.innerHTML = rows.map(function (r) { return recordLi(r, false, map); }).join('');
+          });
       });
     }
 
