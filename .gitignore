@@ -16,6 +16,11 @@
 *.local.js
 *.local.css
 
+# 真實資料，不進公開版控
+# seed_roster.sql 含全系教師的信箱，這個 repo 是公開的，所以排除。
+# 需要的人請跟系辦索取，或參考 seed_roster.example.sql 自行填寫。
+supabase/seed_roster.sql
+
 # 系統 / 編輯器
 .DS_Store
 Thumbs.db

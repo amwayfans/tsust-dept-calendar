@@ -54,6 +54,31 @@ a { color: var(--c-primary); }
 .brand h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: .2px; }
 .brand p { margin: 0; font-size: 12.5px; color: var(--c-muted); }
 
+/* ---------- 導覽列（各頁共用） ---------- */
+.site-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--c-text);
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+.site-nav a:hover { background: #f1f5f9; }
+.site-nav a.active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: var(--c-primary-dark);
+  font-weight: 600;
+}
+@media (max-width: 767px) {
+  .site-nav { width: 100%; margin-right: 0; }
+  .site-nav a { flex: 1; justify-content: center; min-height: var(--touch); }
+}
+
 /* ---------- 按鈕 ---------- */
 .btn {
   display: inline-flex;

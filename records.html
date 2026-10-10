@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>教師記錄 — 機械與自動化工程系</title>
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/records.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <h1>教師記錄</h1>
+      <p>招生 ／ 公差 記錄與統計</p>
+    </div>
+    <nav class="site-nav">
+      <a href="index.html">行事曆</a>
+      <a href="records.html" class="active">教師記錄</a>
+      <a href="admin.html">管理後台</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== 登入 ===================== -->
+  <section class="card" id="login-card" hidden>
+    <h2 style="margin-top:0">教師登入</h2>
+    <p class="hint" style="color:var(--c-muted);font-size:13.5px;margin-top:-6px">
+      帳號由系辦建立。忘記密碼或無法登入請洽系辦（分機 2102）。
+    </p>
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="email">電子郵件</label>
+        <input type="email" id="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">密碼</label>
+        <input type="password" id="password" autocomplete="current-password" required>
+      </div>
+      <div class="field-error" id="login-error" hidden></div>
+      <div class="modal-actions" style="justify-content:flex-start">
+        <button class="btn btn-primary" type="submit" id="btn-login">登入</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ===================== 區塊 A：我的記錄 ===================== -->
+  <section id="my-section" hidden>
+
+    <div class="card">
+      <div class="toolbar">
+        <span class="badge badge-admin" id="who">—</span>
+        <span class="badge" id="who-role" hidden></span>
+        <span class="spacer"></span>
+        <button class="btn" id="btn-pw" type="button">修改密碼</button>
+        <button class="btn btn-danger" id="btn-logout" type="button">登出</button>
+      </div>
+
+      <h2 style="margin-top:0" id="form-title">新增記錄</h2>
+
+      <div class="field" id="wrap-teacher" hidden>
+        <label for="f-teacher">以哪位教師名義新增 <span class="hint">（管理員代輸入）</span></label>
+        <select id="f-teacher"></select>
+      </div>
+
+      <form id="record-form" novalidate>
+        <input type="hidden" id="f-id">
+
+        <div class="row2">
+          <div class="field">
+            <label for="f-type">類型 <span class="hint">（必填）</span></label>
+            <select id="f-type">
+              <option value="enrollment">招生</option>
+              <option value="duty">公差</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-date">日期 <span class="hint">（必填，不可選未來）</span></label>
+            <input type="date" id="f-date" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-desc">事由說明 <span class="hint">（必填，200 字內）</span></label>
+          <textarea id="f-desc" maxlength="200" required></textarea>
+          <div class="field-error" id="e-desc" hidden></div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="f-loc">地點 <span class="hint">（選填，100 字內）</span></label>
+            <input type="text" id="f-loc" maxlength="100">
+          </div>
+          <div class="field">
+            <label for="f-note">備註 <span class="hint">（選填，200 字內）</span></label>
+            <input type="text" id="f-note" maxlength="200">
+          </div>
+        </div>
+
+        <div class="field-error" id="e-form" hidden></div>
+
+        <div class="modal-actions">
+          <button class="btn" type="button" id="btn-cancel" hidden>取消編輯</button>
+          <button class="btn btn-primary" type="submit" id="btn-save">新增</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">我的記錄 <span class="hint" id="my-count"></span></h2>
+      <ul class="ev-list" id="my-list"></ul>
+      <div class="empty" id="my-empty" hidden>尚無記錄</div>
+      <div class="error-box" id="my-error" hidden></div>
+    </div>
+
+  </section>
+
+  <!-- ===================== 區塊 B：統計圖表（公開） ===================== -->
+  <section class="card" id="stats-card">
+    <div class="toolbar">
+      <h2 style="margin:0">教師招生 ／ 公差次數統計</h2>
+      <span class="spacer"></span>
+      <select id="year-select" aria-label="選擇學年度"></select>
+      <button class="btn" id="btn-csv" type="button">匯出 CSV</button>
+    </div>
+
+    <div class="chart-legend">
+      <span><i style="background:#2563EB"></i>招生</span>
+      <span><i style="background:#F59E0B"></i>公差</span>
+    </div>
+
+    <div class="chart-wrap" id="chart-wrap" hidden>
+      <canvas id="chart" height="320"></canvas>
+    </div>
+    <div class="empty" id="chart-empty" hidden>本學年度尚無記錄</div>
+    <div class="error-box" id="chart-error" hidden></div>
+  </section>
+
+  <!-- ===================== 區塊 C：全部記錄（需登入） ===================== -->
+  <section class="card" id="all-section" hidden>
+    <h2 style="margin-top:0">全部記錄</h2>
+
+    <div class="filters">
+      <select id="flt-year" aria-label="學年度"></select>
+      <select id="flt-type" aria-label="類型">
+        <option value="">全部類型</option>
+        <option value="enrollment">招生</option>
+        <option value="duty">公差</option>
+      </select>
+      <select id="flt-teacher" aria-label="教師"></select>
+      <span class="spacer"></span>
+      <span class="hint" id="all-count"></span>
+    </div>
+
+    <ul class="ev-list" id="all-list"></ul>
+    <div class="empty" id="all-empty" hidden>沒有符合條件的記錄</div>
+    <div class="error-box" id="all-error" hidden></div>
+
+    <div class="pager" id="pager" hidden>
+      <button class="btn" id="pg-prev" type="button">‹ 上一頁</button>
+      <span id="pg-info">—</span>
+      <button class="btn" id="pg-next" type="button">下一頁 ›</button>
+    </div>
+  </section>
+
+  <div class="card" id="booting">
+    <div class="skeleton" style="width:40%"></div>
+    <div class="skeleton" style="width:65%"></div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div>機械與自動化工程系｜系辦分機 2102</div>
+</footer>
+
+<!-- 刪除確認 -->
+<div class="modal" id="confirm">
+  <div class="modal-box">
+    <h3>確定要刪除嗎？</h3>
+    <p id="confirm-text">—</p>
+    <div class="modal-actions">
+      <button class="btn" type="button" id="c-no">取消</button>
+      <button class="btn btn-danger" type="button" id="c-yes">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 修改密碼 -->
+<div class="modal" id="pw-modal">
+  <div class="modal-box">
+    <h3>修改密碼</h3>
+    <form id="pw-form">
+      <div class="field">
+        <label for="pw1">新密碼 <span class="hint">（至少 6 個字元）</span></label>
+        <input type="password" id="pw1" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="pw2">再輸入一次</label>
+        <input type="password" id="pw2" autocomplete="new-password">
+      </div>
+      <div class="field-error" id="pw-error" hidden></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="pw-cancel">取消</button>
+        <button class="btn btn-primary" type="submit" id="pw-save">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/records.js"></script>
+</body>
+</html>

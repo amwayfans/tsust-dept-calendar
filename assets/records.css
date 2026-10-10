@@ -1,0 +1,74 @@
+/* ============================================================
+ * 教師記錄分頁 — 專屬樣式
+ * 共用的按鈕 / 卡片 / 表單樣式在 styles.css，這裡只放這一頁才有的東西。
+ * ============================================================ */
+
+/* ---------- 統計圖表 ---------- */
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  margin: 6px 0 12px;
+  font-size: 13.5px;
+  color: var(--c-muted);
+}
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend i {
+  width: 12px; height: 12px; border-radius: 3px; display: inline-block;
+}
+
+/* 手機：柱子太多時讓這一區可以橫向捲動 */
+.chart-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+}
+.chart-wrap .chart-inner { position: relative; }
+
+/* ---------- 篩選器 ---------- */
+.filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.filters select {
+  width: auto;
+  min-width: 132px;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+.filters .spacer { margin-left: auto; }
+
+/* ---------- 分頁 ---------- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--c-muted);
+}
+
+/* ---------- 代輸入標記 ---------- */
+.tag-admin {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+/* ---------- 手機 ---------- */
+@media (max-width: 767px) {
+  .filters { gap: 8px; }
+  .filters select { flex: 1; min-width: 0; }
+  .filters .spacer { display: none; }
+  .chart-legend { gap: 12px; font-size: 13px; }
+}

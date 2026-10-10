@@ -17,16 +17,21 @@
 ```
 .
 ├── index.html                 公開月曆（所有人）
+├── records.html               教師記錄（招生／公差）
 ├── admin.html                 管理後台（僅管理員）
 ├── assets/
 │   ├── config.js              ⚙️ 設定（Supabase 連線、類別、標題）
 │   ├── common.js              共用工具（連線、時區、事件查詢、登入）
 │   ├── calendar.js            月曆頁邏輯
+│   ├── records.js             教師記錄頁邏輯（表單、圖表、CSV）
+│   ├── records.css            教師記錄頁專屬樣式
 │   ├── admin.js               後台 CRUD 邏輯
-│   └── styles.css             樣式
+│   └── styles.css             共用樣式
 └── supabase/
-    ├── migration.sql          資料表 + RLS + is_admin()  ← 必跑
-    └── seed.sql               測試資料（可選）
+    ├── migration.sql          行事曆：events 表 + RLS        ← 必跑
+    ├── migration_records.sql  教師記錄：profiles 等 + RLS    ← 必跑
+    ├── seed.sql               行事曆測試資料（可選）
+    └── seed_roster.sql        教師名冊（19 位）              ← 必跑
 ```
 
 ---
@@ -136,6 +141,76 @@ curl -i -X POST "https://<專案>.supabase.co/rest/v1/events" \
 
 要改顏色或新增類別，編輯 `assets/config.js` 的 `CATEGORIES`，
 並同步更新 `supabase/migration.sql` 裡的 `events_category` check 條件。
+
+---
+
+## 教師記錄分頁（records.html）
+
+老師自行登入後輸入「招生」「公差」記錄，系統即時統計成堆疊柱狀圖，
+可匯出 CSV 作為教師評鑑參考。
+
+### 啟用步驟
+
+**① 執行資料庫 SQL**（順序很重要）
+
+1. `supabase/migration_records.sql` → 建立 `profiles`、`teacher_roster`、`teacher_records` 與權限規則
+2. `supabase/seed_roster.sql` → 匯入 19 位教師名冊
+
+**② 建立教師帳號**
+
+到 Supabase 後台 → **Authentication → Users → Add user**，逐一建立：
+
+- Email：要跟 `teacher_roster` 裡的**完全一致**
+- 密碼：設定一組，並**勾選 Auto Confirm User**
+- 姓名會由系統自動從名冊帶入，**不需要手動填**
+
+> 帳號建好後，`profiles` 會自動建立並帶入正確姓名。
+> 若某個帳號不在名冊中，該帳號登入後**無法新增記錄**，會提示洽系辦。
+
+**③ 指派管理員**
+
+`is_admin()` 目前以 `sr0035@tsust.edu.tw` 判斷（沿用行事曆的設定）。
+要換人：改 `supabase/migration.sql` 裡 `is_admin()` 的那行 email，重跑一次。
+
+### 姓名一致性（重要）
+
+教師姓名**一律以 `teacher_roster` 為準**，老師無法自行輸入或修改：
+
+- 寫入時由資料庫 trigger 從 `profiles` 帶入 `teacher_name`，前端送什麼都會被覆蓋
+- 因此不可能出現「王小明」與「王 小明」被算成兩個人的情況
+
+要新增／移除老師：改 `seed_roster.sql` 的清單後重跑，或執行
+
+```sql
+delete from public.teacher_roster where email = 'xxx@tsust.edu.tw';
+```
+
+### 學年度
+
+台灣學年度制：**8/1 ～ 次年 7/31**。
+
+- 115 學年度 = 2026/08/01 ~ 2027/07/31
+- 寫入時由資料庫自動計算 `academic_year`，前端不能指定
+- 換算函式：`select public.get_academic_year('2026-10-10');` → `115`
+
+### 權限一覽
+
+| 動作 | 訪客 | 教師 | 管理員 |
+|---|---|---|---|
+| 看統計圖表 | ✅ | ✅ | ✅ |
+| 看記錄明細 | ❌ | ✅ | ✅ |
+| 新增記錄 | ❌ | 只能新增自己的 | 任何人（可代輸入） |
+| 編輯／刪除 | ❌ | 只能改自己的 | 任何人 |
+| 匯出 CSV | ✅ | ✅ | ✅ |
+
+> 訪客看到的是 `record_stats()` 這支函式回傳的**加總結果**，
+> 不含任何一筆的事由、地點。所以「公開統計但不公開明細」是真的做到，
+> 不是靠前端把表格藏起來。
+
+### 代輸入
+
+管理員登入後，表單上方會多一個「以哪位教師名義新增」的選單。
+代輸入的記錄在列表上會標示「**由管理員代輸入**」，並額外記錄是哪位管理員操作。
 
 ---
 
