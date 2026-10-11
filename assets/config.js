@@ -57,7 +57,8 @@ window.APP_CONFIG = {
   MOBILE_BREAKPOINT: 768,
 
   // LINE 登入開關。
-  // Supabase 的 custom provider（識別碼 custom:line）建好、且實測通過之後才改成 true。
-  // 沒建好就打開的話，老師按下去只會看到錯誤訊息，比沒有這顆按鈕更糟。
-  LINE_LOGIN_ENABLED: false
+  // Supabase 的 custom provider（識別碼 custom:line）已於 2026-10-11 建好並實測通過，
+  // 因此開啟。若日後 LINE 端或 provider 出問題，把這裡改回 false 即可讓登入頁
+  // 恢復成「只有帳密」，老師不會看到壞掉的按鈕。
+  LINE_LOGIN_ENABLED: true
 };
