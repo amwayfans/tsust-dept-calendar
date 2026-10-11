@@ -440,69 +440,97 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .card[data-sec] h2 { color: var(--sec); border-bottom-color: var(--sec-bd); }
 .card[data-sec] .toolbar h2 { color: var(--sec); }
 
-/* ---------- 今日行程（取代原本的四格統計列） ---------- */
-/* 設計參考 Fantastical 的「Up Next」面板：
-   淺底卡片、左側飽和色條、圓角色塊、時間與標題分開層級。
-   只放「今天」的行程，字比月曆大，並由 calendar.js 用 GSAP 做呼吸字。 */
+/* ---------- 今日行程（頁面的視覺主角） ---------- */
+/* 使用者進站後第一眼要看的就是這裡，所以刻意做得比月曆卡更「重」：
+   金色漸層頂帶（全頁只有這裡有）＋ 深藍日期膠囊 ＋ 行程數徽章 ＋ 大陰影。
+   月曆卡維持純白，兩者放在一起才分得出主次。 */
 .today-panel {
-  background: var(--c-surface);
-  border: 1px solid #dbe3ec;
-  border-left: 5px solid var(--c-primary);
+  position: relative;
+  background: linear-gradient(180deg, #fffdf7 0%, #ffffff 62%);
+  border: 1px solid #ecdcb2;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 16px 20px 18px;
-  margin-bottom: 18px;
+  box-shadow: 0 10px 26px rgba(30, 58, 95, .10), 0 2px 6px rgba(30, 58, 95, .05);
+  padding: 20px 22px 20px;
+  margin-bottom: 22px;
+  overflow: hidden;
+}
+/* 頂端金色漸層細帶：一眼就認出「這是今日行程」 */
+.today-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--c-accent) 0%, #d9a441 55%, #f0cf8e 100%);
 }
 .today-panel[hidden] { display: none; }
 
 .today-head {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
-  padding-bottom: 10px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--c-border-soft);
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #f0e4c8;
 }
 .today-label {
   font-size: var(--fs-lg);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--c-primary);
-  letter-spacing: .4px;
+  letter-spacing: .6px;
 }
+/* 日期做成深底白字膠囊：比原本的灰字醒目得多 */
 .today-date {
-  font-size: var(--fs-base);
-  font-weight: 600;
-  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: #fff;
+  background: var(--c-primary);
+  border-radius: 999px;
+  padding: 3px 12px;
   font-variant-numeric: tabular-nums;
 }
+/* 「N 項」徽章：靠右，讓標題列有左右平衡 */
+.today-count {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-accent);
+  background: var(--c-accent-soft);
+  border: 1px solid #f0dfae;
+  border-radius: 999px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+.today-count[hidden] { display: none; }
 
 .today-body { display: flex; flex-direction: column; gap: 10px; }
 
+/* 行程卡改成白底＋外框＋陰影：浮在淡金面板上才跳得出來。
+   左側色條加粗到 6px，類別一眼可辨。 */
 .today-item {
   display: flex;
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  padding: 11px 14px;
+  padding: 14px 16px;
   border-radius: var(--radius);
-  /* 淡同色底 ＋ 左側飽和色條：跟月曆上的事件卡同一個語言，
-     一眼就知道這筆行程是哪一類。--ev-accent 由 calendar.js 設定。 */
-  background: var(--c-surface-2);
-  border-left: 5px solid var(--ev-accent, var(--c-border));
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-soft);
+  border-left: 6px solid var(--ev-accent, var(--c-border));
+  box-shadow: var(--shadow-sm);
 }
 .today-item-time {
-  font-size: var(--fs-base);
-  font-weight: 700;
-  color: var(--c-text-2);
+  font-size: var(--fs-md);
+  font-weight: 800;
+  color: var(--c-text);
   font-variant-numeric: tabular-nums;
-  min-width: 56px;
+  min-width: 62px;
 }
 /* 今天的行程標題：全頁最大的字，GSAP 呼吸字打在這上面。
    line-height 留寬一點，字放大後才不會黏在一起。 */
 .today-item-title {
   font-size: var(--fs-xl);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--c-text);
   line-height: 1.35;
   letter-spacing: .2px;
@@ -512,7 +540,7 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .today-item-loc {
   font-size: var(--fs-sm);
   color: var(--c-text-2);
-  background: var(--c-surface);
+  background: var(--c-surface-2);
   border: 1px solid var(--c-border-soft);
   border-radius: 999px;
   padding: 2px 10px;
@@ -522,15 +550,17 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
    呼吸動畫會把透明度壓到 0.48，原本的淡灰字在谷底會淡到像壞掉。 */
 .today-none {
   margin: 0;
-  padding: 6px 2px;
+  padding: 8px 2px;
   font-size: var(--fs-lg);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--c-text);
 }
 
 @media (max-width: 640px) {
+  .today-panel { padding: 16px 16px 18px; margin-bottom: 18px; }
+  .today-item { padding: 12px 14px; gap: 10px; }
   .today-item-title { font-size: var(--fs-lg); }
-  .today-item-time { min-width: 48px; }
+  .today-item-time { min-width: 52px; }
 }
 
 /* ---------- 月曆 ---------- */

@@ -69,6 +69,15 @@
    * ============================================================ */
   var elToday = document.getElementById('today-panel');
   var elTodayBody = document.getElementById('today-body');
+  var elTodayCount = document.getElementById('today-count');
+
+  /* 「N 項行程」徽章。0 筆時不顯示 —— 空狀態已經有一行字了，
+     再掛一個「0 項」只是多一句廢話。 */
+  function setTodayCount(n) {
+    if (!elTodayCount) return;
+    elTodayCount.hidden = !n;
+    elTodayCount.textContent = n ? n + ' 項行程' : '';
+  }
 
   function loadToday() {
     var t = todayStr();
@@ -80,12 +89,14 @@
       .catch(function () {
         /* 今日行程只是輔助資訊，查不到就顯示「無行程」，不干擾月曆 */
         elTodayBody.innerHTML = '<p class="today-none">目前無法讀取今日行程。</p>';
+        setTodayCount(0);
         elToday.hidden = false;
       });
   }
 
   function renderToday(rows) {
     elTodayBody.innerHTML = '';
+    setTodayCount(rows.length);
 
     if (!rows.length) {
       elTodayBody.innerHTML =
