@@ -446,26 +446,40 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 }
 
 /* ---------- 本週的行程：特別凸顯 ---------- */
-/* 用「金色側條 + 粗體」，理由：
-   1. 金色是品牌強調色，六個類別色（藍／綠／紫／橙／紅／灰）都不會用到它，
-      所以不會跟任何一種行程混淆。
-   2. 用 ::before 畫側條，不要用 border-left —— FullCalendar 會用行內樣式
-      設 border-color，行內一定蓋掉 CSS，粗細留著但顏色會變。
-   3. 不要用 box-shadow —— 今天的行程要用 GSAP 做呼吸光暈（行內 box-shadow），
-      兩個會互相蓋掉；用偽元素就可以並存（本週＝金側條，今天＝外加藍暈＋動畫）。 */
+/* 本週的行程＝金色外框 ＋ 白色內圈 ＋ 粗體。
+   為什麼是這三樣：
+   1. 金色是品牌強調色，六個類別色（藍／綠／紫／橙／紅／灰）都不會用到，
+      不會跟任何一種行程的分類色混淆。
+   2. 整顆框住比只畫一條左側線明顯得多（左側線在縮圖下幾乎看不出來）。
+   3. 框用 outline 不用 border —— FullCalendar 會用行內樣式設 border-color，
+      行內一定蓋掉 CSS。outline 也不佔版面，不會把隔壁的行程擠開。
+   4. 框用 outline 不用 box-shadow —— 今天的行程要用 GSAP 做呼吸光暈
+      （行內 box-shadow），行內樣式會把這裡的 box-shadow 整條蓋掉。
+   5. 白圈墊在金框內側：金色直接壓在紅色底（假日）上對比不足，
+      隔一圈白之後，六種底色上都看得清楚。 */
 .fc .fc-event.fc-event-thisweek {
   position: relative;
-  padding-left: 11px;
   font-weight: 700;
   letter-spacing: .1px;
+  /* 金色外框：整顆行程被框住，比只有左側一條線明顯得多。
+     outline 不佔版面、不影響排版，也不像 box-shadow 會被 GSAP 的行內樣式蓋掉。
+     負的 offset 讓框貼在行程內緣，不會擠到隔壁的行程。
+     再加一圈白色內陰影：金色壓在紅色底（假日）上對比不夠，
+     白圈墊在中間讓金框在藍／綠／紫／橙／紅／灰底上都看得清楚。
+     白圈用 ::after 畫，不要用 box-shadow —— 今天的行程要用 GSAP 做呼吸光暈
+     （行內 box-shadow），會把這裡的 box-shadow 整條蓋掉。 */
+  outline: 2px solid var(--c-accent);
+  outline-offset: -2px;
 }
-.fc .fc-event.fc-event-thisweek::before {
+.fc .fc-event.fc-event-thisweek::after {
   content: "";
   position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  border-radius: 3px 0 0 3px;
-  background: var(--c-accent);
+  /* 往內縮 2px，剛好貼在金框的內側。
+     兩者若都畫在最外緣會完全重疊，而 outline 是最後才塗的、一定蓋掉白圈。 */
+  inset: 2px;
+  border: 2px solid rgba(255, 255, 255, .85);
+  border-radius: 2px;
+  pointer-events: none;
 }
 /* 時間型事件前面本來就有小圓點，往右挪一點才不會跟金側條疊在一起 */
 .fc .fc-event.fc-event-thisweek .fc-event-time { margin-left: 0; }
