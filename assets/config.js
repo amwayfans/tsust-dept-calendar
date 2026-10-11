@@ -38,13 +38,19 @@ window.APP_CONFIG = {
   PHOTO_URL_TTL: 3600,    // 簽章網址有效秒數（私有桶必須簽章才看得到）
 
   // 事件類別與顏色
+  // 每個類別三色一組（參考 Fantastical 的事件卡做法）：
+  //   color = 飽和主色 → 左側色條、圖例圓點、清單圓點
+  //   tint  = 極淡同色底 → 事件卡的底色（不是整片飽和色，讀起來才不刺眼）
+  //   ink   = 深同色字 → 事件標題文字（比純黑柔和，又跟底色同一家族）
+  // 這樣一顆事件卡＝「淡底＋左側飽和色條＋深色字」，
+  // 一眼就能分辨類別，又不會整片月曆花花綠綠。
   CATEGORIES: {
-    meeting:  { label: '會議', color: '#2563EB' },
-    course:   { label: '課程', color: '#16A34A' },
-    exam:     { label: '考試', color: '#7C3AED' },
-    activity: { label: '活動', color: '#F59E0B' },
-    holiday:  { label: '假日', color: '#DC2626' },
-    other:    { label: '其他', color: '#64748B' }
+    meeting:  { label: '會議', color: '#2563EB', tint: '#E8F0FE', ink: '#1E40AF' },
+    course:   { label: '課程', color: '#16A34A', tint: '#E6F6EC', ink: '#15803D' },
+    exam:     { label: '考試', color: '#7C3AED', tint: '#F1EAFE', ink: '#6D28D9' },
+    activity: { label: '活動', color: '#F59E0B', tint: '#FEF3E2', ink: '#B45309' },
+    holiday:  { label: '假日', color: '#DC2626', tint: '#FDEAEA', ink: '#B91C1C' },
+    other:    { label: '其他', color: '#64748B', tint: '#EEF2F6', ink: '#475569' }
   },
 
   // 手機版斷點（小於此寬度改用議程列表）

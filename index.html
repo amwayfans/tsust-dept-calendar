@@ -29,6 +29,14 @@
       <a href="records.html">教師記錄</a>
       <a href="admin.html">管理後台</a>
     </nav>
+    <!-- 登入者身分（頭像＋姓名）。未登入時整塊不佔位。 -->
+    <span class="who-chip" id="who-chip" hidden>
+      <span class="avatar-slot" id="who-avatar"></span>
+      <span class="who-text">
+        <span class="who-name" id="who-name">—</span>
+        <span class="who-role" id="who-role" hidden></span>
+      </span>
+    </span>
     <span id="admin-badge" class="badge badge-admin" hidden>管理員</span>
     <a class="btn btn-ghost" id="btn-add" href="admin.html" hidden>＋ 新增事件</a>
     <a class="btn btn-ghost" id="link-admin" href="admin.html">管理員登入</a>
@@ -37,6 +45,16 @@
 
 <main class="wrap">
 
+  <!-- 今日行程：取代原本的四格統計列。
+       只放「今天」的行程，字放大、用 GSAP 呼吸字突顯。 -->
+  <section class="today-panel" id="today-panel" hidden>
+    <div class="today-head">
+      <span class="today-label">今日行程</span>
+      <span class="today-date" id="today-date">—</span>
+    </div>
+    <div class="today-body" id="today-body"></div>
+  </section>
+
   <div class="toolbar">
     <button class="btn" id="btn-prev" type="button" aria-label="上個月">‹ 上月</button>
     <button class="btn" id="btn-today" type="button">今天</button>
@@ -44,28 +62,6 @@
     <span class="month-label" id="month-label">—</span>
     <span class="spacer"></span>
     <button class="btn btn-ghost" id="btn-view" type="button" hidden>切換列表</button>
-  </div>
-
-  <!-- 統計列（資料來自 events 表，免登入即可看） -->
-  <div class="stats" id="stats" hidden>
-    <div class="stat" data-sec="navy">
-      <span class="stat-label">下一個行程</span>
-      <span class="stat-value is-text" id="stat-next">—</span>
-      <span class="stat-sub" id="stat-next-date">—</span>
-    </div>
-    <div class="stat" data-sec="blue">
-      <span class="stat-label">本月行程</span>
-      <span class="stat-value" id="stat-month">—</span>
-    </div>
-    <div class="stat" data-sec="gold">
-      <span class="stat-label">本學年度行程</span>
-      <span class="stat-value" id="stat-year">—</span>
-    </div>
-    <div class="stat" data-sec="rose">
-      <span class="stat-label">最近放假</span>
-      <span class="stat-value is-text" id="stat-holiday">—</span>
-      <span class="stat-sub" id="stat-holiday-date">—</span>
-    </div>
   </div>
 
   <div class="card" data-sec="navy">
@@ -102,6 +98,67 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 新增事件（在月曆日期上連點兩下就會打開，日期已自動帶入） -->
+<div class="modal" id="add-modal">
+  <div class="modal-box modal-box-form">
+    <h3 id="a-heading">新增事件</h3>
+    <p class="hint" id="a-when" style="margin-top:-8px">—</p>
+    <form id="add-form" novalidate>
+      <div class="field">
+        <label for="a-title-input">標題</label>
+        <input type="text" id="a-title-input" placeholder="例：系務會議" required>
+      </div>
+
+      <div class="field">
+        <label for="a-category">類別</label>
+        <select id="a-category"></select>
+      </div>
+
+      <div class="field">
+        <label class="check-line" for="a-allday">
+          <input type="checkbox" id="a-allday"> 全天事件（沒有特定時間）
+        </label>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="a-start-date">開始日期</label>
+          <input type="date" id="a-start-date" required>
+        </div>
+        <div class="field" id="wrap-a-start-time">
+          <label for="a-start-time">開始時間</label>
+          <input type="time" id="a-start-time">
+        </div>
+        <div class="field">
+          <label for="a-end-date">結束日期</label>
+          <input type="date" id="a-end-date" required>
+        </div>
+        <div class="field" id="wrap-a-end-time">
+          <label for="a-end-time">結束時間</label>
+          <input type="time" id="a-end-time">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="a-location">地點 <span class="hint">（選填）</span></label>
+        <input type="text" id="a-location" placeholder="例：機414">
+      </div>
+
+      <div class="field">
+        <label for="a-description">說明 <span class="hint">（選填）</span></label>
+        <textarea id="a-description" placeholder="補充說明、與會人員、備註…"></textarea>
+      </div>
+
+      <div class="field-error" id="a-error" hidden></div>
+
+      <div class="modal-actions">
+        <button class="btn" type="button" id="a-cancel">取消</button>
+        <button class="btn btn-primary" type="submit" id="a-save">新增</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <script src="assets/config.js"></script>
 <script src="assets/common.js"></script>

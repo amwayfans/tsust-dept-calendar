@@ -110,32 +110,8 @@
 }
 #f-photo:hover { border-color: var(--sec-purple); background: #faf8ff; }
 
-/* ---------- 圓形頭像 ---------- */
-.avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  overflow: hidden;
-  background: var(--c-border-soft);
-  color: #fff;
-  font-weight: 700;
-  line-height: 1;
-  user-select: none;
-  /* 用外框做出「貼在卡片上」的乾淨圓邊，不另外加邊框以免壓到照片 */
-  box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 3px var(--c-border-soft);
-}
-.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* 工具列：登入者本人 */
-.avatar-lg { width: 48px; height: 48px; font-size: 21px; }
-
-/* 記錄列表：該筆記錄的教師 */
-.avatar-sm { width: 34px; height: 34px; font-size: 15px; margin-right: 10px; }
-
-/* 還沒登入時不佔位 */
-.avatar-slot:empty { display: none; }
+/* ---------- 圓形頭像 ----------
+   規則本體在 styles.css（行事曆頁也要用），這裡只留記錄頁專屬的微調。 */
 
 /* ============================================================
  * 記錄列表：每一列依「招生 / 公差」上色

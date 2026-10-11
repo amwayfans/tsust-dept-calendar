@@ -97,7 +97,7 @@ body {
 }
 
 /* 日期、時間、數字用等寬數字，直排時才不會左右跳動 */
-.month-label, .num, time, .stat-value, .ev-main small { font-variant-numeric: tabular-nums; }
+.month-label, .num, time, .today-date, .today-item-time, .ev-main small { font-variant-numeric: tabular-nums; }
 
 a { color: var(--c-secondary); text-underline-offset: 2px; }
 
@@ -189,8 +189,77 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .badge-admin { background: var(--c-accent-soft); color: #854d0e; border: 1px solid #f3dfae; }
 .badge[hidden] { display: none !important; }
 
-/* ---------- 圓形頭像（容器由 records.css 給尺寸） ---------- */
+/* ---------- 圓形頭像 ---------- */
+/* 這組規則放在 styles.css（而不是 records.css），
+   因為行事曆頁（index.html）也要顯示登入者的頭像，
+   而它只載入 styles.css。 */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--c-border-soft);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  /* 用外框做出「貼在卡片上」的乾淨圓邊，不另外加邊框以免壓到照片 */
+  box-shadow: 0 0 0 2px var(--c-surface), 0 0 0 3px var(--c-border-soft);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 工具列：登入者本人 */
+.avatar-lg { width: 48px; height: 48px; font-size: 21px; }
+
+/* 頁首（深色底）：登入者本人 */
+.avatar-md { width: 40px; height: 40px; font-size: 18px; }
+
+/* 記錄列表：該筆記錄的教師 */
+.avatar-sm { width: 34px; height: 34px; font-size: 15px; margin-right: 10px; }
+
+/* 還沒登入時不佔位 */
 .avatar-slot:empty { display: none; }
+
+/* 手機：頭像縮一點，不要佔掉版面 */
+@media (max-width: 767px) {
+  .avatar-lg { width: 42px; height: 42px; font-size: 19px; }
+  .avatar-sm { width: 30px; height: 30px; font-size: 14px; margin-right: 8px; }
+}
+
+/* ---------- 頁首的登入者身分（頭像 ＋ 姓名 ＋ 角色） ---------- */
+.who-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .18);
+  max-width: 260px;
+}
+.who-chip[hidden] { display: none; }
+/* 頁首是深色底，頭像的外框要跟著換色，否則會出現一圈白邊 */
+.site-header .avatar {
+  box-shadow: 0 0 0 2px var(--c-primary), 0 0 0 3px rgba(255, 255, 255, .45);
+}
+.who-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.who-name {
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.who-role { color: #b9c8dd; font-size: 12px; white-space: nowrap; }
+.who-role[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  .who-text { display: none; }       /* 手機只留頭像，不要擠掉導覽 */
+  .who-chip { padding: 4px; }
+}
 
 /* ---------- 按鈕 ---------- */
 .btn {
@@ -312,45 +381,94 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .card[data-sec] h2 { color: var(--sec); border-bottom-color: var(--sec-bd); }
 .card[data-sec] .toolbar h2 { color: var(--sec); }
 
-/* ---------- 統計列（Data-Dense Dashboard 的 KPI） ---------- */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-  gap: 10px;
+/* ---------- 今日行程（取代原本的四格統計列） ---------- */
+/* 設計參考 Fantastical 的「Up Next」面板：
+   淺底卡片、左側飽和色條、圓角色塊、時間與標題分開層級。
+   只放「今天」的行程，字比月曆大，並由 calendar.js 用 GSAP 做呼吸字。 */
+.today-panel {
+  background: var(--c-surface);
+  border: 1px solid #dbe3ec;
+  border-left: 5px solid var(--c-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 20px 18px;
   margin-bottom: 18px;
 }
-.stat {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-soft);
-  border-left: 5px solid var(--c-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 13px 16px;
+.today-panel[hidden] { display: none; }
+
+.today-head {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--c-border-soft);
+}
+.today-label {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--c-primary);
+  letter-spacing: .4px;
+}
+.today-date {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.today-body { display: flex; flex-direction: column; gap: 10px; }
+
+.today-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 11px 14px;
+  border-radius: var(--radius);
+  /* 淡同色底 ＋ 左側飽和色條：跟月曆上的事件卡同一個語言，
+     一眼就知道這筆行程是哪一類。--ev-accent 由 calendar.js 設定。 */
+  background: var(--c-surface-2);
+  border-left: 5px solid var(--ev-accent, var(--c-border));
+}
+.today-item-time {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+}
+/* 今天的行程標題：全頁最大的字，GSAP 呼吸字打在這上面。
+   line-height 留寬一點，字放大後才不會黏在一起。 */
+.today-item-title {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.35;
+  letter-spacing: .2px;
+  flex: 1 1 auto;
   min-width: 0;
 }
-.stat-label { font-size: var(--fs-xs); color: var(--c-text-2); font-weight: 600; letter-spacing: .3px; }
-.stat-value {
-  font-size: var(--fs-kpi);
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--c-primary);
-  letter-spacing: -.3px;
+.today-item-loc {
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
 }
-.stat-value.is-text { font-size: var(--fs-md); font-weight: 700; line-height: 1.5; word-break: break-word; }
-.stat-sub { font-size: var(--fs-xs); color: var(--c-text-2); }
+.today-none {
+  margin: 0;
+  padding: 6px 2px;
+  font-size: var(--fs-md);
+  color: var(--c-text-2);
+}
 
-/* 每張 KPI 一個顏色，四個指標一眼分得開 */
-.stat[data-sec="navy"]  { border-left-color: var(--sec-navy);  background: var(--sec-navy-bg); }
-.stat[data-sec="blue"]  { border-left-color: var(--sec-blue);  background: var(--sec-blue-bg); }
-.stat[data-sec="gold"]  { border-left-color: var(--sec-gold);  background: var(--sec-gold-bg); }
-.stat[data-sec="rose"]  { border-left-color: var(--sec-rose);  background: var(--sec-rose-bg); }
-.stat[data-sec="navy"] .stat-value { color: var(--sec-navy); }
-.stat[data-sec="blue"] .stat-value { color: var(--sec-blue); }
-.stat[data-sec="gold"] .stat-value { color: var(--sec-gold); }
-.stat[data-sec="rose"] .stat-value { color: var(--sec-rose); }
+@media (max-width: 640px) {
+  .today-item-title { font-size: var(--fs-lg); }
+  .today-item-time { min-width: 48px; }
+}
 
 /* ---------- 月曆 ---------- */
 #calendar { background: var(--c-surface); }
@@ -381,18 +499,57 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 }
 /* 月曆格子的文字要比一般說明再大一點，不然整片看過去很吃力。
    放大後標題更容易被截斷 —— 所以 tooltip（calendar.js 的 eventDidMount）
-   一定要在，滑鼠移上去才讀得到全名。 */
+   一定要在，滑鼠移上去才讀得到全名。
+
+   事件卡的外觀參考 Fantastical：
+   底色是「極淡的同色底」（不是整片飽和色）、文字是深同色，
+   左側再壓一條飽和色條 —— 類別一眼可辨，整片月曆也不會花花綠綠。
+   底色與文字色由 calendar.js 用行內樣式指定（FullCalendar 的機制），
+   左側色條用 ::before 畫（行內樣式蓋不到偽元素，才不會被吃掉）。 */
 .fc .fc-event {
+  position: relative;
   border: none;
   cursor: pointer;
   font-size: 14px;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
+  padding: 2px 6px 2px 10px;   /* 左邊留給色條 */
+  border-radius: 7px;
   transition: filter .15s ease;
 }
-.fc .fc-event:hover { filter: brightness(.92); }
+.fc .fc-event::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--ev-accent, transparent);
+  border-radius: 7px 0 0 7px;
+  pointer-events: none;
+}
+.fc .fc-event:hover { filter: brightness(.95); }
 /* GSAP 進場動畫會縮放事件，變形原點置中才不會從角落放大 */
 .fc .fc-event { transform-origin: center center; }
+/* 左側色條只畫在「有底色的整塊事件」上（月檢視的全天／跨日行程）。
+   有時段的行程在月檢視是一顆小圓點＋文字，沒有底色可以壓色條 ——
+   硬畫會變成一條孤零零的直線浮在日期格裡。
+   清單檢視同理，靠小圓點辨色就好（跟 Fantastical 的議程列表一樣）。 */
+.fc .fc-daygrid-block-event::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--ev-accent, transparent);
+  border-radius: 7px 0 0 7px;
+  pointer-events: none;
+}
+/* 時間型事件的小圓點：FullCalendar 會用行內樣式把顏色設成事件底色
+   （現在是淡色 tint，畫出來幾乎看不見），所以要用 !important 蓋成飽和色。 */
+.fc .fc-daygrid-event-dot,
+.fc .fc-list-event-dot {
+  border-color: var(--ev-accent, var(--c-primary)) !important;
+}
 /* 標題太長要截斷並顯示「…」，不要讓字被切一半（月曆格子很窄） */
 .fc .fc-event-title,
 .fc .fc-event-title-container,
@@ -412,6 +569,9 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .fc .fc-list-event:hover td { background: var(--c-surface-2); }
 .fc .fc-list-day-cushion { background: var(--c-surface-2); }
 .fc .fc-toolbar-title { font-size: 20px; font-weight: 700; }
+/* 日期格可以連點兩下新增事件（見 calendar.js 的 dateClick），
+   所以整格都要看起來可以點。 */
+.fc .fc-daygrid-day { cursor: pointer; }
 
 /* ---------- 本週與今天：從整片月曆裡跳出來 ---------- */
 /* 本週（今天所在的週一～週日）整列淡藍底 + 表頭加深，
@@ -446,8 +606,8 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 }
 
 /* ---------- 本週的行程：特別凸顯 ---------- */
-/* 本週的行程＝金色外框 ＋ 白色內圈 ＋ 粗體。
-   為什麼是這三樣：
+/* 本週的行程＝金色外框 ＋ 粗體。
+   為什麼是這兩樣：
    1. 金色是品牌強調色，六個類別色（藍／綠／紫／橙／紅／灰）都不會用到，
       不會跟任何一種行程的分類色混淆。
    2. 整顆框住比只畫一條左側線明顯得多（左側線在縮圖下幾乎看不出來）。
@@ -455,34 +615,32 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
       行內一定蓋掉 CSS。outline 也不佔版面，不會把隔壁的行程擠開。
    4. 框用 outline 不用 box-shadow —— 今天的行程要用 GSAP 做呼吸光暈
       （行內 box-shadow），行內樣式會把這裡的 box-shadow 整條蓋掉。
-   5. 白圈墊在金框內側：金色直接壓在紅色底（假日）上對比不足，
-      隔一圈白之後，六種底色上都看得清楚。 */
+   （原本金框內側還墊了一圈白圈，那是因為以前事件底色是飽和色、
+     金框壓在紅底上看不清楚。現在底色改成極淡的 tint，白圈已經沒有作用，
+     留著只是多一層看不見的圖層，所以移除。） */
 .fc .fc-event.fc-event-thisweek {
   position: relative;
   font-weight: 700;
   letter-spacing: .1px;
-  /* 金色外框：整顆行程被框住，比只有左側一條線明顯得多。
-     outline 不佔版面、不影響排版，也不像 box-shadow 會被 GSAP 的行內樣式蓋掉。
-     負的 offset 讓框貼在行程內緣，不會擠到隔壁的行程。
-     再加一圈白色內陰影：金色壓在紅色底（假日）上對比不夠，
-     白圈墊在中間讓金框在藍／綠／紫／橙／紅／灰底上都看得清楚。
-     白圈用 ::after 畫，不要用 box-shadow —— 今天的行程要用 GSAP 做呼吸光暈
-     （行內 box-shadow），會把這裡的 box-shadow 整條蓋掉。 */
   outline: 2px solid var(--c-accent);
   outline-offset: -2px;
 }
-.fc .fc-event.fc-event-thisweek::after {
-  content: "";
-  position: absolute;
-  /* 往內縮 2px，剛好貼在金框的內側。
-     兩者若都畫在最外緣會完全重疊，而 outline 是最後才塗的、一定蓋掉白圈。 */
-  inset: 2px;
-  border: 2px solid rgba(255, 255, 255, .85);
-  border-radius: 2px;
-  pointer-events: none;
-}
-/* 時間型事件前面本來就有小圓點，往右挪一點才不會跟金側條疊在一起 */
+/* 時間型事件前面本來就有小圓點，往右挪一點才不會跟左側色條疊在一起 */
 .fc .fc-event.fc-event-thisweek .fc-event-time { margin-left: 0; }
+
+/* ---------- 過去的事件：反灰 ---------- */
+/* 已經結束的行程淡出成灰階，眼睛自然會落在還沒發生的事情上。
+   用 filter: grayscale 而不是改背景色，是因為事件底色由 FullCalendar
+   用行內樣式指定，CSS 蓋不掉；而且 filter 會連金色外框一起轉灰 ——
+   這樣「金框＝本週還沒過、灰＝已經過去」自動分清楚，
+   不會出現灰底卻配一圈亮金框的怪畫面。
+   opacity 再壓到 .55，讓它明顯退到背景去。 */
+.fc .fc-event.fc-event-past {
+  filter: grayscale(1);
+  opacity: .55;
+}
+/* 反灰的行程不需要 hover 再變亮，否則游標移過去又「活」過來 */
+.fc .fc-event.fc-event-past:hover { filter: grayscale(1); }
 
 /* ---------- 圖例 ---------- */
 .legend {
@@ -695,6 +853,35 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   justify-content: flex-end;
   margin-top: 18px;
   flex-wrap: wrap;
+}
+
+/* 表單型 Modal（在月曆上連點兩下叫出來的新增事件視窗） */
+.modal-box-form { max-width: 580px; }
+/* 開始／結束各自「日期＋時間」一組，兩欄並排。
+   手機放不下就自動疊成一欄，不要硬擠成兩欄讓日期被切掉。 */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* 勾選項（全天事件）：整行都可以點，不要只有那個小方框能點 */
+.check-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.check-line input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--c-primary);
+  cursor: pointer;
 }
 
 /* ---------- 事件列表（管理後台 / 教師記錄） ---------- */

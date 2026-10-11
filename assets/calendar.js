@@ -1,6 +1,7 @@
 /* ============================================================
  * 公開月曆頁（index.html）
- * 免登入即可查看；管理員登入後才會出現「新增事件」按鈕。
+ * 免登入即可查看；管理員登入後才會出現「新增事件」按鈕，
+ * 也可以在月曆的日期上連點兩下直接叫出新增視窗。
  * ============================================================ */
 (function () {
   'use strict';
@@ -16,10 +17,14 @@
   var btnView = document.getElementById('btn-view');
   var linkAdmin = document.getElementById('link-admin');
   var badge = document.getElementById('admin-badge');
+  var elWhoChip = document.getElementById('who-chip');
 
   document.getElementById('site-title').textContent = cfg.SITE_TITLE;
   document.getElementById('site-subtitle').textContent = cfg.SITE_SUBTITLE;
   document.title = cfg.SITE_TITLE;
+
+  /* 目前登入者（null = 未登入）。雙擊新增事件時要用它判斷權限。 */
+  var session = null;
 
   /* 圖例 */
   var lg = document.getElementById('legend');
@@ -30,92 +35,6 @@
     lg.appendChild(s);
   });
 
-  /* ---------- 統計列 ---------- */
-  /* 只查本學年度（8/1 起）的行程，前端算統計。
-     統計只是加分項：查不到就整列隱藏，不影響月曆。 */
-  var statRows = [];
-
-  /** 'YYYY-MM-DD' → '日一二三四五六'（用 UTC 算，不受瀏覽器時區影響） */
-  function weekdayOf(dateStr) {
-    return '日一二三四五六'.charAt(new Date(dateStr + 'T00:00:00Z').getUTCDay());
-  }
-
-  /** 學年度起始日：8/1 起算 */
-  function academicYearStart(d) {
-    var y = d.getFullYear();
-    var startY = (d.getMonth() + 1 >= 8) ? y : y - 1;
-    return startY + '-08-01';
-  }
-
-  function loadStats() {
-    var el = document.getElementById('stats');
-    if (!el) return;
-    var today = A.tzParts(new Date().toISOString()).date;
-
-    A.sb.from('events')
-      .select('title,start_at,end_at,category')
-      .gte('start_at', academicYearStart(new Date()) + 'T00:00:00+08:00')
-      .order('start_at')
-      .then(function (r) {
-        if (r.error) return;              /* 統計失敗不干擾月曆 */
-        statRows = r.data || [];
-        renderStats(el, today, statRows);
-      });
-  }
-
-  function renderStats(el, today, rows) {
-    var month = today.slice(0, 7);
-
-    var inMonth = rows.filter(function (r) {
-      return A.tzParts(r.start_at).date.slice(0, 7) === month;
-    });
-    document.getElementById('stat-year').textContent = rows.length;
-    document.getElementById('stat-month').textContent = inMonth.length;
-
-    /* 下一個行程（含今天） */
-    var next = null;
-    for (var i = 0; i < rows.length; i++) {
-      if (A.tzParts(rows[i].start_at).date >= today) { next = rows[i]; break; }
-    }
-    var elNext = document.getElementById('stat-next');
-    var elNextDate = document.getElementById('stat-next-date');
-    if (next) {
-      var nd = A.tzParts(next.start_at).date;
-      elNext.textContent = next.title;
-      elNextDate.textContent = A.shortDate(nd) + '（' + weekdayOf(nd) + '）';
-    } else {
-      elNext.textContent = '近期無行程';
-      elNextDate.textContent = '—';
-    }
-
-    /* 最近一次放假 */
-    var hol = null;
-    for (var j = 0; j < rows.length; j++) {
-      if (rows[j].category === 'holiday' &&
-          A.tzParts(rows[j].start_at).date >= today) { hol = rows[j]; break; }
-    }
-    var elHol = document.getElementById('stat-holiday');
-    var elHolDate = document.getElementById('stat-holiday-date');
-    if (hol) {
-      var hd = A.tzParts(hol.start_at).date;
-      /* 加上「還有幾天」，否則當下一個行程本身就是放假時，
-         這張卡會跟第一張寫得一模一樣，看起來像重複。 */
-      var diff = Math.round(
-        (new Date(hd + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000);
-      var when = diff === 0 ? '就是今天' : (diff > 0 ? '還有 ' + diff + ' 天' : '');
-      elHol.textContent = hol.title;
-      elHolDate.textContent = A.shortDate(hd) + '（' + weekdayOf(hd) + '）' +
-                              (when ? '・' + when : '');
-    } else {
-      elHol.textContent = '—';
-      elHolDate.textContent = '—';
-    }
-
-    el.hidden = false;
-  }
-
-  loadStats();
-
   /* ---------- 日期小工具 ---------- */
   function addDays(dateStr, n) {
     var d = new Date(dateStr + 'T00:00:00Z');
@@ -123,14 +42,150 @@
     return d.toISOString().slice(0, 10);
   }
 
-  /* 把資料庫的一列轉成 FullCalendar 事件 */
+  /** 'YYYY-MM-DD' → '日一二三四五六'（用 UTC 算，不受瀏覽器時區影響） */
+  function weekdayOf(dateStr) {
+    return '日一二三四五六'.charAt(new Date(dateStr + 'T00:00:00Z').getUTCDay());
+  }
+
+  /** 'YYYY-MM-DD' → '10/11（六）' */
+  function dateLabel(dateStr) {
+    return A.shortDate(dateStr) + '（' + weekdayOf(dateStr) + '）';
+  }
+
+  /* 「今天」一律以台北日期為準（A.tzParts）。
+     不要用瀏覽器當地日期：筆電時區沒調好（或使用者出國）時，
+     畫面各處會互相打臉。 */
+  function todayStr() { return A.tzParts(new Date().toISOString()).date; }
+
+  /** FullCalendar 傳進來的 Date → 那一格代表的日期字串 'YYYY-MM-DD' */
+  function cellDate(d) {
+    var m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' +
+           (day < 10 ? '0' : '') + day;
+  }
+
+  /* ============================================================
+   * 一、今日行程欄位（取代原本的四格統計列）
+   * ============================================================ */
+  var elToday = document.getElementById('today-panel');
+  var elTodayBody = document.getElementById('today-body');
+
+  function loadToday() {
+    var t = todayStr();
+    document.getElementById('today-date').textContent = dateLabel(t);
+
+    A.fetchEvents(new Date(t + 'T00:00:00+08:00'),
+                  new Date(t + 'T23:59:59+08:00'))
+      .then(renderToday)
+      .catch(function () {
+        /* 今日行程只是輔助資訊，查不到就顯示「無行程」，不干擾月曆 */
+        elTodayBody.innerHTML = '<p class="today-none">目前無法讀取今日行程。</p>';
+        elToday.hidden = false;
+      });
+  }
+
+  function renderToday(rows) {
+    elTodayBody.innerHTML = '';
+
+    if (!rows.length) {
+      elTodayBody.innerHTML =
+        '<p class="today-none">今天沒有安排行程。</p>';
+      elToday.hidden = false;
+      return;
+    }
+
+    rows.forEach(function (r) {
+      var c = A.cat(r.category);
+      var item = document.createElement('div');
+      item.className = 'today-item';
+      item.style.setProperty('--ev-accent', c.color);
+
+      var time = document.createElement('span');
+      time.className = 'today-item-time';
+      time.textContent = r.all_day ? '全天' : A.tzParts(r.start_at).time;
+
+      var title = document.createElement('span');
+      title.className = 'today-item-title';
+      title.textContent = r.title;
+
+      item.appendChild(time);
+      item.appendChild(title);
+
+      if (r.location) {
+        var loc = document.createElement('span');
+        loc.className = 'today-item-loc';
+        loc.textContent = r.location;
+        item.appendChild(loc);
+      }
+
+      elTodayBody.appendChild(item);
+    });
+
+    elToday.hidden = false;
+    breatheToday();
+  }
+
+  /* 呼吸字：讓今天每一筆行程的標題「一明一暗」慢慢起伏，
+     眼睛自然會被拉過去。
+     兩道防線：GSAP 沒載入成功、或系統設定了「減少動態」→ 直接不跑，
+     文字維持全不透明（CSS 的預設值），不會變成一團看不到的字。 */
+  function breatheToday() {
+    if (typeof window.gsap === 'undefined') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var titles = elTodayBody.querySelectorAll('.today-item-title');
+    if (!titles.length) return;
+
+    window.gsap.killTweensOf(titles);
+    window.gsap.fromTo(titles,
+      { opacity: 1, textShadow: '0 0 0 rgba(30,58,95,0)' },
+      {
+        opacity: .48,
+        textShadow: '0 0 16px rgba(30,58,95,.38)',
+        duration: 1.5, repeat: -1, yoyo: true, ease: 'sine.inOut',
+        stagger: .18
+      });
+  }
+
+  /* ============================================================
+   * 二、過去的事件反灰
+   * ============================================================ */
+  /** 這筆行程是否已經結束（用台北日期比，當天一律算「還沒過去」）。
+   *  只比到「日」為止：今天稍早結束的行程仍然算今天，不反灰 ——
+   *  它同時也是「今日行程」欄位要突顯的對象，反灰會互相打架。 */
+  function isPast(r) {
+    if (!r) return false;
+    return A.tzParts(r.end_at).date < todayStr();
+  }
+
+  /* ============================================================
+   * 三、月曆
+   * ============================================================ */
+  function isMobile() { return window.innerWidth < cfg.MOBILE_BREAKPOINT; }
+
+  function showError(err) {
+    elLoading.hidden = true;
+    elError.hidden = false;
+    if (A.isMissingTable(err)) {
+      elError.innerHTML = '資料表尚未建立。<br>請先在 Supabase 執行 <code>supabase/migration.sql</code>。';
+    } else {
+      elError.innerHTML = '載入失敗，請稍後再試。' +
+        '<br><code>' + String(err.message || err) + '</code>';
+    }
+  }
+
+  /* 把資料庫的一列轉成 FullCalendar 事件。
+     顏色採 Fantastical 式的事件卡：
+       底色 = 極淡的同色 tint、文字 = 深同色 ink，
+       左側飽和色條由 CSS 的 ::before 畫（見 styles.css）。 */
   function toFcEvent(r) {
     var c = A.cat(r.category);
     var ev = {
       id: r.id,
       title: r.title,
-      backgroundColor: c.color,
-      borderColor: c.color,
+      backgroundColor: c.tint || c.color,
+      borderColor: c.tint || c.color,
+      textColor: c.ink || '#ffffff',
       extendedProps: { row: r }
     };
     if (r.all_day) {
@@ -145,32 +200,6 @@
       ev.end = r.end_at;
     }
     return ev;
-  }
-
-  function isMobile() { return window.innerWidth < cfg.MOBILE_BREAKPOINT; }
-
-  function showError(err) {
-    elLoading.hidden = true;
-    elError.hidden = false;
-    if (A.isMissingTable(err)) {
-      elError.innerHTML = '資料表尚未建立。<br>請先在 Supabase 執行 <code>supabase/migration.sql</code>。';
-    } else {
-      elError.innerHTML = '載入失敗，請稍後再試。' +
-        '<br><code>' + String(err.message || err) + '</code>';
-    }
-  }
-
-  /* ---------- 本週與今天 ----------
-     「今天」一律以台北日期為準（A.tzParts），跟上面的統計列同一個來源。
-     不要用瀏覽器當地日期：筆電時區沒調好（或使用者出國）時，
-     統計列說「今天 10/10」、月曆卻把 10/11 圈起來，兩邊會互相打臉。 */
-  function todayStr() { return A.tzParts(new Date().toISOString()).date; }
-
-  /** FullCalendar 傳進來的 Date → 那一格代表的日期字串 'YYYY-MM-DD' */
-  function cellDate(d) {
-    var m = d.getMonth() + 1, day = d.getDate();
-    return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' +
-           (day < 10 ? '0' : '') + day;
   }
 
   /** 本週（台北今天的週一～週日） */
@@ -193,20 +222,18 @@
     var r = currentWeekRange(), d = cellDate(arg.date), cls = [];
     if (d >= r[0] && d <= r[1]) cls.push('fc-day-is-week');
     /* 自己標「今天」而不是靠 FullCalendar 的 fc-day-today：
-       後者依瀏覽器時區，會跟統計列差一天 */
+       後者依瀏覽器時區，會跟今日行程欄位差一天 */
     if (d === todayStr()) cls.push('fc-day-is-tpe');
     return cls;
   }
 
-  /* ---------- 今天的事件動畫（GSAP） ----------
-     只在「今天」那一格的行程上跑：先由小放大進場，再輕輕呼吸，
-     讓使用者一眼就看到今天的行程。
-     兩道防線：GSAP 沒載入成功、或系統設定了「減少動態」→ 直接不跑，月曆照常可用。 */
+  /* ---------- 今天那一格的行程動畫（GSAP） ----------
+     先由小放大進場，再輕輕呼吸光暈。
+     跟上面的呼吸字一樣：GSAP 沒載入或「減少動態」就整段略過。 */
   function animateToday() {
     if (typeof window.gsap === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    /* 用 data-date 指定今天那一格，而不是 .fc-day-today（見上） */
     var cell = elCal.querySelector('td[data-date="' + todayStr() + '"]');
     if (!cell) return;
     var els = cell.querySelectorAll('.fc-event');
@@ -233,7 +260,6 @@
       });
   }
 
-  /* ---------- 月曆 ---------- */
   var calendar = new FullCalendar.Calendar(elCal, {
     initialView: isMobile() ? 'listMonth' : 'dayGridMonth',
     locale: 'zh-tw',
@@ -268,8 +294,7 @@
     },
 
     eventClick: function (info) {
-      var r = info.event.extendedProps.row;
-      openDetail(r);
+      openDetail(info.event.extendedProps.row);
     },
 
     /* 事件進到 DOM 之後才跑動畫。
@@ -283,18 +308,62 @@
        被截斷就等於資訊看不到，所以一定要掛 title 讓滑鼠移上去能讀全名。 */
     eventDidMount: function (info) {
       var r = info.event.extendedProps.row || {};
+      var c = A.cat(r.category);
+
+      /* 左側飽和色條的顏色。用 CSS 變數傳給 ::before，
+         不必為六個類別各寫一條規則，也不會被 FullCalendar 的行內樣式蓋掉。 */
+      info.el.style.setProperty('--ev-accent', c.color);
+
+      /* 事件文字顏色。
+         有底色的整塊事件，FullCalendar 會把 textColor 設在標題元素上；
+         但「有時段」的行程在月檢視是一顆小圓點，沒有底色，
+         標題就只會繼承 .fc-event（＝<a>）的連結藍，跟類別無關。
+         這裡直接把 ink 色補在事件元素上，兩種型態都一致。
+         整塊事件的標題有自己的行內色，不受影響。 */
+      if (c.ink) info.el.style.color = c.ink;
+
       var tip = [A.fmtRange(r), r.title].filter(Boolean).join('　');
       if (r.location) tip += '（' + r.location + '）';
       var t = info.el.querySelector('.fc-event-title') || info.el;
       t.setAttribute('title', tip);
 
-      /* 本週的行程特別凸顯（見 styles.css）。
+      /* 過去的事件反灰（見 styles.css）。
          用 class 而不是直接改樣式，才能一眼看出是哪條規則在作用。 */
+      if (isPast(r)) info.el.classList.add('fc-event-past');
+
+      /* 本週的行程特別凸顯（見 styles.css） */
       if (isThisWeek(r)) info.el.classList.add('fc-event-thisweek');
     }
   });
 
   calendar.render();
+
+  /* ---------- 雙擊日期 → 新增事件 ----------
+     用瀏覽器原生的 dblclick，不要用 FullCalendar 的 dateClick：
+     1. dateClick 走的是 FullCalendar 自家的指標事件層（PointerDragging），
+        對合成事件沒有反應，自動化測試驅動不了、也難驗證。
+     2. 原生 dblclick 的「連點兩下」判定交給作業系統，
+        會跟著使用者的「雙擊速度」系統設定走，
+        不必自己寫死「400ms 內第二次」這種門檻（手慢的人會被判成兩次單擊）。
+     3. 掛在整個月曆容器上（事件代理），月曆重繪也不用重新綁。 */
+  document.getElementById('calendar').addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+
+    /* 雙擊在事件卡上＝想看這筆的詳細內容，不該跳出「新增」視窗 */
+    if (t.closest('.fc-event')) return;
+
+    /* 只認日期格。點到表頭、工具列或「+N more」都不算。 */
+    var cell = t.closest('.fc-daygrid-day[data-date]');
+    if (!cell) return;
+
+    var dateStr = cell.getAttribute('data-date');
+    if (!dateStr) return;
+
+    /* 連點兩下預設會選取格子裡的文字，這裡把它擋掉 */
+    e.preventDefault();
+    openAddModal(dateStr);
+  });
 
   /* ---------- 事件詳情 ---------- */
   function openDetail(r) {
@@ -324,8 +393,138 @@
     if (e.target === this) this.classList.remove('show');
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') document.getElementById('modal').classList.remove('show');
+    if (e.key !== 'Escape') return;
+    document.getElementById('modal').classList.remove('show');
+    closeAddModal();
   });
+
+  /* ============================================================
+   * 四、新增事件視窗（雙擊日期後打開）
+   * ============================================================ */
+  var elAddModal = document.getElementById('add-modal');
+  var addForm = document.getElementById('add-form');
+  var af = {
+    title: document.getElementById('a-title-input'),
+    category: document.getElementById('a-category'),
+    allday: document.getElementById('a-allday'),
+    startDate: document.getElementById('a-start-date'),
+    startTime: document.getElementById('a-start-time'),
+    endDate: document.getElementById('a-end-date'),
+    endTime: document.getElementById('a-end-time'),
+    location: document.getElementById('a-location'),
+    description: document.getElementById('a-description'),
+    error: document.getElementById('a-error')
+  };
+
+  /* 類別選單 */
+  Object.keys(cfg.CATEGORIES).forEach(function (k) {
+    var o = document.createElement('option');
+    o.value = k;
+    o.textContent = cfg.CATEGORIES[k].label;
+    af.category.appendChild(o);
+  });
+
+  function toggleAddAllDay() {
+    var on = af.allday.checked;
+    document.getElementById('wrap-a-start-time').hidden = on;
+    document.getElementById('wrap-a-end-time').hidden = on;
+  }
+  af.allday.addEventListener('change', toggleAddAllDay);
+
+  function openAddModal(dateStr) {
+    /* 沒登入（或不是管理員）不開表單 —— 就算開了，寫入也會被資料庫的
+       RLS 擋掉，不如當下就講清楚，不要讓使用者填完才失敗。 */
+    if (!A.isAdmin(session)) {
+      A.toast('新增事件需要管理員權限，請先從右上角登入。', 'error');
+      return;
+    }
+
+    addForm.reset();
+    af.category.value = 'meeting';
+    af.allday.checked = false;
+    af.startDate.value = dateStr;
+    af.endDate.value = dateStr;
+    af.startTime.value = '09:00';
+    af.endTime.value = '10:00';
+    af.error.hidden = true;
+
+    document.getElementById('a-when').textContent = dateLabel(dateStr);
+    document.getElementById('a-save').textContent = '新增';
+    toggleAddAllDay();
+
+    elAddModal.classList.add('show');
+    window.setTimeout(function () { af.title.focus(); }, 60);
+  }
+
+  function closeAddModal() {
+    elAddModal.classList.remove('show');
+  }
+
+  document.getElementById('a-cancel').addEventListener('click', closeAddModal);
+  elAddModal.addEventListener('click', function (e) {
+    if (e.target === this) closeAddModal();
+  });
+
+  addForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    af.error.hidden = true;
+
+    var title = af.title.value.trim();
+    if (!title) {
+      showAddError('標題必填。');
+      af.title.focus();
+      return;
+    }
+    if (!af.startDate.value || !af.endDate.value) {
+      showAddError('開始與結束日期都要填。');
+      return;
+    }
+
+    var allDay = af.allday.checked;
+    var startIso = A.tzToIso(af.startDate.value, allDay ? '00:00' : af.startTime.value);
+    var endIso = A.tzToIso(af.endDate.value, allDay ? '23:59' : af.endTime.value);
+
+    if (new Date(endIso) < new Date(startIso)) {
+      showAddError('結束時間不可以早於開始時間。');
+      return;
+    }
+
+    var payload = {
+      title: title,
+      category: af.category.value,
+      visibility: 'department',      /* 從月曆快速新增的一律是系上公開行程 */
+      all_day: allDay,
+      start_at: startIso,
+      end_at: endIso,
+      location: af.location.value.trim() || null,
+      description: af.description.value.trim() || null
+    };
+
+    var btn = document.getElementById('a-save');
+    btn.disabled = true;
+
+    A.sb.from('events').insert(payload).select().then(function (res) {
+      btn.disabled = false;
+      if (res.error) {
+        showAddError('新增失敗：' + res.error.message);
+        return;
+      }
+      closeAddModal();
+      A.toast('已新增「' + title + '」', 'ok');
+      refreshAll();
+    });
+  });
+
+  function showAddError(msg) {
+    af.error.textContent = msg;
+    af.error.hidden = false;
+  }
+
+  /** 月曆與今日行程一起重讀 */
+  function refreshAll() {
+    calendar.refetchEvents();
+    loadToday();
+  }
 
   /* ---------- 工具列 ---------- */
   document.getElementById('btn-prev').addEventListener('click', function () { calendar.prev(); });
@@ -345,12 +544,41 @@
     }
   });
 
-  /* ---------- 登入狀態（只影響按鈕顯示；真正把關在 RLS） ---------- */
-  A.getSession().then(function (session) {
-    if (A.isAdmin(session)) {
+  /* ---------- 登入狀態 ---------- */
+  /* 畫面（按鈕、頭像）只是提示；真正把關的是資料庫的 RLS。 */
+  A.getSession().then(function (s) {
+    session = s;
+    if (!s || !s.user) return;
+
+    var email = s.user.email || '';
+    if (A.isAdmin(s)) {
       btnAdd.hidden = false;
       badge.hidden = false;
       linkAdmin.textContent = '管理後台';
     }
+
+    /* 在行事曆最上方顯示登入者與頭像。
+       姓名與照片取自 profiles（跟教師記錄頁同一份資料），
+       讀不到就退回用信箱，至少讓使用者知道自己是誰。 */
+    document.getElementById('who-name').textContent = email;
+    elWhoChip.hidden = false;
+
+    A.sb.from('profiles').select('full_name,avatar_url,role')
+      .eq('id', s.user.id).maybeSingle()
+      .then(function (r) {
+        var p = (r && !r.error && r.data) || {};
+        var name = (p.full_name || '').trim() || email;
+        document.getElementById('who-name').textContent = name;
+        document.getElementById('who-avatar').innerHTML =
+          A.avatarHtml(name, p.avatar_url, 'avatar-md');
+        if (p.role) {
+          var roleEl = document.getElementById('who-role');
+          roleEl.textContent = A.roleLabel(p);
+          roleEl.hidden = false;
+        }
+      });
   });
+
+  /* 今日行程欄位（免登入即可看，跟月曆一樣是公開資訊） */
+  loadToday();
 })();
