@@ -355,18 +355,20 @@
     var enroll = statsRows.map(function (r) { return r.enrollment_count; });
     var duty = statsRows.map(function (r) { return r.duty_count; });
 
-    /* 手機：每根柱子至少 52px，不夠寬就讓外層橫向捲動 */
-    var need = labels.length * 52;
-    var avail = elChartWrap.clientWidth || 600;
-    var w = Math.max(need, avail);
+    /* 橫式長條圖：老師姓名放左邊，不會像直式那樣被截掉、也不必讓圖表橫向捲動。
+       高度隨人數長，讓頁面自然往下捲 —— 19 位老師約 700px。
+       每列 34px：兩個堆疊區段還看得清楚，卡片又不會長到失控。 */
+    var rowH = 34;
+    var h = Math.max(180, labels.length * rowH + 76);
 
     elChartWrap.innerHTML =
-      '<div class="chart-inner" style="position:relative;height:320px;width:' + w + 'px">' +
+      '<div class="chart-inner" style="position:relative;height:' + h + 'px">' +
       '<canvas id="chart"></canvas></div>';
 
     if (chart) { chart.destroy(); chart = null; }
     chart = new Chart($('chart').getContext('2d'), {
       type: 'bar',
+      /* indexAxis: 'y' 就是把直式長條轉成橫式的開關 */
       data: {
         labels: labels,
         datasets: [
@@ -375,19 +377,23 @@
         ]
       },
       options: {
+        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
         animation: { duration: 250 },
         scales: {
+          /* 轉橫式之後兩軸的角色對調：
+             x＝數值軸（次數），y＝類別軸（老師姓名）。
+             姓名軸要 autoSkip:false，19 位老師才會每一位都列出來、不被跳過。 */
           x: {
-            stacked: true,
-            ticks: { autoSkip: false, maxRotation: 60, minRotation: 0, font: { size: 12 } },
-            grid: { display: false }
-          },
-          y: {
             stacked: true, beginAtZero: true,
             ticks: { precision: 0, stepSize: 1 },
             title: { display: true, text: '次數' }
+          },
+          y: {
+            stacked: true,
+            ticks: { autoSkip: false, font: { size: 12 } },
+            grid: { display: false }
           }
         },
         plugins: {
@@ -395,9 +401,11 @@
           tooltip: {
             callbacks: {
               title: function (items) { return items[0].label; },
-              label: function (c) { return c.dataset.label + '：' + c.parsed.y + ' 次'; },
+              /* 橫式之後數值在 parsed.x（不是 parsed.y）——這裡漏改的話
+                 tooltip 會永遠顯示 0 次。 */
+              label: function (c) { return c.dataset.label + '：' + c.parsed.x + ' 次'; },
               footer: function (items) {
-                var t = items.reduce(function (s, i) { return s + (i.parsed.y || 0); }, 0);
+                var t = items.reduce(function (s, i) { return s + (i.parsed.x || 0); }, 0);
                 return '合計：' + t + ' 次';
               }
             }

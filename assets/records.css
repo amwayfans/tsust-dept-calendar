@@ -22,11 +22,11 @@
   width: 15px; height: 15px; border-radius: 5px; display: inline-block; flex: 0 0 auto;
 }
 
-/* 手機：柱子太多時讓這一區可以橫向捲動 */
+/* 圖表容器。改橫式長條之後，老師姓名在左邊、圖表本身就是整個寬度，
+   不再需要橫向捲動（以前直式時要靠捲動才看得到後面的老師）。
+   高度由 JS 依人數算，所以在這裡不要寫死高度。 */
 .chart-wrap {
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
   padding-bottom: 6px;
 }
 .chart-wrap .chart-inner { position: relative; }
