@@ -282,6 +282,15 @@
     /* 本週整列淡底色、今天再加一圈外框（見 styles.css） */
     dayCellClassNames: weekClass,
 
+    /* 月曆格子的日期：zh-tw 語系給的是「1日」「28日」，
+       那個「日」字在格子裡會自己折成第二行，白白吃掉一格高度。
+       只留數字就好。
+       只影響月曆格；列表檢視的完整日期（2026年10月7日）與
+       表頭的星期（週一…週日）都不動。 */
+    dayCellContent: function (arg) {
+      return arg.dayNumberText.replace(/日$/, '');
+    },
+
     events: function (info, success, failure) {
       A.fetchEvents(info.start, info.end).then(function (rows) {
         elLoading.hidden = true;
