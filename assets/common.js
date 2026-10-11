@@ -243,6 +243,71 @@
     });
   })();
 
+  /* ---------- 手勢滑動切換頁籤（行事曆 ⇄ 公差/招生記錄） ----------
+     兩個頁面是各自獨立的 HTML 檔，所以「滑動」實作上就是換頁：
+     手指往左滑＝去右邊那一頁，往右滑＝回左邊那一頁，
+     跟 iOS 分段控制項的直覺一致（不是捲動、也不是切換月份）。
+
+     桌機／筆電沒有 touch 事件，完全不受影響；
+     管理後台這類不在頁籤清單裡的頁面也不啟用。 */
+  (function () {
+    var TABS = ['index.html', 'records.html'];
+    var here = location.pathname.split('/').pop() || 'index.html';
+    var idx = TABS.indexOf(here);
+    if (idx === -1) return;
+
+    var MIN_X = 55;      // 水平位移門檻（px）：太小會誤判成點擊
+    var RATIO = 1.5;     // 水平必須明顯大於垂直，才不會跟上下捲動打架
+    var MAX_T = 700;     // 手勢最長時間（ms）：慢慢拖曳不算滑動
+    var SLIDE = 60;      // 換頁前位移的距離（px）
+
+    var sx = 0, sy = 0, st = 0, tracking = false, done = false;
+
+    /* 手指起點在「可左右捲動」的區塊裡時，讓那個區塊自己捲，不要切頁 */
+    function inHScroll(el) {
+      for (var n = el; n && n !== document.body; n = n.parentElement) {
+        if (n.scrollWidth > n.clientWidth + 4) {
+          var ox = getComputedStyle(n).overflowX;
+          if (ox === 'auto' || ox === 'scroll') return true;
+        }
+      }
+      return false;
+    }
+
+    /* 開著視窗（新增／詳情／確認框）時不要切頁 */
+    function modalOpen() {
+      return !!document.querySelector('.modal.show');
+    }
+
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) { tracking = false; return; }
+      if (modalOpen() || inHScroll(e.target)) { tracking = false; return; }
+      var t = e.touches[0];
+      sx = t.clientX; sy = t.clientY; st = Date.now();
+      tracking = true; done = false;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function (e) {
+      if (!tracking || done) return;
+      tracking = false;
+
+      var t = e.changedTouches[0];
+      var dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Date.now() - st > MAX_T) return;
+      if (Math.abs(dx) < MIN_X || Math.abs(dx) < Math.abs(dy) * RATIO) return;
+
+      var next = idx + (dx < 0 ? 1 : -1);      // 往左滑＝下一頁
+      if (next < 0 || next >= TABS.length) return;
+
+      done = true;
+      document.documentElement.style.overflowX = 'hidden';   // 位移時別冒出橫向捲軸
+      document.body.style.transition = 'transform .16s ease, opacity .16s ease';
+      document.body.style.transform = 'translateX(' + (dx < 0 ? -SLIDE : SLIDE) + 'px)';
+      document.body.style.opacity = '.3';
+      setTimeout(function () { location.href = TABS[next]; }, 155);
+    }, { passive: true });
+  })();
+
   window.App = {
     cfg: cfg,
     sb: sb,
