@@ -113,19 +113,40 @@
     return location.origin + location.pathname;
   }
 
+  /* 用 LINE 登入（只有已綁定過的帳號能用）。
+     同樣要注意：signInWithOAuth 失敗時也可能「回傳 { error }」而不 throw，
+     所以一樣在這裡轉成 throw。 */
   function signInWithLine() {
     sessionStorage.setItem(OAUTH_FLAG, 'login');
     return sb.auth.signInWithOAuth({
       provider: LINE_PROVIDER,
       options: { redirectTo: oauthRedirectTo() }
+    }).then(function (res) {
+      if (res && res.error) {
+        sessionStorage.removeItem(OAUTH_FLAG);
+        throw res.error;
+      }
+      return res;
     });
   }
 
+  /* 綁定 LINE 到目前登入的帳號。
+     ⚠️ 陷阱：linkIdentity 失敗時是「回傳 { data, error }」而不是 throw，
+     所以呼叫端用 .catch() 是收不到的 —— 使用者按了鈕只會覺得「卡住、沒反應」。
+     這裡統一轉成 throw，讓呼叫端一種寫法就能處理。
+     （實際踩過：Supabase 未開 Manual Linking 時回 404 manual_linking_disabled，
+       畫面完全不動、沒有任何提示。） */
   function linkLine() {
     sessionStorage.setItem(OAUTH_FLAG, 'link');
     return sb.auth.linkIdentity({
       provider: LINE_PROVIDER,
       options: { redirectTo: oauthRedirectTo() }
+    }).then(function (res) {
+      if (res && res.error) {
+        sessionStorage.removeItem(OAUTH_FLAG);
+        throw res.error;
+      }
+      return res;
     });
   }
 

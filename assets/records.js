@@ -389,7 +389,13 @@
     btn.disabled = true;
     A.linkLine().catch(function (err) {
       btn.disabled = false;
-      A.toast('綁定失敗：' + ((err && err.message) || '請稍後再試'), 'error');
+      var code = (err && err.code) || '';
+      var msg = (err && err.message) || '請稍後再試';
+      /* 後台還沒開 Manual Linking 時，給一句人話，不要讓老師看到英文錯誤 */
+      if (code === 'manual_linking_disabled') {
+        msg = '系統尚未開啟「LINE 帳號綁定」功能，請洽系辦（分機 2102）。';
+      }
+      A.toast('綁定失敗：' + msg, 'error');
     });
   });
 
