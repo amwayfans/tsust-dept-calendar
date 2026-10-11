@@ -31,9 +31,9 @@
 <main class="wrap">
 
   <!-- ===================== 登入 ===================== -->
-  <section class="card" id="login-card" hidden>
+  <section class="card" id="login-card" data-sec="navy" hidden>
     <h2 style="margin-top:0">教師登入</h2>
-    <p class="hint" style="color:var(--c-text-2);font-size:13px;margin-top:-6px">
+    <p class="hint" style="margin-top:-8px">
       帳號由系辦建立。忘記密碼或無法登入請洽系辦（分機 2102）。
     </p>
     <form id="login-form" novalidate>
@@ -55,7 +55,8 @@
   <!-- ===================== 區塊 A：我的記錄 ===================== -->
   <section id="my-section" hidden>
 
-    <div class="card">
+    <!-- 填寫表單：每個欄位群組用不同顏色分開 -->
+    <div class="card" data-sec="gold">
       <div class="toolbar">
         <span class="avatar-slot" id="who-avatar"></span>
         <span class="badge badge-admin" id="who">—</span>
@@ -67,57 +68,75 @@
 
       <h2 style="margin-top:0" id="form-title">新增記錄</h2>
 
-      <div class="field" id="wrap-teacher" hidden>
-        <label for="f-teacher">以哪位教師名義新增 <span class="hint">（管理員代輸入）</span></label>
-        <select id="f-teacher"></select>
-      </div>
-
       <form id="record-form" novalidate>
         <input type="hidden" id="f-id">
 
-        <div class="row2">
-          <div class="field">
-            <label for="f-type">類型 <span class="hint">（必填）</span></label>
-            <select id="f-type">
-              <option value="enrollment">招生</option>
-              <option value="duty">公差</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-date">日期 <span class="hint">（必填，不可選未來）</span></label>
-            <input type="date" id="f-date" required>
+        <div class="field" id="wrap-teacher" hidden>
+          <div class="fblock" data-sec="rose" style="margin-bottom:0">
+            <div class="fblock-title">代輸入對象</div>
+            <div class="field" style="margin-bottom:0">
+              <label for="f-teacher">以哪位教師名義新增 <span class="hint">（管理員代輸入）</span></label>
+              <select id="f-teacher"></select>
+            </div>
           </div>
         </div>
 
-        <div class="field">
-          <label for="f-desc">事由說明 <span class="hint">（必填，200 字內）</span></label>
-          <textarea id="f-desc" maxlength="200" required></textarea>
-          <div class="field-error" id="e-desc" hidden></div>
+        <div class="fblock" data-sec="blue">
+          <div class="fblock-title">記錄類型與日期</div>
+          <div class="row2">
+            <div class="field">
+              <label for="f-type">類型 <span class="hint">（必填）</span></label>
+              <select id="f-type">
+                <option value="enrollment">招生</option>
+                <option value="duty">公差</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-date">日期 <span class="hint">（必填，不可選未來）</span></label>
+              <input type="date" id="f-date" required>
+            </div>
+          </div>
         </div>
 
-        <div class="row2">
-          <div class="field">
-            <label for="f-loc">地點 <span class="hint">（選填，100 字內）</span></label>
-            <input type="text" id="f-loc" maxlength="100">
-          </div>
-          <div class="field">
-            <label for="f-note">備註 <span class="hint">（選填，200 字內）</span></label>
-            <input type="text" id="f-note" maxlength="200">
+        <div class="fblock" data-sec="gold">
+          <div class="fblock-title">事由說明</div>
+          <div class="field" style="margin-bottom:0">
+            <label for="f-desc">做了什麼 <span class="hint">（必填，200 字內）</span></label>
+            <textarea id="f-desc" maxlength="200" required
+                      placeholder="例：至○○高中辦理招生宣導、協助系上專題成果展佈置"></textarea>
+            <div class="field-error" id="e-desc" hidden></div>
           </div>
         </div>
 
-        <div class="field">
-          <label for="f-photo">當日照片 <span class="hint">（選填，1 張）</span></label>
-          <input type="file" id="f-photo" accept="image/*" capture="environment">
-          <div class="hint" style="margin-top:6px">
-            手機可直接拍照；上傳前會自動縮圖（最長邊 1600px），省空間也省流量。
+        <div class="fblock" data-sec="teal">
+          <div class="fblock-title">地點與備註</div>
+          <div class="row2">
+            <div class="field">
+              <label for="f-loc">地點 <span class="hint">（選填，100 字內）</span></label>
+              <input type="text" id="f-loc" maxlength="100" placeholder="例：機414會議室">
+            </div>
+            <div class="field">
+              <label for="f-note">備註 <span class="hint">（選填，200 字內）</span></label>
+              <input type="text" id="f-note" maxlength="200">
+            </div>
           </div>
-          <div id="photo-preview-wrap" hidden style="margin-top:10px">
-            <img id="photo-preview" alt="照片預覽"
-                 style="max-width:220px;max-height:220px;border-radius:8px;
-                        border:1px solid var(--c-border);display:block">
-            <div style="margin-top:6px">
-              <button class="btn" type="button" id="btn-photo-clear">移除照片</button>
+        </div>
+
+        <div class="fblock" data-sec="purple">
+          <div class="fblock-title">當日照片（佐證）</div>
+          <div class="field" style="margin-bottom:0">
+            <label for="f-photo">照片 <span class="hint">（選填，1 張）</span></label>
+            <input type="file" id="f-photo" accept="image/*" capture="environment">
+            <div class="hint" style="margin-top:6px">
+              手機可直接拍照；上傳前會自動縮圖（最長邊 1600px），省空間也省流量。
+            </div>
+            <div id="photo-preview-wrap" hidden style="margin-top:10px">
+              <img id="photo-preview" alt="照片預覽"
+                   style="max-width:220px;max-height:220px;border-radius:8px;
+                          border:1px solid var(--c-border);display:block">
+              <div style="margin-top:6px">
+                <button class="btn" type="button" id="btn-photo-clear">移除照片</button>
+              </div>
             </div>
           </div>
         </div>
@@ -133,7 +152,7 @@
       </form>
     </div>
 
-    <div class="card">
+    <div class="card" data-sec="blue">
       <h2 style="margin-top:0">我的記錄 <span class="hint" id="my-count"></span></h2>
       <ul class="ev-list" id="my-list"></ul>
       <div class="empty" id="my-empty" hidden>尚無記錄</div>
@@ -143,7 +162,7 @@
   </section>
 
   <!-- ===================== 區塊 B：統計圖表（公開） ===================== -->
-  <section class="card" id="stats-card">
+  <section class="card" id="stats-card" data-sec="teal">
     <div class="toolbar">
       <h2 style="margin:0">教師招生 ／ 公差次數統計</h2>
       <span class="spacer"></span>
@@ -164,7 +183,7 @@
   </section>
 
   <!-- ===================== 區塊 C：全部記錄（需登入） ===================== -->
-  <section class="card" id="all-section" hidden>
+  <section class="card" id="all-section" data-sec="purple" hidden>
     <h2 style="margin-top:0">全部記錄</h2>
 
     <div class="filters">

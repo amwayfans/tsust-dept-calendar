@@ -1,21 +1,25 @@
 /* ============================================================
  * 教師記錄分頁 — 專屬樣式
  * 共用的按鈕 / 卡片 / 表單樣式在 styles.css，這裡只放這一頁才有的東西。
- * 色票與尺度一律沿用 styles.css 的設計權杖，不要在這裡寫死顏色。
+ * 色票與字級一律沿用 styles.css 的設計權杖，不要在這裡寫死。
  * ============================================================ */
 
 /* ---------- 統計圖表 ---------- */
 .chart-legend {
   display: flex;
-  gap: 8px 16px;
+  gap: 10px 20px;
   flex-wrap: wrap;
-  margin: 4px 0 12px;
-  font-size: 13px;
+  margin: 4px 0 14px;
+  padding: 10px 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
   color: var(--c-text-2);
 }
-.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; }
 .chart-legend i {
-  width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: 0 0 auto;
+  width: 15px; height: 15px; border-radius: 5px; display: inline-block; flex: 0 0 auto;
 }
 
 /* 手機：柱子太多時讓這一區可以橫向捲動 */
@@ -28,19 +32,25 @@
 .chart-wrap .chart-inner { position: relative; }
 
 /* ---------- 篩選器 ---------- */
+/* 這一條是「控制列」，用淡底色跟下面的資料區分開，
+   否則整張卡都是白的，看不出哪裡可以操作。 */
 .filters {
   display: flex;
-  gap: var(--gap);
+  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--sec-purple-bg);
+  border: 1px solid var(--sec-purple-bd);
+  border-radius: var(--radius);
 }
 .filters select {
   width: auto;
-  min-width: 132px;
-  min-height: 38px;
-  padding: 6px 10px;
-  font-size: 14px;
+  min-width: 140px;
+  min-height: 42px;
+  padding: 7px 11px;
+  font-size: var(--fs-sm);
 }
 .filters .spacer { margin-left: auto; }
 
@@ -49,23 +59,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin-top: 16px;
-  font-size: 14px;
+  gap: 16px;
+  margin-top: 18px;
+  font-size: var(--fs-sm);
   color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
 }
-.pager button { min-width: 44px; }
+.pager button { min-width: 48px; }
 
 /* ---------- 代輸入標記 ---------- */
 .tag-admin {
   display: inline-block;
   margin-left: 6px;
-  padding: 1px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
   background: var(--c-accent-soft);
   color: #854d0e;
   border: 1px solid #f3dfae;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -74,8 +85,8 @@
 .ev-photo-link { display: inline-block; margin-top: 8px; }
 .ev-photo {
   display: block;
-  width: 96px;
-  height: 96px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
   border-radius: var(--radius);
   border: 1px solid var(--c-border-soft);
@@ -86,18 +97,18 @@
   transform: scale(1.04);
   box-shadow: var(--shadow-md);
 }
-.ev-photo-loading { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--c-muted-fg); }
+.ev-photo-loading { display: inline-block; margin-top: 8px; font-size: var(--fs-xs); color: var(--c-text-2); }
 
-/* 表單裡的選檔欄位 */
+/* 表單裡的選檔欄位（在紫色「當日照片」區塊裡，用白底才跳得出來） */
 #f-photo {
   width: 100%;
-  padding: 8px;
-  background: var(--c-bg);
+  padding: 9px;
+  background: var(--c-surface);
   border: 1px dashed var(--c-border);
   border-radius: var(--radius);
   cursor: pointer;
 }
-#f-photo:hover { border-color: var(--c-secondary); background: #f4f8ff; }
+#f-photo:hover { border-color: var(--sec-purple); background: #faf8ff; }
 
 /* ---------- 圓形頭像 ---------- */
 .avatar {
@@ -118,27 +129,44 @@
 .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* 工具列：登入者本人 */
-.avatar-lg { width: 46px; height: 46px; font-size: 20px; }
+.avatar-lg { width: 48px; height: 48px; font-size: 21px; }
 
 /* 記錄列表：該筆記錄的教師 */
-.avatar-sm { width: 32px; height: 32px; font-size: 14px; margin-right: 9px; }
+.avatar-sm { width: 34px; height: 34px; font-size: 15px; margin-right: 10px; }
 
 /* 還沒登入時不佔位 */
 .avatar-slot:empty { display: none; }
 
-/* ---------- 記錄列表 ---------- */
-/* 教師記錄頁的列表項比後台高一些（要放照片），
-   但維持相同的節奏與分隔線。 */
-.ev-list li { padding: 13px 4px; }
+/* ============================================================
+ * 記錄列表：每一列依「招生 / 公差」上色
+ * 顏色跟統計圖的圖例一致（招生＝藍、公差＝金），
+ * 這樣列表和圖表對得起來，也不用逐字讀才知道是哪一類。
+ * ============================================================ */
+.ev-list li {
+  padding: 14px 12px;
+  border-left: 4px solid transparent;
+  border-radius: var(--radius-sm);
+}
 .ev-list li .avatar-sm { align-self: flex-start; margin-top: 2px; }
+.ev-list li[data-type="enrollment"] {
+  border-left-color: #2563eb;                 /* 招生＝藍 */
+  background: linear-gradient(90deg, #f0f6ff 0, rgba(255, 255, 255, 0) 78%);
+}
+.ev-list li[data-type="duty"] {
+  border-left-color: #f59e0b;                 /* 公差＝金 */
+  background: linear-gradient(90deg, #fffaf0 0, rgba(255, 255, 255, 0) 78%);
+}
+/* 分隔線改畫在內縮的位置，才不會被左側色條切斷 */
+.ev-list li { border-bottom: 1px solid var(--c-border-soft); }
 
 /* ---------- 手機 ---------- */
 @media (max-width: 767px) {
-  .filters { gap: 6px; }
+  .filters { gap: 8px; padding: 10px 11px; }
   .filters select { flex: 1; min-width: 0; }
   .filters .spacer { display: none; }
-  .chart-legend { gap: 8px 12px; font-size: 12.5px; }
-  .ev-photo { width: 76px; height: 76px; }
-  .avatar-lg { width: 40px; height: 40px; font-size: 18px; }
-  .avatar-sm { width: 28px; height: 28px; font-size: 13px; margin-right: 7px; }
+  .chart-legend { gap: 8px 14px; padding: 9px 12px; }
+  .ev-photo { width: 80px; height: 80px; }
+  .avatar-lg { width: 42px; height: 42px; font-size: 19px; }
+  .avatar-sm { width: 30px; height: 30px; font-size: 14px; margin-right: 8px; }
+  .ev-list li { padding: 12px 9px; }
 }

@@ -660,7 +660,9 @@
           '<button class="btn btn-danger" data-act="del" data-id="' + esc(r.id) + '">刪除</button>' +
         '</div>'
       : '';
-    return '<li>' +
+    /* data-type 給 CSS 上色用（招生＝藍、公差＝金），
+       讓每一列不用逐字讀也知道是哪一類 */
+    return '<li data-type="' + esc(r.record_type) + '">' +
       '<span class="ev-dot" style="background:' + color + '"></span>' +
       A.avatarHtml(r.teacher_name, avatarByName[(r.teacher_name || '').trim()], 'avatar-sm') +
       '<div class="ev-main">' +

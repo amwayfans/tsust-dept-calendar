@@ -5,9 +5,12 @@
  *   風格：Swiss Modernism 2.0 × Data-Dense Dashboard
  *   色盤：Research Lab / University Department（學術海軍藍＋金）
  *   字型：Inter（拉丁與數字）＋ Noto Sans TC（中文）
- *   網格：8px 基準、卡片留白、表格列高 36px
  *
- * 純 CSS，無建置步驟。改動請同步 records.css（後者只放大系統的擴充）。
+ * 純 CSS，無建置步驟。改動請同步 records.css。
+ *
+ * 【改字級】只要改下面 --fs-* 那一組，全站跟著放大。
+ * 【改區塊顏色】卡片加 data-sec="gold|blue|..." 就會自動有
+ *   頂部色帶、淡色底與同色標題，不用另外寫 CSS。
  * ============================================================ */
 
 /* ---------- 設計權杖 ---------- */
@@ -39,6 +42,25 @@
   --c-danger-soft: #fef2f2;
   --c-success: #15803d;
 
+  /* ---------- 字級尺度（改這裡＝全站放大） ---------- */
+  --fs-xs: 13px;      /* 極小的輔助說明 */
+  --fs-sm: 14px;      /* 次要文字、標籤 */
+  --fs-base: 16px;    /* 內文 */
+  --fs-md: 17px;      /* 清單主標 */
+  --fs-lg: 20px;      /* 卡片標題 */
+  --fs-xl: 24px;      /* 月份標題 */
+  --fs-kpi: 28px;     /* 統計數字 */
+  --fs-brand: 21px;   /* 頁首主標 */
+
+  /* ---------- 區塊配色（每一區一個顏色，一眼看出用途） ---------- */
+  --sec-navy:   #1e3a5f;  --sec-navy-bg:   #eef3f9;  --sec-navy-bd:   #d3e0f0;
+  --sec-gold:   #a16207;  --sec-gold-bg:   #fdf8ea;  --sec-gold-bd:   #f0e0bd;
+  --sec-blue:   #2563eb;  --sec-blue-bg:   #eff5fe;  --sec-blue-bd:   #d3e2fa;
+  --sec-green:  #15803d;  --sec-green-bg:  #eef8f1;  --sec-green-bd:  #cfe9da;
+  --sec-purple: #6d28d9;  --sec-purple-bg: #f4f1fe;  --sec-purple-bd: #ddd5fb;
+  --sec-teal:   #0f766e;  --sec-teal-bg:   #ecf7f6;  --sec-teal-bd:   #cbe8e5;
+  --sec-rose:   #be123c;  --sec-rose-bg:   #fdf1f4;  --sec-rose-bd:   #f7d3dc;
+
   /* 尺度 */
   --radius-sm: 6px;
   --radius: 10px;
@@ -49,10 +71,10 @@
 
   /* 版面 */
   --gap: 8px;
-  --card-pad: 16px;
+  --card-pad: 18px;
   --maxw: 1180px;      /* 內容寬度（不含左右留白） */
   --gut: 18px;         /* 左右留白 —— 頁首與內容一定要用同一個值 */
-  --touch: 44px;
+  --touch: 46px;
 
   /* 焦點（無障礙：鍵盤操作一定要看得到） */
   --ring: 0 0 0 3px rgba(30, 58, 95, .26);
@@ -70,8 +92,8 @@ body {
      （Inter 沒有中文字形，所以中文字不會被它影響）。 */
   font-family: Inter, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
                system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--fs-base);
+  line-height: 1.65;
 }
 
 /* 日期、時間、數字用等寬數字，直排時才不會左右跳動 */
@@ -103,41 +125,41 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  min-height: 64px;
+  min-height: 68px;
   padding: 10px 0;
 }
 .brand { display: flex; flex-direction: column; margin-right: auto; min-width: 0; }
 .brand h1 {
   margin: 0;
-  font-size: 19px;
+  font-size: var(--fs-brand);
   font-weight: 700;
   letter-spacing: .3px;
   color: var(--c-primary-fg);
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 .brand h1::before {
   content: "";
   width: 4px;
-  height: 19px;
+  height: 21px;
   border-radius: 2px;
   background: var(--c-accent);
   flex: 0 0 auto;
 }
-.brand p { margin: 1px 0 0 13px; font-size: 12.5px; color: #b6c6d9; }
+.brand p { margin: 2px 0 0 14px; font-size: var(--fs-sm); color: #bfcfe0; }
 
 /* ---------- 導覽列（各頁共用） ---------- */
 .site-nav { display: flex; gap: 4px; flex-wrap: wrap; }
 .site-nav a {
   display: inline-flex;
   align-items: center;
-  min-height: 38px;
-  padding: 6px 14px;
+  min-height: 42px;
+  padding: 7px 16px;
   border-radius: 8px;
   text-decoration: none;
   color: #d3dded;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   border: 1px solid transparent;
   transition: background .18s ease, color .18s ease, border-color .18s ease;
 }
@@ -155,14 +177,14 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12.5px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   line-height: 1.5;
   white-space: nowrap;
   background: var(--c-surface-2);
-  color: var(--c-muted-fg);
+  color: var(--c-text-2);
 }
 .badge-admin { background: var(--c-accent-soft); color: #854d0e; border: 1px solid #f3dfae; }
 .badge[hidden] { display: none !important; }
@@ -176,13 +198,13 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 38px;
-  padding: 7px 15px;
+  min-height: 42px;
+  padding: 8px 17px;
   border: 1px solid var(--c-border);
   border-radius: 8px;
   background: var(--c-surface);
   color: var(--c-text);
-  font-size: 14px;
+  font-size: var(--fs-sm);
   font-family: inherit;
   font-weight: 500;
   cursor: pointer;
@@ -223,19 +245,20 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .toolbar {
   display: flex;
   align-items: center;
-  gap: var(--gap);
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 .month-label {
-  font-size: 20px;
+  font-size: var(--fs-xl);
   font-weight: 700;
   letter-spacing: .3px;
-  min-width: 160px;
+  min-width: 170px;
   color: var(--c-primary);
 }
 .toolbar .spacer { margin-left: auto; }
 
+/* ---------- 卡片 ---------- */
 .card {
   background: var(--c-surface);
   border: 1px solid #dbe3ec;
@@ -246,102 +269,130 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 /* 登入表單：窄一點比較好讀，而且置中
    （只設 max-width 會靠左，右邊留一大片空白，看起來像版面壞掉） */
 #login-card {
-  max-width: 460px;
+  max-width: 470px;
   margin-left: auto;
   margin-right: auto;
 }
 #login-card .btn-primary { width: 100%; }
 
-.card + .card { margin-top: 16px; }
+.card + .card { margin-top: 18px; }
 /* 標題在工具列裡時不畫底線（旁邊還有下拉與按鈕，畫線會很怪） */
 .toolbar h2 { margin: 0; padding-bottom: 0; border-bottom: none; }
 /* 工具列裡的控制項間距要一致，否則下拉與按鈕會黏在一起 */
-.toolbar select, .toolbar .btn { min-height: 38px; }
+.toolbar select, .toolbar .btn { min-height: 42px; }
 
 /* 卡片標題 —— 用 .card h2（不是 > h2），
    否則標題若放在 .toolbar 裡就吃不到，會變成瀏覽器預設的超大標題 */
 .card h2 {
-  margin: 0 0 12px;
-  font-size: 17px;
+  margin: 0 0 14px;
+  font-size: var(--fs-lg);
   font-weight: 700;
   letter-spacing: .2px;
-  padding-bottom: 10px;
+  padding-bottom: 11px;
   border-bottom: 1px solid var(--c-border-soft);
 }
+
+/* ============================================================
+ * 區塊配色：卡片加 data-sec="xxx" 就會自動上色。
+ * 目的＝不用讀文字也知道這一區在做什麼。
+ * ============================================================ */
+.card[data-sec="navy"]   { --sec: var(--sec-navy);   --sec-bg: var(--sec-navy-bg);   --sec-bd: var(--sec-navy-bd); }
+.card[data-sec="gold"]   { --sec: var(--sec-gold);   --sec-bg: var(--sec-gold-bg);   --sec-bd: var(--sec-gold-bd); }
+.card[data-sec="blue"]   { --sec: var(--sec-blue);   --sec-bg: var(--sec-blue-bg);   --sec-bd: var(--sec-blue-bd); }
+.card[data-sec="green"]  { --sec: var(--sec-green);  --sec-bg: var(--sec-green-bg);  --sec-bd: var(--sec-green-bd); }
+.card[data-sec="purple"] { --sec: var(--sec-purple); --sec-bg: var(--sec-purple-bg); --sec-bd: var(--sec-purple-bd); }
+.card[data-sec="teal"]   { --sec: var(--sec-teal);   --sec-bg: var(--sec-teal-bg);   --sec-bd: var(--sec-teal-bd); }
+.card[data-sec="rose"]   { --sec: var(--sec-rose);   --sec-bg: var(--sec-rose-bg);   --sec-bd: var(--sec-rose-bd); }
+
+.card[data-sec] {
+  border-color: var(--sec-bd);
+  border-top: 4px solid var(--sec);
+  background: linear-gradient(180deg, var(--sec-bg) 0, var(--c-surface) 130px);
+}
+.card[data-sec] h2 { color: var(--sec); border-bottom-color: var(--sec-bd); }
+.card[data-sec] .toolbar h2 { color: var(--sec); }
 
 /* ---------- 統計列（Data-Dense Dashboard 的 KPI） ---------- */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: var(--gap);
-  margin-bottom: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
 }
 .stat {
   background: var(--c-surface);
   border: 1px solid var(--c-border-soft);
+  border-left: 5px solid var(--c-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  padding: 11px 14px;
+  padding: 13px 16px;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
-.stat-label { font-size: 12.5px; color: var(--c-muted-fg); font-weight: 500; }
+.stat-label { font-size: var(--fs-xs); color: var(--c-text-2); font-weight: 600; letter-spacing: .3px; }
 .stat-value {
-  font-size: 22px;
+  font-size: var(--fs-kpi);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--c-primary);
-  letter-spacing: -.2px;
+  letter-spacing: -.3px;
 }
-.stat-value.is-text { font-size: 15px; font-weight: 600; line-height: 1.5; word-break: break-word; }
-.stat-sub { font-size: 12px; color: var(--c-muted-fg); }
-/* 第一張卡（下一個行程）用淡底色突顯。
-   不要用單邊色條——四張卡只有一張有左側色條，整排會左右不平衡。 */
-.stat-highlight {
-  background: linear-gradient(180deg, #f2f6fc 0%, var(--c-surface) 100%);
-  border-color: #d3e0f0;
-}
-.stat-highlight .stat-value { color: var(--c-secondary); }
+.stat-value.is-text { font-size: var(--fs-md); font-weight: 700; line-height: 1.5; word-break: break-word; }
+.stat-sub { font-size: var(--fs-xs); color: var(--c-text-2); }
+
+/* 每張 KPI 一個顏色，四個指標一眼分得開 */
+.stat[data-sec="navy"]  { border-left-color: var(--sec-navy);  background: var(--sec-navy-bg); }
+.stat[data-sec="blue"]  { border-left-color: var(--sec-blue);  background: var(--sec-blue-bg); }
+.stat[data-sec="gold"]  { border-left-color: var(--sec-gold);  background: var(--sec-gold-bg); }
+.stat[data-sec="rose"]  { border-left-color: var(--sec-rose);  background: var(--sec-rose-bg); }
+.stat[data-sec="navy"] .stat-value { color: var(--sec-navy); }
+.stat[data-sec="blue"] .stat-value { color: var(--sec-blue); }
+.stat[data-sec="gold"] .stat-value { color: var(--sec-gold); }
+.stat[data-sec="rose"] .stat-value { color: var(--sec-rose); }
 
 /* ---------- 月曆 ---------- */
 #calendar { background: var(--c-surface); }
 .fc {
   --fc-border-color: var(--c-border-soft);
-  --fc-today-bg-color: #eef4fd;
+  --fc-today-bg-color: #cfe1f8;
   --fc-page-bg-color: var(--c-surface);
   --fc-neutral-bg-color: var(--c-surface-2);
-  font-size: 14px;
+  font-size: var(--fs-sm);
 }
-.fc .fc-col-header-cell { background: var(--c-surface-2); padding: 4px 0; }
+.fc .fc-col-header-cell { background: var(--c-surface-2); padding: 5px 0; }
 .fc .fc-col-header-cell-cushion {
   color: var(--c-text-2);
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: .5px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .6px;
   text-decoration: none;
-  padding: 4px 0;
+  padding: 5px 0;
 }
 .fc .fc-day-sat .fc-col-header-cell-cushion,
 .fc .fc-day-sun .fc-col-header-cell-cushion { color: #b91c1c; }
 .fc .fc-daygrid-day-number {
   color: var(--c-text-2);
   text-decoration: none;
-  font-size: 12.5px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
-  padding: 4px 6px;
+  padding: 5px 8px;
 }
-.fc .fc-day-today .fc-daygrid-day-number { color: var(--c-primary); font-weight: 700; }
+/* 月曆格子的文字要比一般說明再大一點，不然整片看過去很吃力。
+   放大後標題更容易被截斷 —— 所以 tooltip（calendar.js 的 eventDidMount）
+   一定要在，滑鼠移上去才讀得到全名。 */
 .fc .fc-event {
   border: none;
   cursor: pointer;
-  font-size: 12.5px;
-  padding: 1px 4px;
+  font-size: 14px;
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
   transition: filter .15s ease;
 }
 .fc .fc-event:hover { filter: brightness(.92); }
+/* GSAP 進場動畫會縮放事件，變形原點置中才不會從角落放大 */
+.fc .fc-event { transform-origin: center center; }
 /* 標題太長要截斷並顯示「…」，不要讓字被切一半（月曆格子很窄） */
 .fc .fc-event-title,
 .fc .fc-event-title-container,
@@ -360,15 +411,72 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 }
 .fc .fc-list-event:hover td { background: var(--c-surface-2); }
 .fc .fc-list-day-cushion { background: var(--c-surface-2); }
-.fc .fc-toolbar-title { font-size: 18px; font-weight: 700; }
+.fc .fc-toolbar-title { font-size: 20px; font-weight: 700; }
+
+/* ---------- 本週與今天：從整片月曆裡跳出來 ---------- */
+/* 本週（今天所在的週一～週日）整列淡藍底 + 表頭加深，
+   這樣一眼就知道「現在在哪一週」，不用去數日期 */
+.fc .fc-day-is-week { background: #e4eef9; }
+.fc .fc-day-is-week .fc-daygrid-day-number { color: var(--c-primary); font-weight: 600; }
+/* 註：表頭（週一…週日）不隨週次變動，上色等於七欄全上色、沒有辨識效果，
+   所以「本週」只用格子底色表現，不要再對 .fc-col-header-cell 動手。 */
+
+/* 今天：再加一圈海軍藍外框，是整頁最顯眼的一格。
+   .fc-day-today 由 FullCalendar 依瀏覽器時區標記；
+   .fc-day-is-tpe 由我們依台北日期標記 —— 兩者都上色，
+   台灣的使用者會看到同一格，時區跑掉時也不會兩個「今天」打架。 */
+.fc .fc-day-today,
+.fc .fc-day-is-tpe {
+  background: #cfe1f8 !important;
+  box-shadow: inset 0 0 0 2px var(--c-primary);
+}
+.fc .fc-day-today .fc-daygrid-day-number,
+.fc .fc-day-is-tpe .fc-daygrid-day-number {
+  color: var(--c-primary-fg);
+  font-weight: 700;
+  background: var(--c-primary);
+  border-radius: 999px;
+  min-width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 3px 5px;
+  padding: 0 6px;
+}
+
+/* ---------- 本週的行程：特別凸顯 ---------- */
+/* 用「金色側條 + 粗體」，理由：
+   1. 金色是品牌強調色，六個類別色（藍／綠／紫／橙／紅／灰）都不會用到它，
+      所以不會跟任何一種行程混淆。
+   2. 用 ::before 畫側條，不要用 border-left —— FullCalendar 會用行內樣式
+      設 border-color，行內一定蓋掉 CSS，粗細留著但顏色會變。
+   3. 不要用 box-shadow —— 今天的行程要用 GSAP 做呼吸光暈（行內 box-shadow），
+      兩個會互相蓋掉；用偽元素就可以並存（本週＝金側條，今天＝外加藍暈＋動畫）。 */
+.fc .fc-event.fc-event-thisweek {
+  position: relative;
+  padding-left: 11px;
+  font-weight: 700;
+  letter-spacing: .1px;
+}
+.fc .fc-event.fc-event-thisweek::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 3px 0 0 3px;
+  background: var(--c-accent);
+}
+/* 時間型事件前面本來就有小圓點，往右挪一點才不會跟金側條疊在一起 */
+.fc .fc-event.fc-event-thisweek .fc-event-time { margin-left: 0; }
 
 /* ---------- 圖例 ---------- */
 .legend {
   display: flex;
-  gap: var(--gap) 16px;
+  gap: 10px 18px;
   flex-wrap: wrap;
-  margin-top: 12px;
-  padding: 10px 14px;
+  margin-top: 14px;
+  padding: 12px 16px;
   background: var(--c-surface);
   border: 1px solid var(--c-border-soft);
   border-radius: var(--radius);
@@ -376,24 +484,27 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .legend span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
+  gap: 7px;
+  font-size: var(--fs-sm);
   color: var(--c-text-2);
+  font-weight: 500;
 }
 .legend i {
-  width: 13px; height: 13px; border-radius: 4px;
+  width: 15px; height: 15px; border-radius: 5px;
   display: inline-block; flex: 0 0 auto;
   box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .14);
 }
 
-/* ---------- 表單 ---------- */
-.field { margin-bottom: 13px; }
+/* ============================================================
+ * 表單
+ * ============================================================ */
+.field { margin-bottom: 14px; }
 .field label {
   display: block;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
-  color: var(--c-text-2);
-  margin-bottom: 5px;
+  color: var(--c-text);
+  margin-bottom: 6px;
 }
 .field input[type="text"],
 .field input[type="email"],
@@ -406,17 +517,17 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .field textarea,
 .filters select {
   width: 100%;
-  min-height: 40px;
-  padding: 8px 11px;
+  min-height: 44px;
+  padding: 9px 12px;
   border: 1px solid var(--c-border);
   border-radius: 8px;
   background: var(--c-surface);
   color: var(--c-text);
-  font-size: 14px;
+  font-size: var(--fs-base);
   font-family: inherit;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
-.field textarea { min-height: 76px; resize: vertical; line-height: 1.55; }
+.field textarea { min-height: 84px; resize: vertical; line-height: 1.6; }
 .field input:hover, .field select:hover, .field textarea:hover { border-color: #b8c4d4; }
 .field input:focus, .field select:focus, .field textarea:focus,
 .filters select:focus {
@@ -424,27 +535,70 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   border-color: var(--c-primary);
   box-shadow: var(--ring);
 }
-.field input[type="file"] { padding: 7px 10px; cursor: pointer; }
-.field .hint { font-weight: 400; color: var(--c-muted-fg); font-size: 12.5px; }
+.field input[type="file"] { padding: 8px 11px; cursor: pointer; }
+.field .hint { font-weight: 400; color: var(--c-text-2); }
+
+/* ---------- 表單分區塊（讓每個欄位群組有自己的顏色） ---------- */
+.fblock {
+  --fb: var(--sec-navy);
+  --fb-bg: var(--sec-navy-bg);
+  --fb-bd: var(--sec-navy-bd);
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-bd);
+  border-left: 5px solid var(--fb);
+  border-radius: var(--radius);
+  padding: 13px 15px;
+  margin-bottom: 13px;
+}
+.fblock[data-sec="gold"]   { --fb: var(--sec-gold);   --fb-bg: var(--sec-gold-bg);   --fb-bd: var(--sec-gold-bd); }
+.fblock[data-sec="blue"]   { --fb: var(--sec-blue);   --fb-bg: var(--sec-blue-bg);   --fb-bd: var(--sec-blue-bd); }
+.fblock[data-sec="green"]  { --fb: var(--sec-green);  --fb-bg: var(--sec-green-bg);  --fb-bd: var(--sec-green-bd); }
+.fblock[data-sec="purple"] { --fb: var(--sec-purple); --fb-bg: var(--sec-purple-bg); --fb-bd: var(--sec-purple-bd); }
+.fblock[data-sec="teal"]   { --fb: var(--sec-teal);   --fb-bg: var(--sec-teal-bg);   --fb-bd: var(--sec-teal-bd); }
+.fblock[data-sec="rose"]   { --fb: var(--sec-rose);   --fb-bg: var(--sec-rose-bg);   --fb-bd: var(--sec-rose-bd); }
+
+.fblock-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .6px;
+  color: var(--fb);
+  margin-bottom: 11px;
+  text-transform: none;
+}
+.fblock-title::before {
+  content: "";
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--fb);
+  flex: 0 0 auto;
+}
+/* 區塊裡最後一個欄位不要多留白，否則底部會空一塊 */
+.fblock > .field:last-child, .fblock > .row2:last-child .field { margin-bottom: 0; }
+.fblock .field input, .fblock .field select, .fblock .field textarea { background: var(--c-surface); }
 
 .checkbox {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  min-height: 38px;
+  font-size: var(--fs-base);
+  min-height: 42px;
   cursor: pointer;
   user-select: none;
 }
 .checkbox input {
-  width: 17px;
-  height: 17px;
+  width: 19px;
+  height: 19px;
   min-height: 0;
   accent-color: var(--c-primary);
   cursor: pointer;
 }
 
-.hint { font-size: 13px; color: var(--c-text-2); line-height: 1.6; }
+.hint { font-size: var(--fs-sm); color: var(--c-text-2); line-height: 1.6; }
+/* 標籤「裡面」的括號說明維持小一級，否則標籤會太長而換行 */
+.field .hint { font-size: 13px; }
 
 .field-error {
   background: var(--c-danger-soft);
@@ -452,20 +606,20 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   border-left: 3px solid var(--c-danger);
   color: #991b1b;
   border-radius: var(--radius-sm);
-  padding: 8px 11px;
-  font-size: 13px;
-  margin-bottom: 11px;
+  padding: 9px 12px;
+  font-size: var(--fs-sm);
+  margin-bottom: 12px;
 }
 
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 
 /* ---------- 空狀態 / 載入 / 錯誤 ---------- */
 .empty, .loading, .error-box {
   text-align: center;
-  padding: 40px 16px;
+  padding: 42px 16px;
   color: var(--c-text-2);
 }
-.empty { font-size: 14px; }
+.empty { font-size: var(--fs-base); }
 .error-box { color: var(--c-danger); }
 .error-box code {
   display: inline-block;
@@ -473,13 +627,13 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   padding: 6px 10px;
   background: var(--c-danger-soft);
   border-radius: var(--radius-sm);
-  font-size: 12.5px;
+  font-size: var(--fs-xs);
   color: #991b1b;
   word-break: break-all;
 }
 
 .skeleton {
-  height: 14px;
+  height: 15px;
   border-radius: var(--radius-sm);
   background: linear-gradient(90deg, #eef2f7 25%, #e2e8f0 37%, #eef2f7 63%);
   background-size: 400% 100%;
@@ -505,44 +659,44 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   background: var(--c-surface);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   max-height: 88vh;
   overflow-y: auto;
-  padding: 20px;
+  padding: 22px;
   box-shadow: var(--shadow-md);
   animation: pop .2s cubic-bezier(.2, .8, .3, 1);
 }
 @keyframes pop { from { transform: translateY(8px) scale(.985); opacity: .6 } to { transform: none; opacity: 1 } }
 .modal-box h3 {
-  margin: 0 0 12px;
-  font-size: 17px;
+  margin: 0 0 14px;
+  font-size: var(--fs-lg);
   font-weight: 700;
-  padding-bottom: 10px;
+  padding-bottom: 11px;
   border-bottom: 1px solid var(--c-border-soft);
   color: var(--c-primary);
 }
 .modal-actions {
   display: flex;
-  gap: var(--gap);
+  gap: 10px;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 18px;
   flex-wrap: wrap;
 }
 
-/* ---------- 事件列表（管理後台） ---------- */
+/* ---------- 事件列表（管理後台 / 教師記錄） ---------- */
 .ev-list { list-style: none; margin: 0; padding: 0; }
 .ev-list li {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 4px;
+  gap: 13px;
+  padding: 13px 6px;
   border-bottom: 1px solid var(--c-border-soft);
 }
 .ev-list li:last-child { border-bottom: none; }
-.ev-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.ev-dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; }
 .ev-main { flex: 1; min-width: 0; }
-.ev-main strong { display: block; font-size: 15px; }
-.ev-main small { color: var(--c-muted-fg); font-size: 12.5px; }
+.ev-main strong { display: block; font-size: var(--fs-md); }
+.ev-main small { color: var(--c-text-2); font-size: var(--fs-xs); }
 .ev-actions { display: flex; gap: 6px; flex: 0 0 auto; }
 
 /* ---------- Toast ---------- */
@@ -553,9 +707,9 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   transform: translate(-50%, 16px);
   background: var(--c-primary);
   color: #fff;
-  padding: 10px 18px;
+  padding: 11px 20px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: var(--fs-base);
   box-shadow: var(--shadow-md);
   opacity: 0;
   pointer-events: none;
@@ -572,26 +726,25 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .site-footer {
   max-width: calc(var(--maxw) + var(--gut) * 2);
   margin: 0 auto;
-  padding: 24px var(--gut) 34px;
-  color: var(--c-muted-fg);
-  font-size: 12.5px;
+  padding: 26px var(--gut) 36px;
+  color: var(--c-text-2);
+  font-size: 14px;
   text-align: center;
 }
 
 /* ---------- 手機 ---------- */
 @media (max-width: 767px) {
-  :root { --gut: 13px; }
+  :root { --gut: 13px; --fs-kpi: 24px; --fs-xl: 21px; --fs-lg: 18px; }
   .site-header .inner { min-height: 0; padding: 11px 0; }
-  .brand h1 { font-size: 17px; }
+  .brand h1 { font-size: 19px; }
   .site-nav { width: 100%; margin-right: 0; }
   .site-nav a { flex: 1; justify-content: center; min-height: var(--touch); padding: 6px 8px; }
-  .month-label { min-width: 0; font-size: 17px; width: 100%; }
-  .toolbar { gap: 6px; }
+  .month-label { min-width: 0; width: 100%; }
+  .toolbar { gap: 8px; }
   .toolbar .btn { flex: 1; }
   .row2 { grid-template-columns: 1fr; }
   .card { border-radius: var(--radius); }
-  .stat-value { font-size: 19px; }
-  .modal-box { max-height: 92vh; padding: 16px; }
+  .modal-box { max-height: 92vh; padding: 17px; }
   .modal-actions .btn { flex: 1; }
   .ev-list li { flex-wrap: wrap; }
   .ev-actions { width: 100%; justify-content: flex-end; }

@@ -13,6 +13,8 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- GSAP：今天的事件進場與脈動動畫（載入失敗會自動略過，不影響月曆） -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 </head>
 <body>
 
@@ -46,27 +48,27 @@
 
   <!-- 統計列（資料來自 events 表，免登入即可看） -->
   <div class="stats" id="stats" hidden>
-    <div class="stat stat-highlight">
+    <div class="stat" data-sec="navy">
       <span class="stat-label">下一個行程</span>
       <span class="stat-value is-text" id="stat-next">—</span>
       <span class="stat-sub" id="stat-next-date">—</span>
     </div>
-    <div class="stat">
+    <div class="stat" data-sec="blue">
       <span class="stat-label">本月行程</span>
       <span class="stat-value" id="stat-month">—</span>
     </div>
-    <div class="stat">
+    <div class="stat" data-sec="gold">
       <span class="stat-label">本學年度行程</span>
       <span class="stat-value" id="stat-year">—</span>
     </div>
-    <div class="stat">
+    <div class="stat" data-sec="rose">
       <span class="stat-label">最近放假</span>
       <span class="stat-value is-text" id="stat-holiday">—</span>
       <span class="stat-sub" id="stat-holiday-date">—</span>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" data-sec="navy">
     <div id="calendar"></div>
     <div class="loading" id="loading">
       <div class="skeleton" style="width:60%"></div>
