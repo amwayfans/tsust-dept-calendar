@@ -45,20 +45,43 @@
   });
 
   /* ---------- 啟動 ---------- */
+  /* LINE 登入還沒開通（provider 未設定）→ 把按鈕與分隔線一起收起來 */
+  if (!A.lineEnabled()) A.hideLineUi();
+
   A.getSession().then(function (session) {
     elBooting.hidden = true;
     if (A.isAdmin(session)) {
       showPanel(session);
+    } else if (A.takeOauthIntent() === 'login') {
+      /* 從 LINE 回來但沒有 session ＝ 這個 LINE 帳號還沒綁定過任何帳號 */
+      showLogin('這個 LINE 帳號還沒綁定過。請先用上方帳密登入一次，完成綁定後就能用 LINE 一鍵登入。');
     } else {
       showLogin();
     }
   });
 
-  function showLogin() {
+  function showLogin(msg) {
     elPanel.hidden = true;
     elLogin.hidden = false;
+    if (msg) {
+      var e = document.getElementById('login-error');
+      e.textContent = msg;
+      e.hidden = false;
+    }
     document.getElementById('email').focus();
   }
+
+  /* LINE 登入（只有已綁定的帳號能用；綁定在「公差/招生記錄」頁做） */
+  document.getElementById('btn-line-login').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    A.signInWithLine().catch(function (err) {
+      btn.disabled = false;
+      var e = document.getElementById('login-error');
+      e.textContent = 'LINE 登入無法啟動：' + ((err && err.message) || '請稍後再試');
+      e.hidden = false;
+    });
+  });
 
   function showPanel(session) {
     elLogin.hidden = true;

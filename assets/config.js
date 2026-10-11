@@ -54,5 +54,10 @@ window.APP_CONFIG = {
   },
 
   // 手機版斷點（小於此寬度改用議程列表）
-  MOBILE_BREAKPOINT: 768
+  MOBILE_BREAKPOINT: 768,
+
+  // LINE 登入開關。
+  // Supabase 的 custom provider（識別碼 custom:line）建好、且實測通過之後才改成 true。
+  // 沒建好就打開的話，老師按下去只會看到錯誤訊息，比沒有這顆按鈕更糟。
+  LINE_LOGIN_ENABLED: false
 };

@@ -352,6 +352,79 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .btn-danger { color: var(--c-danger); border-color: #fecaca; background: var(--c-danger-soft); }
 .btn-danger:hover { background: #fee2e2; border-color: #fca5a5; }
 .btn-ghost { border-color: transparent; background: transparent; }
+
+/* ---------- LINE 登入（登入卡與綁定列共用） ---------- */
+/* LINE 官方綠 #06C755。這裡只用文字標記，不放官方 logo 圖檔（商標問題）。 */
+.btn-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #06c755;
+  border: 1px solid #05b34b;
+  color: #fff;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+}
+.btn-line:hover { background: #05b34b; }
+.btn-line:active { background: #049a41; }
+.line-mark {
+  display: inline-block;
+  background: #fff;
+  color: #06c755;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: .5px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  line-height: 1.5;
+}
+.btn-line-sm {
+  margin-left: auto;
+  background: #06c755;
+  border: 1px solid #05b34b;
+  color: #fff;
+  font-weight: 700;
+  padding: 6px 14px;
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-sm);
+}
+.btn-line-sm:hover { background: #05b34b; }
+
+/* 登入卡裡的「或」分隔線 */
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 14px;
+  color: var(--c-muted-fg);
+  font-size: var(--fs-sm);
+}
+.or-divider::before,
+.or-divider::after { content: ""; flex: 1; height: 1px; background: var(--c-border-soft); }
+
+/* ⚠️ 下面這些元素自己有 display 規則，會蓋掉瀏覽器預設的 [hidden] { display: none }。
+   只設 hidden 屬性而沒有這幾行，元素在畫面上照樣看得到 ——
+   「以為藏起來了、其實還露在外面」就是這樣發生的。 */
+.or-divider[hidden],
+.line-bind[hidden] { display: none; }
+
+/* 綁定狀態列（登入後顯示在工具列下方） */
+.line-bind {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius);
+}
+.line-bind-label { font-weight: 700; color: var(--c-text-2); font-size: var(--fs-sm); }
+.line-bind-state { font-size: var(--fs-sm); font-weight: 700; }
+.line-bind-state.is-on { color: var(--c-success); }
+.line-bind-state.is-off { color: var(--c-muted-fg); }
 /* 深海軍藍頁首上的 ghost 按鈕 */
 .site-header .btn-ghost { color: #d3dded; border-color: rgba(255, 255, 255, .22); }
 .site-header .btn-ghost:hover { background: rgba(255, 255, 255, .12); color: #fff; }

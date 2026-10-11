@@ -7,6 +7,11 @@
   'use strict';
 
   var cfg = window.APP_CONFIG;
+
+  /* OAuth 回來時，Supabase 會把 ?code=／?error= 放在網址列，而且很快就會清掉。
+     進站第一件事就先記下來，後面才能分辨「剛剛是登入成功」還是「被擋下來」。 */
+  var OAUTH_RETURN = location.search + location.hash;
+
   var sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
 
   /* ---------- 時區 ----------
@@ -91,6 +96,87 @@
 
   function signOut() {
     return sb.auth.signOut();
+  }
+
+  /* ---------- LINE 登入／綁定 ----------
+     Supabase 的 custom provider 識別碼固定是 'custom:line'。
+
+     為什麼一定要先「綁定」：LINE 那端不會給我們老師的學校信箱，
+     純用 LINE 登入的話，系統只知道「有個 LINE 使用者來了」，
+     不知道他是哪位老師、該給他哪個帳號的權限。
+     所以流程是：先用帳密登入一次 → 把 LINE 身分連到這個既有帳號 → 之後才能一鍵登入。 */
+  var LINE_PROVIDER = 'custom:line';
+  var OAUTH_FLAG = 'ae_oauth_pending';
+
+  /* 回到同一頁。不帶 query／hash，免得把 ?code= 又帶回去變成迴圈。 */
+  function oauthRedirectTo() {
+    return location.origin + location.pathname;
+  }
+
+  function signInWithLine() {
+    sessionStorage.setItem(OAUTH_FLAG, 'login');
+    return sb.auth.signInWithOAuth({
+      provider: LINE_PROVIDER,
+      options: { redirectTo: oauthRedirectTo() }
+    });
+  }
+
+  function linkLine() {
+    sessionStorage.setItem(OAUTH_FLAG, 'link');
+    return sb.auth.linkIdentity({
+      provider: LINE_PROVIDER,
+      options: { redirectTo: oauthRedirectTo() }
+    });
+  }
+
+  /* 剛剛那次 OAuth 是「登入」還是「綁定」？讀完就清掉，重整不會再觸發一次 */
+  function takeOauthIntent() {
+    var v = sessionStorage.getItem(OAUTH_FLAG);
+    if (v) sessionStorage.removeItem(OAUTH_FLAG);
+    return v;
+  }
+
+  /* OAuth 回來時網址列有沒有帶錯誤 */
+  function oauthReturnError() {
+    var s = OAUTH_RETURN || '';
+    var m = /[?#&]error=([^&]*)/.exec(s);
+    if (!m) return null;
+    var d = /[?#&]error_description=([^&]*)/.exec(s);
+    return {
+      code: decodeURIComponent(m[1]).replace(/\+/g, ' '),
+      desc: d ? decodeURIComponent(d[1]).replace(/\+/g, ' ') : ''
+    };
+  }
+
+  /* 這個帳號綁過 LINE 了嗎（身分清單裡有沒有 custom:line） */
+  function hasLineIdentity(user) {
+    var ids = (user && user.identities) || [];
+    for (var i = 0; i < ids.length; i++) {
+      if (ids[i].provider === LINE_PROVIDER) return true;
+    }
+    return false;
+  }
+
+  function getUser() {
+    return sb.auth.getUser().then(function (r) {
+      return (r.data && r.data.user) || null;
+    });
+  }
+
+  /* LINE 登入有沒有開啟（provider 建好之前不要讓老師按到壞掉的按鈕） */
+  function lineEnabled() {
+    return !!cfg.LINE_LOGIN_ENABLED;
+  }
+
+  /* 把頁面上所有 LINE 相關的區塊收起來。
+     按鈕、分隔線、說明文字要一起收，只收按鈕會留下孤零零一條「或」。 */
+  function hideLineUi() {
+    ['btn-line-login', 'line-bind', 'line-login-hint'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.hidden = true;
+    });
+    var d = document.querySelector('.or-divider');
+    if (d) d.hidden = true;
   }
 
   /** 目前登入者是否為管理員（前端判斷只用於「顯示按鈕」，真正把關在 RLS） */
@@ -320,6 +406,14 @@
     getSession: getSession,
     signIn: signIn,
     signOut: signOut,
+    signInWithLine: signInWithLine,
+    linkLine: linkLine,
+    takeOauthIntent: takeOauthIntent,
+    oauthReturnError: oauthReturnError,
+    hasLineIdentity: hasLineIdentity,
+    getUser: getUser,
+    lineEnabled: lineEnabled,
+    hideLineUi: hideLineUi,
     isAdmin: isAdmin,
     isRecordManager: isRecordManager,
     roleLabel: roleLabel,

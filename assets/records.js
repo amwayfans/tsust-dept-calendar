@@ -163,12 +163,22 @@
   /* ============================================================
    * 啟動
    * ============================================================ */
+  var oauthIntent = null;   // 'login' / 'link' / null —— 剛剛那次 OAuth 的目的
+
+  /* LINE 登入還沒開通（provider 未設定）→ 把整組 LINE 介面收起來，
+     不要留一顆按了會失敗的按鈕給老師。 */
+  if (!A.lineEnabled()) A.hideLineUi();
+
   loadRoster().then(function () {
     return loadYears();
   }).then(function () {
     return A.getSession();
   }).then(function (session) {
     elBooting.hidden = true;
+    /* 剛剛是不是從 LINE 回來的？讀完就清掉，重整不會再問一次 */
+    oauthIntent = A.takeOauthIntent();
+    var oerr = A.oauthReturnError();
+
     if (session && session.user) {
       return loadProfile(session.user.id).then(function (profile) {
         if (profile) { enter(session, profile); }
@@ -177,7 +187,15 @@
         }
       });
     }
-    showLogin();
+    /* 沒有 session：若是從 LINE 登入回來的，要講清楚「還沒綁定」，
+       而不是只丟一句通用的登入失敗 —— 老師會以為是自己按錯。 */
+    if (oauthIntent === 'login') {
+      showLogin('這個 LINE 帳號還沒綁定過。請先用上方帳密登入一次，完成綁定後就能用 LINE 一鍵登入。');
+    } else if (oerr) {
+      showLogin('LINE 登入未完成（' + oerr.code + '）。請改用帳密登入，或洽系辦（分機 2102）。');
+    } else {
+      showLogin();
+    }
   }).catch(function (err) {
     elBooting.hidden = true;
     showLogin();
@@ -305,6 +323,8 @@
     $('who-avatar').innerHTML =
       A.avatarHtml(profile.full_name || profile.email, profile.avatar_url, 'avatar-lg');
 
+    refreshLineBind();
+
     /* 姓名不在名冊中 → 不能寫入 */
     var onRoster = !!(profile.full_name && profile.full_name.trim());
     if (!onRoster) {
@@ -340,6 +360,47 @@
       elMy.hidden = true; elAll.hidden = true;
       showLogin();
       A.toast('已登出');
+    });
+  });
+
+  /* ---------- LINE 登入／綁定 ---------- */
+  /* 為什麼要綁定：LINE 不會給我們老師的學校信箱，
+     純用 LINE 登入的話系統認不出他是哪位老師。
+     所以「先用帳密登入一次 → 綁定 LINE → 之後一鍵登入」。 */
+  function refreshLineBind() {
+    var elState = $('line-bind-state'), elBtn = $('btn-line-bind');
+    if (!elState || !A.lineEnabled()) return Promise.resolve();
+    return A.getUser().then(function (user) {
+      var on = A.hasLineIdentity(user);
+      elState.textContent = on ? '已綁定 ✓' : '尚未綁定';
+      elState.className = 'line-bind-state ' + (on ? 'is-on' : 'is-off');
+      elBtn.hidden = on;
+      /* 剛剛是去綁定回來的 → 給一句回饋，否則使用者不知道到底成功了沒 */
+      if (oauthIntent === 'link' && on) A.toast('LINE 綁定完成，之後可以一鍵登入', 'ok');
+    }).catch(function () {
+      elState.textContent = '無法取得綁定狀態';
+      elState.className = 'line-bind-state is-off';
+      elBtn.hidden = true;
+    });
+  }
+
+  $('btn-line-bind').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    A.linkLine().catch(function (err) {
+      btn.disabled = false;
+      A.toast('綁定失敗：' + ((err && err.message) || '請稍後再試'), 'error');
+    });
+  });
+
+  $('btn-line-login').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    A.signInWithLine().catch(function (err) {
+      btn.disabled = false;
+      var e = $('login-error');
+      e.textContent = 'LINE 登入無法啟動：' + ((err && err.message) || '請稍後再試');
+      e.hidden = false;
     });
   });
 

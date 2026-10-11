@@ -57,6 +57,17 @@
         <button class="btn btn-primary" type="submit" id="btn-login">登入</button>
       </div>
     </form>
+
+    <!-- LINE 登入：只有「已綁定」的老師能用。
+         未綁定就按下去，LINE 那端登入成功、但系統認不出你是誰，
+         所以下面那行說明不能省。 -->
+    <div class="or-divider"><span>或</span></div>
+    <button class="btn btn-line" type="button" id="btn-line-login">
+      <span class="line-mark">LINE</span>用 LINE 登入
+    </button>
+    <p class="hint" id="line-login-hint" style="margin:10px 0 0">
+      首次使用請先用上方帳密登入一次，完成 LINE 綁定後就能一鍵登入。
+    </p>
   </section>
 
   <!-- ===================== 區塊 A：我的記錄 ===================== -->
@@ -71,6 +82,13 @@
         <span class="spacer"></span>
         <button class="btn" id="btn-pw" type="button">修改密碼</button>
         <button class="btn btn-danger" id="btn-logout" type="button">登出</button>
+      </div>
+
+      <!-- LINE 綁定狀態：綁定後才能用 LINE 一鍵登入 -->
+      <div class="line-bind" id="line-bind">
+        <span class="line-bind-label">LINE 登入</span>
+        <span class="line-bind-state" id="line-bind-state">檢查中…</span>
+        <button class="btn btn-line-sm" type="button" id="btn-line-bind" hidden>綁定 LINE</button>
       </div>
 
       <h2 style="margin-top:0" id="form-title">新增記錄</h2>

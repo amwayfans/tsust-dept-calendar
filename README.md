@@ -324,6 +324,53 @@ python3 scripts/sync_photos.py
 
 ---
 
+## LINE 登入（選用）
+
+老師除了帳號密碼，也可以用 LINE 一鍵登入。
+
+### 為什麼一定要先「綁定」
+
+**LINE 不會回傳老師的學校信箱。** 它只給使用者 ID、顯示名稱與頭像
+（`email` 權限要另外向 LINE 申請審核，而且多半是私人信箱、對不上 `@tsust.edu.tw`）。
+所以純用 LINE 登入的話，系統只知道「有個 LINE 使用者來了」，
+不知道他是哪位老師、該給他哪個帳號的權限。
+
+流程因此是：**先用帳密登入一次 → 綁定 LINE → 之後才能一鍵登入。**
+
+### 設定步驟
+
+1. **LINE Developers Console**：在現有機器人的 provider 底下新增一個
+   **LINE Login** channel（不是 Messaging API），Callback URL 填
+   `https://<專案ref>.supabase.co/auth/v1/callback`，記下 Channel ID／Secret。
+2. **Supabase**：Auth → Providers → New Provider，
+   選 **Manual configuration（OAuth2）**——**不要選 OIDC 自動探索**。
+
+   | 欄位 | 值 |
+   |---|---|
+   | Identifier | `custom:line` |
+   | Authorization URL | `https://access.line.me/oauth2/v2.1/authorize` |
+   | Token URL | `https://api.line.me/oauth2/v2.1/token` |
+   | UserInfo URL | `https://api.line.me/oauth2/v2.1/userinfo` |
+   | Allow users without email | **開啟** |
+
+   > ⚠️ **走 OIDC 自動探索一定會失敗**：LINE 的 ID token 用 HS256 簽章，
+   > 而 Supabase 的 OIDC 只接受 ES256。必須手動填端點。
+3. **Supabase**：Auth → Settings 開啟 **Manual linking**（`linkIdentity()` 需要）。
+
+### 程式在哪裡
+
+- `assets/common.js`：`signInWithLine()`／`linkLine()`／`hasLineIdentity()`，
+  provider 識別碼是常數 `LINE_PROVIDER = 'custom:line'`。
+- `records.html`：登入卡有「用 LINE 登入」，登入後有綁定狀態列。
+- `admin.html`：登入卡也有「用 LINE 登入」（綁定統一在 records 頁做）。
+
+### 沒綁定的人按了會怎樣
+
+Supabase 的 `disable_signup` 是開著的，所以不會建立新帳號；
+回來時沒有 session，前端會顯示
+「這個 LINE 帳號還沒綁定過。請先用上方帳密登入一次…」。
+**不會出現「登入成功但沒有權限」的半殘狀態。**
+
 ## 常見問題
 
 **畫面顯示「資料表尚未建立」**
