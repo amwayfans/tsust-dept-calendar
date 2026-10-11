@@ -5,11 +5,22 @@
 手寫的測試頁會跟 index.html 愈差愈多，測到的就不是真正上線的那份。
 這裡只做一件事 —— 在 config.js 之前插一段假造登入 session 的 script，
 其餘 HTML 完全照抄。測完就把 _probe.html 刪掉，不會進版控。
-"""
-import pathlib, re, sys
 
-root = pathlib.Path(__file__).resolve().parent
-src = (root / "index.html").read_text(encoding="utf-8")
+用法：
+  python3 scripts/make_probe.py                     # index.html → _probe.html
+  python3 scripts/make_probe.py <來源.html> <輸出.html>   # 指定檔案（比對舊版用）
+"""
+import pathlib, sys
+
+root = pathlib.Path(__file__).resolve().parent.parent   # 本檔在 scripts/ 底下，往上一層才是專案根目錄
+src_path = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "index.html"
+out_path = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else root / "_probe.html"
+if not src_path.is_absolute():
+    src_path = root / src_path
+if not out_path.is_absolute():
+    out_path = root / out_path
+
+src = src_path.read_text(encoding="utf-8")
 
 STUB = """<script>
 /* ==== 測試用：假造一個已登入的管理員 session（被測程式碼一行都沒改） ==== */
@@ -71,6 +82,6 @@ if needle not in src:
 out = src.replace(needle, STUB + needle, 1)
 out = out.replace("<title>系所行事曆</title>", "<title>PROBE（暫時測試頁）</title>", 1)
 
-(root / "_probe.html").write_text(out, encoding="utf-8")
-print("已產生 _probe.html（%d bytes）" % len(out))
+out_path.write_text(out, encoding="utf-8")
+print("已產生 %s（%d bytes）" % (out_path.name, len(out)))
 print("注入點正確：", needle in out)

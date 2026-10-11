@@ -275,6 +275,9 @@
     dayMaxEventRows: 4,
     eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
     noEventsText: '本月尚無行程',
+    /* 列表檢視的全天行程原本顯示英文 "all-day"（FullCalendar 的預設值，
+       連 zh-tw 語系檔也沒覆蓋），這裡明確改成中文。 */
+    allDayText: '全天',
 
     /* 本週整列淡底色、今天再加一圈外框（見 styles.css） */
     dayCellClassNames: weekClass,

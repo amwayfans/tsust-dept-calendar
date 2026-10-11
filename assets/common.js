@@ -195,6 +195,54 @@
     return code === '42P01' || code === 'PGRST205' || /does not exist|schema cache/i.test(msg);
   }
 
+  /* ---------- 手機的漢堡選單（各頁共用） ----------
+     頁首只留「行事曆／教師記錄」兩個頁籤與登入者頭像，
+     其餘功能（管理後台、新增事件…）收進這裡，手機才不會被頁首吃掉半個畫面。 */
+  (function () {
+    var toggle = document.getElementById('nav-toggle');
+    var menu = document.getElementById('nav-menu');
+    if (!toggle || !menu) return;
+
+    /* 把桌機版按鈕的狀態複製進選單：
+       登入後才出現的項目（＋新增事件）與會變動的文字（管理員登入／管理後台）
+       兩邊才不會一個顯示、一個不顯示，或一個寫「管理員登入」一個寫「管理後台」。 */
+    function syncFromHeader() {
+      [['menu-admin', 'link-admin'], ['menu-add', 'btn-add']].forEach(function (pair) {
+        var dst = document.getElementById(pair[0]);
+        var src = document.getElementById(pair[1]);
+        if (!dst || !src) return;
+        dst.hidden = src.hidden;
+        var label = (src.textContent || '').trim();
+        if (label) dst.textContent = label;
+      });
+    }
+
+    function open() {
+      syncFromHeader();
+      menu.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+    function close() {
+      menu.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (menu.hidden) open(); else close();
+    });
+
+    /* 點選單以外的地方、或按 Esc 就收起來 */
+    document.addEventListener('click', function (e) {
+      if (menu.hidden) return;
+      if (toggle.contains(e.target) || menu.contains(e.target)) return;
+      close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') close();
+    });
+  })();
+
   window.App = {
     cfg: cfg,
     sb: sb,

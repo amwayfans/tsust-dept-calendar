@@ -149,28 +149,84 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 }
 .brand p { margin: 2px 0 0 14px; font-size: var(--fs-sm); color: #bfcfe0; }
 
-/* ---------- 導覽列（各頁共用） ---------- */
-.site-nav { display: flex; gap: 4px; flex-wrap: wrap; }
-.site-nav a {
+/* ---------- 主要功能頁籤（各頁共用） ----------
+   行事曆／教師記錄做成「分段控制項」（segmented control）而不是普通連結：
+   兩個選項包在同一個膠囊底裡、被選中的那顆變白底 ——
+   一眼就看得出「這裡有兩個分頁可以切」，而不是三個各自獨立的連結。 */
+.site-tabs {
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .13);
+  border: 1px solid rgba(255, 255, 255, .17);
+}
+.site-tabs .tab {
   display: inline-flex;
   align-items: center;
-  min-height: 42px;
-  padding: 7px 16px;
-  border-radius: 8px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 6px 20px;
+  border-radius: 999px;
   text-decoration: none;
-  color: #d3dded;
+  color: #cfdcec;
   font-size: var(--fs-sm);
-  border: 1px solid transparent;
-  transition: background .18s ease, color .18s ease, border-color .18s ease;
-}
-.site-nav a:hover { background: rgba(255, 255, 255, .12); color: #fff; }
-.site-nav a.active {
-  background: var(--c-surface);
-  border-color: var(--c-surface);
-  color: var(--c-primary);
   font-weight: 600;
-  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  transition: background .18s ease, color .18s ease, box-shadow .18s ease;
 }
+.site-tabs .tab:hover { color: #fff; background: rgba(255, 255, 255, .12); }
+.site-tabs .tab.is-active {
+  background: #fff;
+  color: var(--c-primary);
+  box-shadow: 0 1px 4px rgba(8, 18, 34, .25);
+}
+
+/* ---------- 漢堡選單（手機才出現） ---------- */
+.nav-toggle {
+  display: none;                 /* 桌機不需要，桌機直接把功能顯示在頁首 */
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, .26);
+  background: rgba(255, 255, 255, .11);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.nav-toggle:hover { background: rgba(255, 255, 255, .2); }
+.nav-toggle[aria-expanded="true"] { background: rgba(255, 255, 255, .22); }
+
+/* 展開後的功能清單。貼在頁首下緣、靠右對齊。 */
+.nav-menu {
+  position: absolute;
+  right: var(--gut);
+  top: calc(100% - 4px);
+  z-index: 60;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 13px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  box-shadow: 0 14px 34px rgba(8, 18, 34, .26);
+}
+.nav-menu[hidden] { display: none; }
+.nav-menu-item {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 9px;
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+.nav-menu-item:hover { background: var(--c-surface-2); }
+.nav-menu-item[hidden] { display: none; }
 
 /* ---------- 徽章 ---------- */
 .badge {
@@ -256,9 +312,12 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .who-role { color: #b9c8dd; font-size: 12px; white-space: nowrap; }
 .who-role[hidden] { display: none; }
 
-@media (max-width: 720px) {
-  .who-text { display: none; }       /* 手機只留頭像，不要擠掉導覽 */
-  .who-chip { padding: 4px; }
+@media (max-width: 767px) {
+  /* 手機仍然保留登入者（頭像＋姓名＋角色）——這是「我是誰」的依據。
+     只把尺寸縮小並限制寬度，免得長名字把頁首擠爆。 */
+  .who-chip { padding: 3px 10px 3px 4px; max-width: 145px; gap: 8px; }
+  .who-name { font-size: 13px; }
+  .who-role { font-size: 11px; }
 }
 
 /* ---------- 按鈕 ---------- */
@@ -954,10 +1013,52 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 /* ---------- 手機 ---------- */
 @media (max-width: 767px) {
   :root { --gut: 13px; --fs-kpi: 24px; --fs-xl: 21px; --fs-lg: 18px; }
-  .site-header .inner { min-height: 0; padding: 11px 0; }
-  .brand h1 { font-size: 19px; }
-  .site-nav { width: 100%; margin-right: 0; }
-  .site-nav a { flex: 1; justify-content: center; min-height: var(--touch); padding: 6px 8px; }
+
+  /* 手機的頁首只留兩列：
+     第一列＝系所名稱 ＋ 登入者頭像 ＋ 漢堡選單，第二列＝兩個功能頁籤。
+     原本是「標題／副標／三個導覽／頭像＋徽章＋新增事件／管理後台」五列，
+     光頁首就吃掉手機畫面三分之一，往下滑才看得到行程。 */
+  .site-header .inner {
+    min-height: 0;
+    padding: 10px 0;
+    gap: 10px;
+  }
+  /* flex-basis 必須是 0，不能是 auto。
+     用 auto 的話，flex 換行的判斷會拿「標題的內容寬度」當基準（約 208px），
+     加上頭像與漢堡就超過 360px，於是頭像和漢堡被擠到第二、第三列，
+     頁首又長回四列。設成 0 之後它只佔「剩下的空間」，
+     三個元素才會乖乖待在同一列。 */
+  .brand { flex: 1 1 0; min-width: 0; }
+  .brand h1 { font-size: 16px; min-width: 0; }
+  .brand h1::before { height: 17px; width: 3px; }
+  /* 標題不要截斷成「機械與自動化工…」——系名被切掉就失去辨識作用。
+     改成最多折兩行：兩行 15px×1.25 = 38px，比漢堡鈕的 44px 還矮，
+     所以第一列的高度不會變，頁首仍然維持兩列。 */
+  .brand h1 > span {
+    font-size: 15px;
+    line-height: 1.25;
+    min-width: 0;
+    overflow: hidden;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    /* 中文本來可以逐字斷行，於是 390px 會斷成「…工程系 行／事曆」這種爛位置。
+       keep-all 讓中文不在字與字之間斷，只留空白處當斷點 →
+       「機械與自動化工程系／行事曆」；真的遇到超長字串再靠 anywhere 保底。 */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  .brand p { display: none; }        /* 副標題省掉，省下整整一列 */
+
+  /* 兩個頁籤換到第二列、各佔一半寬度 —— 手指好按，也看得出是兩個分頁 */
+  .site-tabs { order: 10; flex: 1 0 100%; }
+  .site-tabs .tab { flex: 1; min-height: var(--touch); padding: 8px 10px; }
+
+  /* 其餘功能（管理後台／新增事件／管理員徽章）收進漢堡選單 */
+  .hdr-desktop { display: none !important; }
+  .nav-toggle { display: inline-flex; }
+
   .month-label { min-width: 0; width: 100%; }
   .toolbar { gap: 8px; }
   .toolbar .btn { flex: 1; }
@@ -967,6 +1068,15 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   .modal-actions .btn { flex: 1; }
   .ev-list li { flex-wrap: wrap; }
   .ev-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* ---------- 窄機（360px 這類）----------
+   第一列扣掉頭像籤與漢堡鈕之後只剩約 123px，
+   15px 的系名需要約 135px，於是會被 overflow-wrap:anywhere
+   從中間切開成「機械與自動化工程／系 行事曆」。
+   縮到 13px 就放得下 —— 系名完整、登入者姓名也完整，兩者都不犧牲。 */
+@media (max-width: 389px) {
+  .brand h1 > span { font-size: 13px; }
 }
 
 /* ---------- 平板 ---------- */
@@ -985,7 +1095,7 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 
 /* ---------- 列印 ---------- */
 @media print {
-  .site-header, .site-nav, .toolbar, .legend, .site-footer, .toast, .stats { display: none !important; }
+  .site-header, .site-tabs, .nav-toggle, .nav-menu, .toolbar, .legend, .site-footer, .toast, .stats { display: none !important; }
   body { background: #fff; }
   .card { border: none; box-shadow: none; padding: 0; }
 }

@@ -21,14 +21,16 @@
 <header class="site-header">
   <div class="inner">
     <div class="brand">
-      <h1 id="site-title">系所行事曆</h1>
+      <h1><span id="site-title">系所行事曆</span></h1>
       <p id="site-subtitle">系務行程公告</p>
     </div>
-    <nav class="site-nav">
-      <a href="index.html" class="active">行事曆</a>
-      <a href="records.html">教師記錄</a>
-      <a href="admin.html">管理後台</a>
+
+    <!-- 兩個主要功能做成頁籤：一眼看得出有兩個分頁可切 -->
+    <nav class="site-tabs" aria-label="主要功能">
+      <a href="index.html" class="tab is-active" aria-current="page">行事曆</a>
+      <a href="records.html" class="tab">教師記錄</a>
     </nav>
+
     <!-- 登入者身分（頭像＋姓名）。未登入時整塊不佔位。 -->
     <span class="who-chip" id="who-chip" hidden>
       <span class="avatar-slot" id="who-avatar"></span>
@@ -37,9 +39,20 @@
         <span class="who-role" id="who-role" hidden></span>
       </span>
     </span>
-    <span id="admin-badge" class="badge badge-admin" hidden>管理員</span>
-    <a class="btn btn-ghost" id="btn-add" href="admin.html" hidden>＋ 新增事件</a>
-    <a class="btn btn-ghost" id="link-admin" href="admin.html">管理員登入</a>
+
+    <!-- 桌機直接顯示在頁首；手機版收進右邊的漢堡選單（見 common.js） -->
+    <span id="admin-badge" class="badge badge-admin hdr-desktop" hidden>管理員</span>
+    <a class="btn btn-ghost hdr-desktop" id="btn-add" href="admin.html" hidden>＋ 新增事件</a>
+    <a class="btn btn-ghost hdr-desktop" id="link-admin" href="admin.html">管理員登入</a>
+
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-label="更多功能" aria-expanded="false" aria-controls="nav-menu">☰</button>
+  </div>
+
+  <!-- 手機的漢堡選單內容（開關由 common.js 控制） -->
+  <div class="nav-menu" id="nav-menu" hidden>
+    <a class="nav-menu-item" id="menu-admin" href="admin.html">管理員登入</a>
+    <a class="nav-menu-item" id="menu-add" href="admin.html" hidden>＋ 新增事件</a>
   </div>
 </header>
 

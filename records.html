@@ -17,14 +17,21 @@
 <header class="site-header">
   <div class="inner">
     <div class="brand">
-      <h1>教師記錄</h1>
+      <h1><span>教師記錄</span></h1>
       <p>招生 ／ 公差 記錄與統計</p>
     </div>
-    <nav class="site-nav">
-      <a href="index.html">行事曆</a>
-      <a href="records.html" class="active">教師記錄</a>
-      <a href="admin.html">管理後台</a>
+    <nav class="site-tabs" aria-label="主要功能">
+      <a href="index.html" class="tab">行事曆</a>
+      <a href="records.html" class="tab is-active" aria-current="page">教師記錄</a>
     </nav>
+    <!-- 桌機直接顯示；手機收進漢堡選單 -->
+    <a class="btn btn-ghost hdr-desktop" href="admin.html">管理後台</a>
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-label="更多功能" aria-expanded="false" aria-controls="nav-menu">☰</button>
+  </div>
+
+  <div class="nav-menu" id="nav-menu" hidden>
+    <a class="nav-menu-item" href="admin.html">管理後台</a>
   </div>
 </header>
 
