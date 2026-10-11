@@ -79,13 +79,57 @@
     elTodayCount.textContent = n ? n + ' 項行程' : '';
   }
 
+  /* ---------- 系上參加人員 ----------
+     會議事件的說明欄常寫「出席：副校長、教務長、各系主任（含機自系主任）…」，
+     這裡只挑出「系上的人」，外部單位（副校長、教務長、校外委員）不列。
+
+     兩種命中方式：
+       1. 直接是名冊上的姓名（有些開會通知直接列名字，例如課程咨詢委員會）
+       2. 是系上的職稱 → 用 TITLE_MAP 換成人名（例如「各系主任（含機自系主任）」）
+     對不到的一律略過，不猜。
+
+     名冊用 members（公開可讀）而不是 teacher_roster（RLS 擋住，匿名讀不到）。 */
+  var MEMBERS = [];
+  var membersReady = A.fetchMembers()
+    .then(function (rows) {
+      MEMBERS = rows.map(function (m) { return m.name; });
+    })
+    .catch(function () { MEMBERS = []; });
+
+  var TITLE_MAP = [
+    ['系主任', '楊至誠'],        /* 含「各系主任（含機自系主任）」「本系主任」 */
+    ['工程學院院長', '楊至誠']
+  ];
+
+  function deptAttendees(r) {
+    if (!r || !r.description) return [];
+    var m = /出席[：:]([^\n。]*)/.exec(r.description);
+    if (!m) return [];
+    var out = [];
+    m[1].split(/[、,，;；\/]/).forEach(function (raw) {
+      var seg = raw.trim();
+      if (!seg) return;
+      var hit = MEMBERS.filter(function (n) { return seg.indexOf(n) >= 0; });
+      if (!hit.length) {
+        hit = TITLE_MAP.filter(function (t) { return seg.indexOf(t[0]) >= 0; })
+                       .map(function (t) { return t[1]; });
+      }
+      hit.forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+    });
+    return out;
+  }
+
   function loadToday() {
     var t = todayStr();
     document.getElementById('today-date').textContent = dateLabel(t);
 
-    A.fetchEvents(new Date(t + 'T00:00:00+08:00'),
-                  new Date(t + 'T23:59:59+08:00'))
-      .then(renderToday)
+    /* 等名冊載入再渲染，否則「系上參加人員」會因為名冊還沒到而空白 */
+    Promise.all([
+      A.fetchEvents(new Date(t + 'T00:00:00+08:00'),
+                    new Date(t + 'T23:59:59+08:00')),
+      membersReady
+    ])
+      .then(function (out) { renderToday(out[0]); })
       .catch(function () {
         /* 今日行程只是輔助資訊，查不到就顯示「無行程」，不干擾月曆 */
         elTodayBody.innerHTML = '<p class="today-none">目前無法讀取今日行程。</p>';
@@ -130,6 +174,16 @@
         loc.className = 'today-item-loc';
         loc.textContent = r.location;
         item.appendChild(loc);
+      }
+
+      /* 系上參加人員（從說明欄的「出席」解析，只列本系的人）。
+         解析不到就不顯示，不要留一行空標籤。 */
+      var who = deptAttendees(r);
+      if (who.length) {
+        var people = document.createElement('span');
+        people.className = 'today-item-people';
+        people.textContent = '系上參加：' + who.join('、');
+        item.appendChild(people);
       }
 
       elTodayBody.appendChild(item);

@@ -79,6 +79,26 @@
       });
   }
 
+  /**
+   * 取系上成員名單（姓名、職稱）。
+   * 用途：會議事件的說明欄只寫職稱（例如「各系主任（含機自系主任）」），
+   * 需要一份「姓名 ↔ 職稱」對照表才能把職稱換成系上人名。
+   *
+   * 為什麼用 members 而不是 teacher_roster：
+   * teacher_roster 有 RLS 擋著，匿名讀不到（會回空陣列）；
+   * members 是公開可讀的完整成員名單（含系助理），前端才拿得到。
+   */
+  function fetchMembers() {
+    return sb.from('members')
+      .select('name,title,category,sort_order')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return res.data || [];
+      });
+  }
+
   /* ---------- 登入狀態 ---------- */
   function getSession() {
     return sb.auth.getSession().then(function (r) {
@@ -424,6 +444,7 @@
     fmtRange: fmtRange,
     cat: cat,
     fetchEvents: fetchEvents,
+    fetchMembers: fetchMembers,
     getSession: getSession,
     signIn: signIn,
     signOut: signOut,

@@ -607,6 +607,18 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   border-radius: 999px;
   padding: 2px 10px;
 }
+/* 系上參加人員（從會議通知的「出席」欄解析出來的本系人名）。
+   flex-basis:100% 強制換到下一行 —— 卡片是 flex-wrap，
+   不這樣寫會擠在標題右邊、把標題壓縮。
+   顏色用主色但字級退一階，讓它可讀卻不跟標題搶。 */
+.today-item-people {
+  flex-basis: 100%;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--c-primary);
+  line-height: 1.5;
+  padding-left: 2px;
+}
 /* 「今天沒有安排行程。」—— 面板唯一的一行字，一樣要呼吸。
    底色從淡灰改成主文字色、字重加粗、字級提一級：
    呼吸動畫會把透明度壓到 0.48，原本的淡灰字在谷底會淡到像壞掉。 */
