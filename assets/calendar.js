@@ -91,6 +91,9 @@
       elTodayBody.innerHTML =
         '<p class="today-none">今天沒有安排行程。</p>';
       elToday.hidden = false;
+      /* 沒有行程時，這行字就是整個欄位唯一的內容，
+         一樣讓它呼吸 —— 否則整塊面板會靜得像壞掉。 */
+      breatheToday();
       return;
     }
 
@@ -133,7 +136,10 @@
     if (typeof window.gsap === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    var titles = elTodayBody.querySelectorAll('.today-item-title');
+    /* 今天有行程 → 呼吸每一筆的標題；
+       今天沒行程 → 呼吸「今天沒有安排行程。」那行字。
+       兩者用同一段動畫，看起來才像同一個系統。 */
+    var titles = elTodayBody.querySelectorAll('.today-item-title, .today-none');
     if (!titles.length) return;
 
     window.gsap.killTweensOf(titles);
@@ -366,7 +372,12 @@
   });
 
   /* ---------- 事件詳情 ---------- */
+  /* 目前詳情視窗顯示的是哪一筆。修改／刪除都從這裡取資料。 */
+  var detailRow = null;
+
   function openDetail(r) {
+    detailRow = r;
+
     document.getElementById('m-title').textContent = r.title;
     document.getElementById('m-time').textContent = A.fmtRange(r);
     document.getElementById('m-cat').textContent = A.cat(r.category).label;
@@ -383,19 +394,43 @@
       descWrap.hidden = false;
     } else { descWrap.hidden = true; }
 
+    /* 修改／刪除只給管理員看。
+       不是管理員就算按了也寫不進去（RLS 會擋），
+       與其讓他填完一輪才失敗，不如一開始就不要出現這顆鈕。 */
+    var canEdit = A.isAdmin(session);
+    document.getElementById('m-edit').hidden = !canEdit;
+    document.getElementById('m-delete').hidden = !canEdit;
+
     document.getElementById('modal').classList.add('show');
   }
 
-  document.getElementById('m-close').addEventListener('click', function () {
+  function closeDetail() {
     document.getElementById('modal').classList.remove('show');
-  });
+  }
+
+  document.getElementById('m-close').addEventListener('click', closeDetail);
   document.getElementById('modal').addEventListener('click', function (e) {
-    if (e.target === this) this.classList.remove('show');
+    if (e.target === this) closeDetail();
   });
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
-    document.getElementById('modal').classList.remove('show');
+    closeDetail();
     closeAddModal();
+    closeDelModal();
+  });
+
+  /* 修改：關掉詳情，改用同一個表單（欄位帶入原本的值） */
+  document.getElementById('m-edit').addEventListener('click', function () {
+    var r = detailRow;
+    closeDetail();
+    if (r) openEditModal(r);
+  });
+
+  /* 刪除：先跳確認，不直接刪 */
+  document.getElementById('m-delete').addEventListener('click', function () {
+    var r = detailRow;
+    closeDetail();
+    if (r) openDelModal(r);
   });
 
   /* ============================================================
@@ -431,6 +466,12 @@
   }
   af.allday.addEventListener('change', toggleAddAllDay);
 
+  /* 表單目前是「新增」還是「修改」。
+     null = 新增；有值 = 正在改這一筆。 */
+  var editingId = null;
+  /* 修改時要沿用原本的可見性，不要偷偷改成公開 */
+  var editingVisibility = 'department';
+
   function openAddModal(dateStr) {
     /* 沒登入（或不是管理員）不開表單 —— 就算開了，寫入也會被資料庫的
        RLS 擋掉，不如當下就講清楚，不要讓使用者填完才失敗。 */
@@ -438,6 +479,9 @@
       A.toast('新增事件需要管理員權限，請先從右上角登入。', 'error');
       return;
     }
+
+    editingId = null;
+    editingVisibility = 'department';
 
     addForm.reset();
     af.category.value = 'meeting';
@@ -448,8 +492,44 @@
     af.endTime.value = '10:00';
     af.error.hidden = true;
 
+    document.getElementById('a-heading').textContent = '新增事件';
     document.getElementById('a-when').textContent = dateLabel(dateStr);
     document.getElementById('a-save').textContent = '新增';
+    toggleAddAllDay();
+
+    elAddModal.classList.add('show');
+    window.setTimeout(function () { af.title.focus(); }, 60);
+  }
+
+  /* 修改：同一個表單，欄位帶入原本的值。
+     日期時間要換算成台北時間再填 —— 資料庫存的是 UTC。 */
+  function openEditModal(r) {
+    if (!A.isAdmin(session)) {
+      A.toast('修改事件需要管理員權限，請先從右上角登入。', 'error');
+      return;
+    }
+
+    editingId = r.id;
+    editingVisibility = r.visibility || 'department';
+
+    addForm.reset();
+    af.title.value = r.title || '';
+    af.category.value = r.category || 'meeting';
+    af.allday.checked = !!r.all_day;
+
+    var s = A.tzParts(r.start_at), e = A.tzParts(r.end_at);
+    af.startDate.value = s.date;
+    af.startTime.value = s.time;
+    af.endDate.value = e.date;
+    af.endTime.value = e.time;
+
+    af.location.value = r.location || '';
+    af.description.value = r.description || '';
+    af.error.hidden = true;
+
+    document.getElementById('a-heading').textContent = '修改事件';
+    document.getElementById('a-when').textContent = A.fmtRange(r);
+    document.getElementById('a-save').textContent = '儲存';
     toggleAddAllDay();
 
     elAddModal.classList.add('show');
@@ -492,7 +572,7 @@
     var payload = {
       title: title,
       category: af.category.value,
-      visibility: 'department',      /* 從月曆快速新增的一律是系上公開行程 */
+      visibility: editingVisibility,   /* 新增＝系上公開；修改＝沿用原本的 */
       all_day: allDay,
       start_at: startIso,
       end_at: endIso,
@@ -501,16 +581,85 @@
     };
 
     var btn = document.getElementById('a-save');
+    var isEdit = !!editingId;
     btn.disabled = true;
 
-    A.sb.from('events').insert(payload).select().then(function (res) {
+    /* 新增用 insert、修改用 update。
+       兩者都接 .select()：RLS 擋掉時不會報錯，只會回 0 筆，
+       沒有 .select() 就沒辦法分辨「成功」與「其實沒寫進去」。 */
+    var q = isEdit
+      ? A.sb.from('events').update(payload).eq('id', editingId)
+      : A.sb.from('events').insert(payload);
+
+    q.select().then(function (res) {
       btn.disabled = false;
+
       if (res.error) {
-        showAddError('新增失敗：' + res.error.message);
+        showAddError((isEdit ? '修改失敗：' : '新增失敗：') + res.error.message);
         return;
       }
+      if (!res.data || !res.data.length) {
+        showAddError('沒有權限' + (isEdit ? '修改' : '新增') +
+                     '這筆事件，請確認已用管理員帳號登入。');
+        return;
+      }
+
       closeAddModal();
-      A.toast('已新增「' + title + '」', 'ok');
+      A.toast((isEdit ? '已更新「' : '已新增「') + title + '」', 'ok');
+      refreshAll();
+    });
+  });
+
+  /* ---------- 刪除事件 ---------- */
+  var elDelModal = document.getElementById('del-modal');
+  var pendingDelete = null;
+
+  function openDelModal(r) {
+    if (!A.isAdmin(session)) {
+      A.toast('刪除事件需要管理員權限，請先從右上角登入。', 'error');
+      return;
+    }
+    pendingDelete = r;
+    document.getElementById('del-text').textContent =
+      '確定要刪除「' + r.title + '」嗎？' + A.fmtRange(r) + '。此動作無法復原。';
+    elDelModal.classList.add('show');
+    /* 焦點放在「取消」而不是「確定刪除」：
+       刪除無法復原，不能讓使用者順手按 Enter 就刪掉。 */
+    window.setTimeout(function () { document.getElementById('del-cancel').focus(); }, 60);
+  }
+
+  function closeDelModal() {
+    elDelModal.classList.remove('show');
+    pendingDelete = null;
+  }
+
+  document.getElementById('del-cancel').addEventListener('click', closeDelModal);
+  elDelModal.addEventListener('click', function (e) {
+    if (e.target === this) closeDelModal();
+  });
+
+  document.getElementById('del-ok').addEventListener('click', function () {
+    if (!pendingDelete) return;
+    var r = pendingDelete;
+    var btn = this;
+    btn.disabled = true;
+
+    A.sb.from('events').delete().eq('id', r.id).select().then(function (res) {
+      btn.disabled = false;
+
+      if (res.error) {
+        closeDelModal();
+        A.toast('刪除失敗：' + res.error.message, 'error');
+        return;
+      }
+      if (!res.data || !res.data.length) {
+        closeDelModal();
+        A.toast('沒有權限刪除這筆事件，請確認已用管理員帳號登入。', 'error');
+        return;
+      }
+
+      closeDelModal();
+      A.toast('已刪除「' + r.title + '」', 'ok');
       refreshAll();
     });
   });

@@ -458,11 +458,15 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   border-radius: 999px;
   padding: 2px 10px;
 }
+/* 「今天沒有安排行程。」—— 面板唯一的一行字，一樣要呼吸。
+   底色從淡灰改成主文字色、字重加粗、字級提一級：
+   呼吸動畫會把透明度壓到 0.48，原本的淡灰字在谷底會淡到像壞掉。 */
 .today-none {
   margin: 0;
   padding: 6px 2px;
-  font-size: var(--fs-md);
-  color: var(--c-text-2);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--c-text);
 }
 
 @media (max-width: 640px) {
@@ -857,6 +861,20 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 
 /* 表單型 Modal（在月曆上連點兩下叫出來的新增事件視窗） */
 .modal-box-form { max-width: 580px; }
+/* 刪除確認：內容很少，框太寬會顯得空 */
+.modal-box-sm { max-width: 420px; }
+
+/* 破壞性動作推到最左邊，跟右邊的「關閉／修改」隔開 */
+.modal-actions .act-left { margin-right: auto; }
+
+/* 實心紅鈕：確認刪除用。軟底色的 .btn-danger 在確認框裡不夠「重」，
+   這種一旦按下去無法復原的動作要讓它一眼看起來就是紅的。 */
+.btn-danger-solid {
+  background: var(--c-danger);
+  border-color: var(--c-danger);
+  color: #fff;
+}
+.btn-danger-solid:hover { background: #b91c1c; border-color: #b91c1c; }
 /* 開始／結束各自「日期＋時間」一組，兩欄並排。
    手機放不下就自動疊成一欄，不要硬擠成兩欄讓日期被切掉。 */
 .grid2 {

@@ -27,3 +27,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# 本機測試用的暫時頁面（由 scripts/make_probe.py 產生，測完就刪）
+# 裡面會假造登入 session，不該進版控。
+_probe*.html

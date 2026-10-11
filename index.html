@@ -92,7 +92,23 @@
     <p id="m-loc-wrap"><strong>地點：</strong><span id="m-loc">—</span></p>
     <p id="m-desc-wrap"><strong>說明：</strong><br><span id="m-desc">—</span></p>
     <div class="modal-actions">
+      <!-- 刪除放最左邊、跟其他鈕隔開：破壞性動作不要跟「關閉」擠在一起，
+           手指滑過去誤按的代價太高。 -->
+      <button class="btn btn-danger act-left" id="m-delete" type="button" hidden>刪除</button>
       <button class="btn" id="m-close" type="button">關閉</button>
+      <button class="btn btn-primary" id="m-edit" type="button" hidden>修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- 刪除確認（刪掉就沒了，一定要再問一次） -->
+<div class="modal" id="del-modal">
+  <div class="modal-box modal-box-sm">
+    <h3>刪除事件</h3>
+    <p id="del-text">—</p>
+    <div class="modal-actions">
+      <button class="btn" id="del-cancel" type="button">取消</button>
+      <button class="btn btn-danger-solid" id="del-ok" type="button">確定刪除</button>
     </div>
   </div>
 </div>
