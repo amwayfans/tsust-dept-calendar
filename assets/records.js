@@ -194,12 +194,32 @@
 
   /* ---------- 名冊 / 學年度 ---------- */
   function loadRoster() {
-    return sb.from('teacher_roster').select('email,full_name,category,title,sort_order')
+    return sb.from('teacher_roster').select('email,full_name,category,title,sort_order,claimed_by')
       .order('sort_order')
       .then(function (res) {
         if (res.error) throw res.error;
         roster = res.data || [];
       });
+  }
+
+  /* 統計列一律依「教師名冊的 sort_order」排，而不是資料庫函式回傳的「次數多寡」。
+     名冊是順序的單一來源：下拉選單、圖表、CSV 三處都照它排，
+     才不會出現「下拉選單照名冊排、圖表照次數排」兩套順序。
+     對應用 claimed_by（名冊 → profiles.id，UUID 對 UUID，最穩），
+     真的沒綁定時才退回用姓名比對。 */
+  function sortStatsByRoster() {
+    var pos = {};
+    roster.forEach(function (r, i) {
+      if (r.claimed_by) pos[r.claimed_by] = i;
+      if (r.full_name) pos['n:' + r.full_name] = i;
+    });
+    statsRows.sort(function (a, b) {
+      var ia = pos[a.teacher_id] != null ? pos[a.teacher_id] : pos['n:' + a.teacher_name];
+      var ib = pos[b.teacher_id] != null ? pos[b.teacher_id] : pos['n:' + b.teacher_name];
+      if (ia == null) ia = Number.MAX_SAFE_INTEGER;   // 名冊查不到的排最後，不讓它插隊
+      if (ib == null) ib = Number.MAX_SAFE_INTEGER;
+      return ia - ib;
+    });
   }
 
   function loadYears() {
@@ -335,6 +355,7 @@
         return;
       }
       statsRows = res.data || [];
+      sortStatsByRoster();      // 依名冊順序排，圖表與 CSV 都用這個順序
       renderChart();
     });
   }
