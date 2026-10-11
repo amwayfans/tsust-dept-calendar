@@ -17,14 +17,14 @@
 ```
 .
 ├── index.html                 公開月曆（所有人）
-├── records.html               教師記錄（招生／公差）
+├── records.html               公差/招生記錄
 ├── admin.html                 管理後台（僅管理員）
 ├── assets/
 │   ├── config.js              ⚙️ 設定（Supabase 連線、類別、標題）
 │   ├── common.js              共用工具（連線、時區、事件查詢、登入）
 │   ├── calendar.js            月曆頁邏輯
-│   ├── records.js             教師記錄頁邏輯（表單、圖表、CSV）
-│   ├── records.css            教師記錄頁專屬樣式
+│   ├── records.js             公差/招生記錄頁邏輯（表單、圖表、CSV）
+│   ├── records.css            公差/招生記錄頁專屬樣式
 │   ├── admin.js               後台 CRUD 邏輯
 │   └── styles.css             共用樣式
 └── supabase/
@@ -148,7 +148,7 @@ curl -i -X POST "https://<專案>.supabase.co/rest/v1/events" \
 
 視覺規範由 UI UX Pro Max 產出，風格為 **Swiss Modernism 2.0 × 資料密集型儀表板**，
 色盤為 **學術海軍藍 + 金色點綴**。所有樣式權杖都定義在 `assets/styles.css` 的 `:root`，
-**改顏色只要改這裡**，三頁（行事曆／教師記錄／管理後台）會一起同步。
+**改顏色只要改這裡**，三頁（行事曆／公差/招生記錄／管理後台）會一起同步。
 
 | 權杖 | 值 | 用途 |
 |---|---|---|
@@ -194,9 +194,9 @@ curl -i -X POST "https://<專案>.supabase.co/rest/v1/events" \
 
 ---
 
-## 教師記錄分頁（records.html）
+## 公差/招生記錄分頁（records.html）
 
-老師自行登入後輸入「招生」「公差」記錄，系統即時統計成堆疊柱狀圖，
+老師自行登入後輸入「招生」「公差」記錄，系統即時統計成橫式長條圖，
 可匯出 CSV 作為教師評鑑參考。
 
 ### 啟用步驟
