@@ -150,7 +150,7 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .brand p { margin: 2px 0 0 14px; font-size: var(--fs-sm); color: #bfcfe0; }
 
 /* ---------- 主要功能頁籤（各頁共用） ----------
-   行事曆／教師記錄做成「分段控制項」（segmented control）而不是普通連結：
+   行事曆／公差/招生記錄做成「分段控制項」（segmented control）而不是普通連結：
    兩個選項包在同一個膠囊底裡、被選中的那顆變白底 ——
    一眼就看得出「這裡有兩個分頁可以切」，而不是三個各自獨立的連結。 */
 .site-tabs {
@@ -961,7 +961,7 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   cursor: pointer;
 }
 
-/* ---------- 事件列表（管理後台 / 教師記錄） ---------- */
+/* ---------- 事件列表（管理後台 / 公差/招生記錄） ---------- */
 .ev-list { list-style: none; margin: 0; padding: 0; }
 .ev-list li {
   display: flex;

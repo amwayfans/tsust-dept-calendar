@@ -719,7 +719,7 @@
     }
 
     /* 在行事曆最上方顯示登入者與頭像。
-       姓名與照片取自 profiles（跟教師記錄頁同一份資料），
+       姓名與照片取自 profiles（跟公差/招生記錄頁同一份資料），
        讀不到就退回用信箱，至少讓使用者知道自己是誰。 */
     document.getElementById('who-name').textContent = email;
     elWhoChip.hidden = false;
