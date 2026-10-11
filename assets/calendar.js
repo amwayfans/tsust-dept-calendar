@@ -278,7 +278,11 @@
   }
 
   var calendar = new FullCalendar.Calendar(elCal, {
-    initialView: isMobile() ? 'listMonth' : 'dayGridMonth',
+    /* 一律用月曆當預設檢視。
+       先前手機（< MOBILE_BREAKPOINT）預設用 listMonth 列表，
+       但使用者指定「預設要看月曆」，所以行動裝置也從月曆開始。
+       列表仍可透過工具列的「切換列表」按鈕進入。 */
+    initialView: 'dayGridMonth',
     locale: 'zh-tw',
     firstDay: cfg.WEEK_STARTS_ON,
     headerToolbar: false,          /* 用自製的工具列 */
@@ -706,14 +710,10 @@
     calendar.changeView(calendar.view.type === 'listMonth' ? 'dayGridMonth' : 'listMonth');
   });
 
-  /* 視窗尺寸改變時，自動在「月曆 / 列表」之間切換（手機用列表較好用） */
-  var lastMobile = isMobile();
+  /* 視窗尺寸改變時，只更新「切換列表／切換月曆」按鈕的顯示，
+     不再自動更換檢視 —— 預設一律是月曆，不因螢幕變窄就被換成列表。 */
   window.addEventListener('resize', function () {
-    var m = isMobile();
-    if (m !== lastMobile) {
-      lastMobile = m;
-      calendar.changeView(m ? 'listMonth' : 'dayGridMonth');
-    }
+    btnView.hidden = !isMobile();
   });
 
   /* ---------- 登入狀態 ---------- */
