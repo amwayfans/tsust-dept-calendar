@@ -368,17 +368,6 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 }
 .btn-line:hover { background: #05b34b; }
 .btn-line:active { background: #049a41; }
-.line-mark {
-  display: inline-block;
-  background: #fff;
-  color: #06c755;
-  font-weight: 800;
-  font-size: 11px;
-  letter-spacing: .5px;
-  padding: 2px 7px;
-  border-radius: 5px;
-  line-height: 1.5;
-}
 .btn-line-sm {
   margin-left: auto;
   background: #06c755;
