@@ -190,6 +190,20 @@
   </div>
 </div>
 
+<!-- 載入保險（必須在 assets/*.js 之前）：
+     月曆初始化期間若有任何未捕捉的例外，載入骨架（#loading）會永遠蓋在畫面上，
+     使用者只看到一片灰條、完全不知道發生什麼事。
+     這裡在最前面就掛好全域攔截；若程式已自行處理（骨架已隱藏）就不插手。
+     （實際發生過：部署途中開頁面，新舊 JS 混搭導致初始化中斷。） -->
+<script>
+  window.addEventListener('error', function () {
+    var l = document.getElementById('loading');
+    var e = document.getElementById('error');
+    if (!l || l.hidden) return;          /* 已載入完成或已由程式處理 */
+    l.hidden = true;
+    if (e) { e.hidden = false; e.textContent = '頁面載入失敗，請重新整理。'; }
+  });
+</script>
 <script src="assets/config.js"></script>
 <script src="assets/common.js"></script>
 <script src="assets/calendar.js"></script>

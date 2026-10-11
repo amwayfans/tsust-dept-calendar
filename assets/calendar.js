@@ -6,6 +6,14 @@
 (function () {
   'use strict';
   var A = window.App;
+  if (!A) {
+    /* common.js 沒載入成功（最常見是新舊快取混搭）→ 直接把骨架收掉並說明。
+       不這樣做的話，下面取 A.cfg 會丟例外，使用者只看到一片灰條。 */
+    var _l = document.getElementById('loading'), _e = document.getElementById('error');
+    if (_l) _l.hidden = true;
+    if (_e) { _e.hidden = false; _e.textContent = '頁面資源載入不完整，請重新整理。'; }
+    return;
+  }
   var cfg = A.cfg;
 
   var elCal = document.getElementById('calendar');
@@ -18,6 +26,36 @@
   var linkAdmin = document.getElementById('link-admin');
   var badge = document.getElementById('admin-badge');
   var elWhoChip = document.getElementById('who-chip');
+
+  /* ---------- 載入保險（避免骨架永遠卡住） ----------
+     只要初始化過程中任何一步丟出例外，後面的 calendar.render() 就不會執行，
+     載入骨架（#loading）會永遠蓋在畫面上 —— 使用者只看到一片灰條，
+     完全不知道發生什麼事，只能一直重新整理。
+     （實際發生過：部署途中開頁面，拿到新舊混搭的 JS，
+       calendar.js 呼叫到舊 common.js 沒有的方法，整個初始化中斷。）
+
+     兩道保險：
+       1. window error 攔截：初始化期間任何未捕捉的例外 → 立刻收掉骨架並說明
+       2. 逾時保險：12 秒還沒 render 完成（例如某個請求卡住）→ 一樣收掉並說明
+     月曆一旦成功 render（rendered = true），兩道保險都不再作用。 */
+  var rendered = false;
+  var failsafe = setTimeout(function () {
+    bailOut('月曆載入逾時，請重新整理頁面。');
+  }, 12000);
+
+  function bailOut(msg) {
+    if (rendered) return;
+    rendered = true;                 /* 避免兩道保險互相蓋訊息 */
+    clearTimeout(failsafe);
+    elLoading.hidden = true;
+    elError.hidden = false;
+    elError.innerHTML = msg +
+      '<br><span style="font-size:13px">重新整理即可；若持續發生請洽系辦（分機 2102）。</span>';
+  }
+
+  window.addEventListener('error', function () {
+    bailOut('月曆載入失敗，請重新整理頁面。');
+  });
 
   document.getElementById('site-title').textContent = cfg.SITE_TITLE;
   document.getElementById('site-subtitle').textContent = cfg.SITE_SUBTITLE;
@@ -90,11 +128,17 @@
 
      名冊用 members（公開可讀）而不是 teacher_roster（RLS 擋住，匿名讀不到）。 */
   var MEMBERS = [];
-  var membersReady = A.fetchMembers()
-    .then(function (rows) {
-      MEMBERS = rows.map(function (m) { return m.name; });
-    })
-    .catch(function () { MEMBERS = []; });
+  /* 這裡刻意寫得防禦性一點：這是「附加資訊」，不該讓它拖垮整個月曆。
+     如果 common.js 是舊版（還沒有 fetchMembers）而 calendar.js 是新版，
+     直接呼叫會丟 TypeError，整個 IIFE 中斷 → 月曆永遠不 render、骨架卡住。 */
+  var membersReady = Promise.resolve();
+  try {
+    if (typeof A.fetchMembers === 'function') {
+      membersReady = A.fetchMembers()
+        .then(function (rows) { MEMBERS = rows.map(function (m) { return m.name; }); })
+        .catch(function () { MEMBERS = []; });
+    }
+  } catch (e) { MEMBERS = []; }
 
   var TITLE_MAP = [
     ['系主任', '楊至誠'],        /* 含「各系主任（含機自系主任）」「本系主任」 */
@@ -235,6 +279,8 @@
   function isMobile() { return window.innerWidth < cfg.MOBILE_BREAKPOINT; }
 
   function showError(err) {
+    rendered = true;                 /* 已有明確錯誤畫面，逾時保險不用再插手 */
+    clearTimeout(failsafe);
     elLoading.hidden = true;
     elError.hidden = false;
     if (A.isMissingTable(err)) {
@@ -357,6 +403,8 @@
 
     events: function (info, success, failure) {
       A.fetchEvents(info.start, info.end).then(function (rows) {
+        rendered = true;             /* 月曆已成功渲染，關掉逾時保險 */
+        clearTimeout(failsafe);
         elLoading.hidden = true;
         elEmpty.hidden = rows.length > 0;
         elError.hidden = true;
