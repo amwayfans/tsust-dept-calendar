@@ -760,35 +760,23 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   padding: 0 6px;
 }
 
-/* ---------- 本週的行程：特別凸顯 ---------- */
-/* 本週的行程＝金色外框 ＋ 粗體。
-   為什麼是這兩樣：
-   1. 金色是品牌強調色，六個類別色（藍／綠／紫／橙／紅／灰）都不會用到，
-      不會跟任何一種行程的分類色混淆。
-   2. 整顆框住比只畫一條左側線明顯得多（左側線在縮圖下幾乎看不出來）。
-   3. 框用 outline 不用 border —— FullCalendar 會用行內樣式設 border-color，
-      行內一定蓋掉 CSS。outline 也不佔版面，不會把隔壁的行程擠開。
-   4. 框用 outline 不用 box-shadow —— 今天的行程要用 GSAP 做呼吸光暈
-      （行內 box-shadow），行內樣式會把這裡的 box-shadow 整條蓋掉。
-   （原本金框內側還墊了一圈白圈，那是因為以前事件底色是飽和色、
-     金框壓在紅底上看不清楚。現在底色改成極淡的 tint，白圈已經沒有作用，
-     留著只是多一層看不見的圖層，所以移除。） */
-.fc .fc-event.fc-event-thisweek {
-  position: relative;
-  font-weight: 700;
-  letter-spacing: .1px;
-  outline: 2px solid var(--c-accent);
-  outline-offset: -2px;
-}
-/* 時間型事件前面本來就有小圓點，往右挪一點才不會跟左側色條疊在一起 */
-.fc .fc-event.fc-event-thisweek .fc-event-time { margin-left: 0; }
+/* ---------- 連續多日的長條事件：不特別凸顯 ---------- */
+/* 這裡刻意「沒有」任何樣式。
+   原本本週的行程會套金色外框＋粗體（.fc-event-thisweek），
+   但跨整週的長條事件（例如「授課教師先期評等」10/12–10/18）整條被框住，
+   變成月曆上最搶眼的東西，非常突兀。
+   使用者指定：連續長期的行程不要特別凸顯，要凸顯的是「當天」的事件，
+   用呼吸燈（GSAP 光暈，見 calendar.js 的 animateToday）就好，當週的不用。
+   所以：
+     - 本週外框       → 移除
+     - 當天單日事件   → 呼吸燈（行內 box-shadow，GSAP 驅動）
+     - 連續多日事件   → 什麼都不加（.fc-event-multiday 只是給 animateToday 排除用）
+   保留這個 class 的標記是為了讓 JS 能排除它，不是為了上樣式。 */
 
 /* ---------- 過去的事件：反灰 ---------- */
 /* 已經結束的行程淡出成灰階，眼睛自然會落在還沒發生的事情上。
    用 filter: grayscale 而不是改背景色，是因為事件底色由 FullCalendar
-   用行內樣式指定，CSS 蓋不掉；而且 filter 會連金色外框一起轉灰 ——
-   這樣「金框＝本週還沒過、灰＝已經過去」自動分清楚，
-   不會出現灰底卻配一圈亮金框的怪畫面。
+   用行內樣式指定，CSS 蓋不掉。
    opacity 再壓到 .55，讓它明顯退到背景去。 */
 .fc .fc-event.fc-event-past {
   filter: grayscale(1);

@@ -226,13 +226,10 @@
     return [addDays(t, -dow), addDays(t, 6 - dow)];
   }
 
-  /** 這筆行程有沒有落在本週（含跨日，只要重疊就算） */
-  function isThisWeek(r) {
+  /** 這筆行程是不是「連續多日」的長條（橫跨好幾天） */
+  function isMultiDay(r) {
     if (!r) return false;
-    var w = currentWeekRange();
-    var s = A.tzParts(r.start_at).date;
-    var e = A.tzParts(r.end_at).date;      /* 全天存末日、有時間存結束當下，兩者都含 */
-    return s <= w[1] && e >= w[0];
+    return A.tzParts(r.start_at).date !== A.tzParts(r.end_at).date;
   }
 
   function weekClass(arg) {
@@ -246,14 +243,17 @@
 
   /* ---------- 今天那一格的行程動畫（GSAP） ----------
      先由小放大進場，再輕輕呼吸光暈。
-     跟上面的呼吸字一樣：GSAP 沒載入或「減少動態」就整段略過。 */
+     跟上面的呼吸字一樣：GSAP 沒載入或「減少動態」就整段略過。
+
+     只挑「單日」事件：連續多日的長條（.fc-event-multiday）不參與，
+     因為整條長條一起發光比單日事件搶眼太多，使用者指定不要凸顯它。 */
   function animateToday() {
     if (typeof window.gsap === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     var cell = elCal.querySelector('td[data-date="' + todayStr() + '"]');
     if (!cell) return;
-    var els = cell.querySelectorAll('.fc-event');
+    var els = cell.querySelectorAll('.fc-event:not(.fc-event-multiday)');
     if (!els.length) return;
 
     /* 換月或重新整理時要先把上一輪的補間清掉，
@@ -364,8 +364,10 @@
          用 class 而不是直接改樣式，才能一眼看出是哪條規則在作用。 */
       if (isPast(r)) info.el.classList.add('fc-event-past');
 
-      /* 本週的行程特別凸顯（見 styles.css） */
-      if (isThisWeek(r)) info.el.classList.add('fc-event-thisweek');
+      /* 連續多日的長條事件標記起來（見 styles.css / animateToday）。
+         這種橫跨好幾天的長條不參與「今天」的呼吸凸顯 ——
+         整條長條發光比單日事件搶眼得多，使用者指定不要特別凸顯它。 */
+      if (isMultiDay(r)) info.el.classList.add('fc-event-multiday');
     }
   });
 
