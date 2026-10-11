@@ -219,26 +219,21 @@
     return ev;
   }
 
-  /** 本週（台北今天的週一～週日） */
-  function currentWeekRange() {
-    var t = todayStr();
-    var dow = (new Date(t + 'T00:00:00Z').getUTCDay() + 6) % 7;   /* 0 = 週一 */
-    return [addDays(t, -dow), addDays(t, 6 - dow)];
-  }
-
   /** 這筆行程是不是「連續多日」的長條（橫跨好幾天） */
   function isMultiDay(r) {
     if (!r) return false;
     return A.tzParts(r.start_at).date !== A.tzParts(r.end_at).date;
   }
 
+  /* 日期格的 class。
+     只標「今天」，不標「本週」——
+     使用者指定本週格子不要有底色（原本整列淡藍底太干擾），
+     所以 fc-day-is-week 已移除，currentWeekRange() 一併刪除。 */
   function weekClass(arg) {
-    var r = currentWeekRange(), d = cellDate(arg.date), cls = [];
-    if (d >= r[0] && d <= r[1]) cls.push('fc-day-is-week');
+    var d = cellDate(arg.date);
     /* 自己標「今天」而不是靠 FullCalendar 的 fc-day-today：
        後者依瀏覽器時區，會跟今日行程欄位差一天 */
-    if (d === todayStr()) cls.push('fc-day-is-tpe');
-    return cls;
+    return d === todayStr() ? ['fc-day-is-tpe'] : [];
   }
 
   /* ---------- 今天那一格的行程動畫（GSAP） ----------

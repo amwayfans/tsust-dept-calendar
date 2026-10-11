@@ -728,36 +728,24 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
    所以整格都要看起來可以點。 */
 .fc .fc-daygrid-day { cursor: pointer; }
 
-/* ---------- 本週與今天：從整片月曆裡跳出來 ---------- */
-/* 本週（今天所在的週一～週日）整列淡藍底 + 表頭加深，
-   這樣一眼就知道「現在在哪一週」，不用去數日期 */
-.fc .fc-day-is-week { background: #e4eef9; }
-.fc .fc-day-is-week .fc-daygrid-day-number { color: var(--c-primary); font-weight: 600; }
-/* 註：表頭（週一…週日）不隨週次變動，上色等於七欄全上色、沒有辨識效果，
-   所以「本週」只用格子底色表現，不要再對 .fc-col-header-cell 動手。 */
-
-/* 今天：再加一圈海軍藍外框，是整頁最顯眼的一格。
+/* ---------- 今天：只留淡藍底 ---------- */
+/* 使用者指定「本週格子底色不用、當天日期的黑色外框也不用」。
+   所以這裡刻意只剩下底色：
+     - 本週整列淡藍底（fc-day-is-week）      → 移除
+     - 今天格子的內縮海軍藍外框（box-shadow）→ 移除
+     - 日期數字的深藍圓形底（pill）          → 移除
+   保留淡藍底是為了還看得出「今天是哪一格」，但不再搶眼。
    .fc-day-today 由 FullCalendar 依瀏覽器時區標記；
    .fc-day-is-tpe 由我們依台北日期標記 —— 兩者都上色，
    台灣的使用者會看到同一格，時區跑掉時也不會兩個「今天」打架。 */
 .fc .fc-day-today,
 .fc .fc-day-is-tpe {
   background: #cfe1f8 !important;
-  box-shadow: inset 0 0 0 2px var(--c-primary);
 }
 .fc .fc-day-today .fc-daygrid-day-number,
 .fc .fc-day-is-tpe .fc-daygrid-day-number {
-  color: var(--c-primary-fg);
+  color: var(--c-primary);
   font-weight: 700;
-  background: var(--c-primary);
-  border-radius: 999px;
-  min-width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 3px 5px;
-  padding: 0 6px;
 }
 
 /* ---------- 連續多日的長條事件：不特別凸顯 ---------- */
