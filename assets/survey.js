@@ -177,6 +177,34 @@
          但已展開的那份（例如剛送出）維持展開，不要突然縮回去。 */
       elWrap.appendChild(buildSurveyCard(s, { collapsible: true, open: s.id === expandedId }));
     });
+
+    /* 進場動畫 + 把「還沒填」的那幾份用呼吸光暈突顯，讓老師第一眼就看到。
+       已填寫的不閃（不用再催），點開後也會停（使用者的動作優先）。 */
+    var cards = [].slice.call(elWrap.children);
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var todo = cards.filter(function (c, i) { return !myBySurvey[surveys[i].id]; });
+
+    if (window.gsap && !reduce) {
+      gsap.from(cards, { opacity: 0, y: 12, duration: .4, stagger: .07,
+                         ease: 'power2.out', clearProps: 'opacity,transform' });
+      todo.forEach(function (c, i) {
+        gsap.fromTo(c, { boxShadow: '0 0 0 0 rgba(37,99,235,0)' },
+          { boxShadow: '0 0 0 7px rgba(37,99,235,.16)', duration: 1.15, repeat: 5,
+            yoyo: true, ease: 'sine.inOut', delay: .45 + i * .12 });
+      });
+    } else {
+      /* 沒有 GSAP、或使用者要求減少動態 → 改用靜態外框，一樣看得出要填哪份 */
+      todo.forEach(function (c) { c.classList.add('sv-attn'); });
+    }
+  }
+
+  /* 點開之後把光暈收掉：使用者已經看到了，不必一直閃 */
+  function stopAttention(card) {
+    if (window.gsap) {
+      gsap.killTweensOf(card);
+      gsap.set(card, { clearProps: 'boxShadow' });
+    }
+    card.classList.remove('sv-attn');
   }
 
   /* o.collapsible：同時有多份調查時用「手風琴」——平常只看到標題與未填／已填，
@@ -303,6 +331,7 @@
         var willOpen = body.hidden;
         body.hidden = !willOpen;
         expandedId = willOpen ? s.id : null;
+        if (willOpen) stopAttention(card);
         fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         fold.querySelector('.sv-chev').textContent = willOpen ? '▾' : '▸';
         /* 展開才載入統計（收著的時候不必查） */
@@ -702,6 +731,7 @@
       btn.textContent = '建立並開放';
       $('new-survey-form').reset();
       $('wrap-max').hidden = true;
+      closeNewModal();
       A.toast('已建立並開放填寫（' + opts.length + ' 個選項）');
       loadAdminList();
       return loadTeacherView();
@@ -719,14 +749,23 @@
     A.toast('已重新載入');
   });
 
-  /* 「建立新調查」預設收起來，要用的時候再展開 —— 讓作答頁回歸問卷本質 */
-  $('btn-new-toggle').addEventListener('click', function () {
-    var wrap = $('new-survey-wrap');
-    var willOpen = wrap.hidden;
-    wrap.hidden = !willOpen;
-    this.textContent = willOpen ? '收起 ▴' : '展開 ▾';
-    this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-    if (willOpen) { $('ns-title').focus(); }
+  /* 「建立新調查」平常只是右下角一顆 ＋，點了才開彈窗 —— 讓作答頁回歸問卷本質 */
+  function openNewModal() {
+    $('new-modal').classList.add('show');
+    setTimeout(function () { $('ns-title').focus(); }, 80);
+  }
+  function closeNewModal() {
+    $('new-modal').classList.remove('show');
+    $('ns-error').hidden = true;
+  }
+
+  $('fab-new').addEventListener('click', openNewModal);
+  $('ns-cancel').addEventListener('click', closeNewModal);
+  $('new-modal').addEventListener('click', function (e) {
+    if (e.target === this) closeNewModal();          /* 點背景關閉 */
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('new-modal').classList.contains('show')) closeNewModal();
   });
 
   /* ---------- 統計與匯出 ---------- */

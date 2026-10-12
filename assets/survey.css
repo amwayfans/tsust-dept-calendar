@@ -325,3 +325,30 @@
 
 .sv-badge.is-open { background: #DBEAFE; color: #1E40AF; }   /* 填寫中 */
 .sv-badge.is-draft { background: #E5E7EB; color: #374151; }  /* 草稿 */
+
+/* ============================================================
+   浮動「建立新調查」鈕（只有管理員看得到）
+   ============================================================ */
+.fab {
+  position: fixed; right: 18px; bottom: 22px; z-index: 40;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 18px; border: 0; border-radius: 999px;
+  background: var(--c-primary); color: #fff;
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, .35);
+  cursor: pointer; transition: transform .12s ease, filter .12s ease;
+}
+.fab:hover { filter: brightness(1.08); }
+.fab:active { transform: translateY(1px); }
+.fab:focus-visible { outline: 3px solid rgba(37, 99, 235, .35); outline-offset: 2px; }
+.fab-plus { font-size: 19px; line-height: 1; }
+
+@media (max-width: 560px) {
+  /* 手機只留 ＋（圓形），不要擋住內容 */
+  .fab-text { display: none; }
+  .fab { padding: 15px; border-radius: 50%; }
+  .fab-plus { font-size: 23px; }
+}
+
+/* 沒有 GSAP 或使用者要求減少動態時的靜態突顯 */
+.card.sv-attn { box-shadow: 0 0 0 4px rgba(37, 99, 235, .16); }

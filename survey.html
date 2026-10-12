@@ -10,7 +10,8 @@
 <link rel="stylesheet" href="assets/styles.css">
 <link rel="stylesheet" href="assets/records.css">
 <link rel="stylesheet" href="assets/survey.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -107,20 +108,16 @@
   <!-- ===================== 管理員區 ===================== -->
   <section id="admin-section" hidden>
 
-    <div class="card" data-sec="purple">
-      <div class="toolbar">
-        <h2 style="margin:0">建立新調查</h2>
-        <span class="spacer"></span>
-        <button class="btn" type="button" id="btn-new-toggle"
-                aria-expanded="false" aria-controls="new-survey-wrap">展開 ▾</button>
-      </div>
-      <p class="hint" style="margin-top:10px">
-        平常收起來，不佔用老師作答的畫面。要新增臨時調查時再展開。
-      </p>
+    <!-- 建立新調查：平常只是右下角一顆 ＋，要用的時候點開填寫（只有管理員看得到） -->
+    <button class="fab" type="button" id="fab-new" title="建立新調查" aria-label="建立新調查">
+      <span class="fab-plus" aria-hidden="true">＋</span>
+      <span class="fab-text">建立新調查</span>
+    </button>
 
-      <!-- 預設隱藏：問卷頁該讓作答當主角，管理工具收起來就好 -->
-      <div id="new-survey-wrap" hidden>
-      <form id="new-survey-form" novalidate>
+    <div class="modal" id="new-modal" role="dialog" aria-modal="true" aria-labelledby="new-modal-title">
+      <div class="modal-box modal-box-form">
+        <h3 id="new-modal-title">建立新調查</h3>
+        <form id="new-survey-form" novalidate>
         <div class="fblock" data-sec="blue">
           <div class="fblock-title">調查主題</div>
           <div class="field">
@@ -185,11 +182,12 @@
           </div>
         </div>
 
-        <div class="field-error" id="ns-error" hidden></div>
-        <div class="modal-actions">
-          <button class="btn btn-primary" type="submit" id="ns-save">建立並開放</button>
-        </div>
-      </form>
+          <div class="field-error" id="ns-error" hidden></div>
+          <div class="modal-actions">
+            <button class="btn" type="button" id="ns-cancel">取消</button>
+            <button class="btn btn-primary" type="submit" id="ns-save">建立並開放</button>
+          </div>
+        </form>
       </div>
     </div>
 
