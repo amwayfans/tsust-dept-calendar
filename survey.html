@@ -193,30 +193,41 @@
       </div>
     </div>
 
-    <div class="card" data-sec="blue">
-      <div class="toolbar">
-        <h2 style="margin:0">調查管理</h2>
-        <span class="hint" style="margin-left:8px">（進行中）</span>
+    <!-- 調查管理：預設收起，以「每一張調查表」為單位管理 -->
+    <div class="card sec-card" data-sec="blue">
+      <button type="button" class="sec-toggle" id="admin-toggle" aria-expanded="false">
+        <span class="sec-chev">▸</span>
+        <span class="sec-title">調查管理</span>
+        <span class="hint sec-note">（進行中）</span>
         <span class="spacer"></span>
-        <button class="btn" id="btn-refresh" type="button">重新載入</button>
+        <span class="hint" id="admin-count"></span>
+      </button>
+      <div class="sec-body" id="admin-body" hidden>
+        <div class="toolbar sec-toolbar">
+          <span class="spacer"></span>
+          <button class="btn" id="btn-refresh" type="button">重新載入</button>
+        </div>
+        <ul class="ev-list" id="admin-list"></ul>
+        <div class="empty" id="admin-empty" hidden>目前沒有進行中的調查</div>
+        <div class="error-box" id="admin-error" hidden></div>
       </div>
-      <ul class="ev-list" id="admin-list"></ul>
-      <div class="empty" id="admin-empty" hidden>目前沒有進行中的調查</div>
-      <div class="error-box" id="admin-error" hidden></div>
     </div>
 
     <!-- 歷史表單區：收回來的調查都在這裡，可查詢、列印、重新開放 -->
-    <div class="card" data-sec="gold" id="history-card">
-      <div class="toolbar">
-        <h2 style="margin:0">歷史表單區</h2>
+    <div class="card sec-card" data-sec="gold" id="history-card">
+      <button type="button" class="sec-toggle" id="history-toggle" aria-expanded="false">
+        <span class="sec-chev">▸</span>
+        <span class="sec-title">歷史表單區</span>
         <span class="spacer"></span>
         <span class="hint" id="history-count"></span>
+      </button>
+      <div class="sec-body" id="history-body" hidden>
+        <p class="hint" style="margin-top:0">
+          已收回的調查會放在這裡，隨時可以查詢各項結果、列印存檔，或重新開放填寫。
+        </p>
+        <ul class="ev-list" id="history-list"></ul>
+        <div class="empty" id="history-empty" hidden>還沒有收回任何調查</div>
       </div>
-      <p class="hint" style="margin-top:10px">
-        已收回的調查會放在這裡，隨時可以查詢各項結果、列印存檔，或重新開放填寫。
-      </p>
-      <ul class="ev-list" id="history-list"></ul>
-      <div class="empty" id="history-empty" hidden>還沒有收回任何調查</div>
     </div>
 
     <!-- 匯出預覽（給系主任參考） -->

@@ -288,3 +288,40 @@
 /* 收合後的內容區要真的消失（不能只靠 hidden 屬性，會被 display 規則蓋掉） */
 .sv-body { padding: 0 16px 16px; }
 .sv-body[hidden] { display: none; }
+
+/* ============================================================
+   管理區塊（調查管理／歷史表單區）本身的收合
+   ============================================================ */
+.sec-card { padding: 0; overflow: hidden; }
+
+.sec-toggle {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 15px 16px;
+  background: none; border: 0; cursor: pointer;
+  text-align: left; font-family: inherit; color: inherit;
+}
+.sec-toggle:hover { background: var(--c-surface-2); }
+.sec-toggle:focus-visible { outline: 2px solid var(--c-primary); outline-offset: -2px; }
+.sec-chev { color: var(--c-primary); font-size: 13px; line-height: 1; flex: 0 0 auto; }
+.sec-title { font-size: 17px; font-weight: 700; color: var(--c-text); }
+.sec-note { margin-left: -4px; }
+.sec-body { padding: 0 16px 16px; }
+.sec-body[hidden] { display: none; }
+.sec-toolbar { margin-top: 0; }
+
+/* ============================================================
+   管理列表：每一張調查表自己一列手風琴
+   ============================================================ */
+.ev-list li.ev-item {
+  display: block; padding: 0; overflow: hidden;
+  border-radius: 10px; border: 1px solid var(--c-border);
+}
+.ev-item + .ev-item { margin-top: 8px; }
+.ev-head { padding: 12px 14px; }
+.ev-head .ev-title { font-size: 15px; font-weight: 700; margin: 0; }
+.ev-head .ev-meta { font-size: 12px; }
+.ev-item .sv-body { padding: 0 14px 14px; }
+.ev-item .ev-actions { flex-wrap: wrap; }
+
+.sv-badge.is-open { background: #DBEAFE; color: #1E40AF; }   /* 填寫中 */
+.sv-badge.is-draft { background: #E5E7EB; color: #374151; }  /* 草稿 */

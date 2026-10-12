@@ -23,6 +23,7 @@
   var elWrap = $('surveys-wrap'), elNoSurvey = $('no-survey'), elMyError = $('my-error');
   var elAdminList = $('admin-list'), elAdminEmpty = $('admin-empty'), elAdminError = $('admin-error');
   var elHistList = $('history-list'), elHistEmpty = $('history-empty'), elHistCount = $('history-count');
+  var elAdminCount = $('admin-count');
   var elExportCard = $('export-card'), elExportBody = $('export-body'), elExportTitle = $('export-title');
   var elIntro = $('survey-intro');
 
@@ -32,6 +33,7 @@
   var myBySurvey = {};      // survey_id -> response
   var allSurveys = [];      // 管理員用：全部調查
   var fillCount = {};       // 管理員用：每份調查已填幾人
+  var expandedId = null;    // 老師端：目前展開的那一份（送出後維持展開，不突然縮回去）
   var exportSurvey = null;  // 目前匯出中的調查
 
   /* ============================================================
@@ -155,6 +157,9 @@
       .catch(showError);
   }
 
+  wireSection('admin-toggle', 'admin-body');
+  wireSection('history-toggle', 'history-body');
+
   function renderSurveys() {
     elWrap.innerHTML = '';
     var pending = surveys.filter(function (s) { return !myBySurvey[s.id]; }).length;
@@ -168,11 +173,9 @@
     }
 
     surveys.forEach(function (s) {
-      elWrap.appendChild(buildSurveyCard(s, {
-        collapsible: many,
-        /* 只有一份就不用多點一下；多份時全部收起來，進站畫面才乾淨 */
-        open: !many
-      }));
+      /* 不論幾份，一律預設收起 —— 進站先看到清單，要填哪份再點開。
+         但已展開的那份（例如剛送出）維持展開，不要突然縮回去。 */
+      elWrap.appendChild(buildSurveyCard(s, { collapsible: true, open: s.id === expandedId }));
     });
   }
 
@@ -299,6 +302,7 @@
         var body = card.querySelector('.sv-body');
         var willOpen = body.hidden;
         body.hidden = !willOpen;
+        expandedId = willOpen ? s.id : null;
         fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         fold.querySelector('.sv-chev').textContent = willOpen ? '▾' : '▸';
         /* 展開才載入統計（收著的時候不必查） */
@@ -412,6 +416,18 @@
       });
   }
 
+  /* 管理區塊本身可收合：預設收起，要用再展開 */
+  function wireSection(toggleId, bodyId) {
+    var t = $(toggleId), b = $(bodyId);
+    if (!t || !b) return;
+    t.addEventListener('click', function () {
+      var willOpen = b.hidden;
+      b.hidden = !willOpen;
+      t.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      t.querySelector('.sec-chev').textContent = willOpen ? '▾' : '▸';
+    });
+  }
+
   function renderAdminList() {
     /* 進行中（草稿／填寫中）放「調查管理」；已收回的放「歷史表單區」 */
     var live = allSurveys.filter(function (s) { return s.status !== 'closed'; });
@@ -419,6 +435,7 @@
 
     elAdminList.innerHTML = '';
     elAdminEmpty.hidden = !!live.length;
+    elAdminCount.textContent = live.length ? ('共 ' + live.length + ' 份') : '';
     live.forEach(function (s) { elAdminList.appendChild(surveyRow(s, false)); });
 
     elHistList.innerHTML = '';
@@ -430,16 +447,23 @@
   /* 管理列表的一列：進行中與歷史共用，差在動作按鈕 */
   function surveyRow(s, isHistory) {
     var li = document.createElement('li');
+    li.className = 'ev-item';
     var status = s.status === 'open' ? '填寫中' : (s.status === 'closed' ? '已收回' : '草稿');
+    var badgeCls = s.status === 'open' ? 'is-open' : (s.status === 'closed' ? 'is-done' : 'is-draft');
     var filled = fillCount[s.id];
-    var progress = (filled === undefined) ? '還沒有人填寫　·　'
-                                          : ('已填 ' + filled + ' 人　·　');
-    li.innerHTML = '<div class="ev-main"><div class="ev-title">' + A.esc(s.title)
-      + ' <span class="hint">（' + status + '）</span></div>'
-      + '<div class="ev-meta">' + progress
-      + (s.deadline ? '截止：' + A.tzParts(s.deadline).date + ' ' + A.tzParts(s.deadline).time + '　·　' : '')
-      + (s.description ? A.esc(s.description) : '')
-      + '</div></div>'
+    var progress = (filled === undefined) ? '還沒有人填寫' : ('已填 ' + filled + ' 人');
+    var metaTxt = progress
+      + (s.deadline ? '　·　截止：' + A.tzParts(s.deadline).date + ' ' + A.tzParts(s.deadline).time : '');
+    li.innerHTML = '<button type="button" class="sv-head ev-head" data-act="fold-row" aria-expanded="false">'
+      + '<span class="sv-chev">▸</span>'
+      + '<span class="sv-head-body">'
+      + '<span class="ev-title">' + A.esc(s.title) + '</span>'
+      + '<span class="ev-meta">' + A.esc(metaTxt) + '</span>'
+      + '</span>'
+      + '<span class="sv-badge ' + badgeCls + '">' + status + '</span>'
+      + '</button>'
+      + '<div class="sv-body" hidden>'
+      + (s.description ? '<p class="hint" style="margin-top:0">' + A.esc(s.description) + '</p>' : '')
       + '<div class="ev-actions">'
       + '<button class="btn" data-act="stat" data-sid="' + s.id + '">'
       + (isHistory ? '檢視／列印' : '統計／匯出') + '</button>'
@@ -451,7 +475,14 @@
       + ' aria-expanded="false" title="其他操作">⋯</button>'
       + '<button class="btn btn-danger" data-act="del" data-sid="' + s.id + '" hidden'
       + ' title="刪除整場調查（含所有人的作答）">刪除這場調查</button>'
-      + '</div>';
+      + '</div></div>';
+    li.querySelector('[data-act="fold-row"]').addEventListener('click', function () {
+      var body = li.querySelector('.sv-body');
+      var willOpen = body.hidden;
+      body.hidden = !willOpen;
+      this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      this.querySelector('.sv-chev').textContent = willOpen ? '▾' : '▸';
+    });
     li.querySelector('[data-act="stat"]').addEventListener('click', function () { showExport(s); });
     if (isHistory) {
       li.querySelector('[data-act="reopen"]').addEventListener('click', function () { reopenSurvey(s); });
