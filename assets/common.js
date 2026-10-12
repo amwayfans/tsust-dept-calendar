@@ -378,7 +378,9 @@
      桌機／筆電沒有 touch 事件，完全不受影響；
      管理後台這類不在頁籤清單裡的頁面也不啟用。 */
   (function () {
-    var TABS = ['index.html', 'records.html'];
+    /* ⚠️ 新增頁籤時一定要把檔名加進來，否則那一頁不會有滑動切換。
+       順序要跟畫面上的頁籤一致（行事曆 → 公差/招生記錄 → 調查專區）。 */
+    var TABS = ['index.html', 'records.html', 'survey.html'];
     var here = location.pathname.split('/').pop() || 'index.html';
     var idx = TABS.indexOf(here);
     if (idx === -1) return;

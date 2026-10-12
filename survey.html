@@ -232,6 +232,12 @@
   <div class="modal-box">
     <h3 id="confirm-title">確定要刪除嗎？</h3>
     <p id="confirm-text">—</p>
+    <!-- 高風險操作才顯示：要照打一次名稱才能按確定 -->
+    <div id="confirm-typed" hidden>
+      <label for="confirm-input">請輸入「<b id="confirm-expect"></b>」以確認：</label>
+      <input type="text" id="confirm-input" autocomplete="off" autocapitalize="off"
+             spellcheck="false" placeholder="照上面文字輸入">
+    </div>
     <div class="modal-actions">
       <button class="btn" type="button" id="c-no">取消</button>
       <button class="btn btn-danger" type="button" id="c-yes">確定刪除</button>

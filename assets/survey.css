@@ -240,3 +240,16 @@
 .sv-options + .field + .field-error + .modal-actions .btn-danger {
   margin-left: auto;
 }
+
+/* 高風險操作：要照打名稱才能確定 */
+#confirm-typed { margin: 0 0 14px; }
+#confirm-typed[hidden] { display: none; }
+#confirm-typed label { display: block; font-size: 13px; color: var(--c-text-2); margin-bottom: 6px; }
+#confirm-typed b { color: #B91C1C; }
+#confirm-typed input {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--c-line);
+  border-radius: 8px; font-size: 15px; font-family: inherit;
+}
+#confirm-typed input:focus { outline: 2px solid var(--c-primary); outline-offset: 1px; }
+/* 確定鈕在還沒照打之前是灰的，讓人一眼看出「還不能按」 */
+#c-yes:disabled { opacity: .45; cursor: not-allowed; }

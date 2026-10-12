@@ -369,11 +369,21 @@
         + '<button class="btn" data-act="stat" data-sid="' + s.id + '">統計／匯出</button>'
         + '<button class="btn" data-act="toggle" data-sid="' + s.id + '">'
         + (s.status === 'open' ? '關閉' : '開放') + '</button>'
-        + '<button class="btn btn-danger" data-act="del" data-sid="' + s.id + '"'
+        /* 刪除是破壞性動作：預設藏起來，要按「⋯」才會出現 —— 這顆鈕太容易誤觸了 */
+        + '<button class="btn btn-ghost" data-act="more" data-sid="' + s.id + '"'
+        + ' aria-expanded="false" title="其他操作">⋯</button>'
+        + '<button class="btn btn-danger" data-act="del" data-sid="' + s.id + '" hidden'
         + ' title="刪除整場調查（含所有人的作答）">刪除這場調查</button>'
         + '</div>';
       li.querySelector('[data-act="stat"]').addEventListener('click', function () { showExport(s); });
       li.querySelector('[data-act="toggle"]').addEventListener('click', function () { toggleSurvey(s); });
+      li.querySelector('[data-act="more"]').addEventListener('click', function () {
+        var d = li.querySelector('[data-act="del"]');
+        var willShow = d.hidden;
+        d.hidden = !willShow;
+        this.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+        this.textContent = willShow ? '收起' : '⋯';
+      });
       li.querySelector('[data-act="del"]').addEventListener('click', function () { askDelete(s); });
       elAdminList.appendChild(li);
     });
@@ -396,16 +406,37 @@
         視窗永遠不會出現，症狀就是「按了刪除完全沒反應」。
         以後新增任何 modal 一律用 'show'。
      ------------------------------------------------------------ */
-  function askConfirm(title, text, onOk) {
+  function askConfirm(title, text, onOk, opts) {
+    opts = opts || {};
     $('confirm-title').textContent = title;
     $('confirm-text').textContent = text;   /* 用 textContent，換行靠 CSS 的 pre-line */
     var modal = $('confirm');
     var yes = $('c-yes');
     var no = $('c-no');
+    var typed = $('confirm-typed');
+    var input = $('confirm-input');
+
+    /* 高風險操作（例如刪掉整場調查）→ 要求照打一次名稱，確定鈕才會亮。
+       在手機上誤觸的機率遠高於桌機，「多一步」比「跳警告」有效得多。 */
+    if (opts.typeToConfirm) {
+      $('confirm-expect').textContent = opts.typeToConfirm;
+      input.value = '';
+      yes.disabled = true;
+      input.oninput = function () {
+        yes.disabled = input.value.trim() !== opts.typeToConfirm;
+      };
+      typed.hidden = false;
+    } else {
+      typed.hidden = true;
+      yes.disabled = false;
+      input.oninput = null;
+    }
+
     function close(ok) {
       modal.classList.remove('show');
       yes.removeEventListener('click', onYes);
       no.removeEventListener('click', onNo);
+      input.oninput = null;
       if (ok) onOk();
     }
     function onYes() { close(true); }
@@ -414,17 +445,17 @@
     no.addEventListener('click', onNo);
     modal.classList.add('show');
     /* 刪除無法復原 → 焦點放在「取消」，不要讓人順手按 Enter 就刪掉 */
-    setTimeout(function () { no.focus(); }, 60);
+    setTimeout(function () { (opts.typeToConfirm ? input : no).focus(); }, 60);
   }
 
   function askDelete(s) {
     askConfirm(
-      '確定要刪除這場調查嗎？',
+      '刪除這場調查（無法復原）',
       '「' + s.title + '」會整場刪除，包括：\n'
         + '‧ 底下所有選項\n'
         + '‧ 所有老師的作答紀錄\n\n'
-        + '刪除後無法復原，也無法從系統救回。\n\n'
-        + '如果只是想停止收件，請改按「關閉」——\n'
+        + '⚠️ 刪除後無法復原，也無法從系統救回。\n\n'
+        + '如果只是想停止收件，請按「取消」，改按列表上的「關閉」——\n'
         + '資料會完整保留，之後還能重新開放。',
       function () {
         sb.from('surveys').delete().eq('id', s.id).then(function (res) {
@@ -434,7 +465,8 @@
           loadAdminList();
           loadTeacherView().catch(function () {});
         });
-      });
+      },
+      { typeToConfirm: s.title });   /* 要照打一次調查名稱才能刪 */
   }
 
   /* 清除自己的作答（整筆刪除，回到「尚未填寫」） */
