@@ -22,6 +22,7 @@
   var elBooting = $('booting');
   var elWrap = $('surveys-wrap'), elNoSurvey = $('no-survey'), elMyError = $('my-error');
   var elAdminList = $('admin-list'), elAdminEmpty = $('admin-empty'), elAdminError = $('admin-error');
+  var elHistList = $('history-list'), elHistEmpty = $('history-empty'), elHistCount = $('history-count');
   var elExportCard = $('export-card'), elExportBody = $('export-body'), elExportTitle = $('export-title');
   var elIntro = $('survey-intro');
 
@@ -30,6 +31,7 @@
   var optionsBySurvey = {}; // survey_id -> [options]
   var myBySurvey = {};      // survey_id -> response
   var allSurveys = [];      // 管理員用：全部調查
+  var fillCount = {};       // 管理員用：每份調查已填幾人
   var exportSurvey = null;  // 目前匯出中的調查
 
   /* ============================================================
@@ -155,12 +157,29 @@
 
   function renderSurveys() {
     elWrap.innerHTML = '';
+    var pending = surveys.filter(function (s) { return !myBySurvey[s.id]; }).length;
+    var many = surveys.length > 1;
+
+    if (many) {
+      elIntro.textContent = '目前有 ' + surveys.length + ' 份調查，其中 '
+        + pending + ' 份還沒填。點標題即可展開填寫。';
+    } else {
+      elIntro.textContent = '請勾選您的意願，送出後可以再修改。';
+    }
+
     surveys.forEach(function (s) {
-      elWrap.appendChild(buildSurveyCard(s));
+      elWrap.appendChild(buildSurveyCard(s, {
+        collapsible: many,
+        /* 只有一份就不用多點一下；多份時全部收起來，進站畫面才乾淨 */
+        open: !many
+      }));
     });
   }
 
-  function buildSurveyCard(s) {
+  /* o.collapsible：同時有多份調查時用「手風琴」——平常只看到標題與未填／已填，
+     o.open：展開狀態。只有一份時不需要多點一下，直接展開。 */
+  function buildSurveyCard(s, o) {
+    o = o || {};
     var opts = optionsBySurvey[s.id] || [];
     var mine = myBySurvey[s.id] || null;
     var chosen = (mine && mine.option_ids) || [];
@@ -170,10 +189,7 @@
     var card = document.createElement('div');
     card.className = 'card';
     card.setAttribute('data-sec', closed ? 'other' : 'blue');
-
-    var h = '';
-    h += '<h2 style="margin-top:0">' + A.esc(s.title) + '</h2>';
-    if (s.description) h += '<p class="hint" style="margin-top:-6px">' + A.esc(s.description) + '</p>';
+    if (o.collapsible) card.className += ' sv-accordion';
 
     var meta = [];
     meta.push(s.multi ? (s.max_choices ? '可複選，最多 ' + s.max_choices + ' 個' : '可複選，不限數量') : '單選');
@@ -181,7 +197,30 @@
     meta.push(mine ? '已於 ' + A.tzParts(mine.updated_at).date + ' 送出' : '尚未填寫');
     if (closed) meta.push('已截止');
     else if (locked) meta.push('送出後鎖定');
-    h += '<p class="hint" style="margin:0 0 12px">' + A.esc(meta.join('　·　')) + '</p>';
+
+    var h = '';
+    if (o.collapsible) {
+      /* 標題列本身就是一顆按鈕：一眼看到有哪幾份、哪幾份還沒填 */
+      h += '<button type="button" class="sv-head" data-act="fold" data-sid="' + s.id + '"'
+        + ' aria-expanded="' + (o.open ? 'true' : 'false') + '">'
+        + '<span class="sv-chev">' + (o.open ? '▾' : '▸') + '</span>'
+        + '<span class="sv-head-body">'
+        + '<span class="sv-head-title">' + A.esc(s.title) + '</span>'
+        + '<span class="sv-head-meta">' + A.esc(meta.join('　·　')) + '</span>'
+        + '</span>'
+        + '<span class="sv-badge ' + (mine ? 'is-done' : 'is-todo') + '">'
+        + (mine ? '已填寫' : '未填寫') + '</span>'
+        + '</button>';
+    } else {
+      h += '<h2 style="margin-top:0">' + A.esc(s.title) + '</h2>';
+      if (s.description) h += '<p class="hint" style="margin-top:-6px">' + A.esc(s.description) + '</p>';
+      h += '<p class="hint" style="margin:0 0 12px">' + A.esc(meta.join('　·　')) + '</p>';
+    }
+
+    h += '<div class="sv-body"' + (o.collapsible && !o.open ? ' hidden' : '') + '>';
+    if (o.collapsible && s.description) {
+      h += '<p class="hint" style="margin-top:0">' + A.esc(s.description) + '</p>';
+    }
 
     /* 已送出過 → 明確顯示「您目前選了什麼」，並告訴老師可以回去改。
        使用者特別要求：老師看完統計後要能變更選項，所以這一段不能省。 */
@@ -235,6 +274,7 @@
       + '</div>';
 
     h += '<div class="sv-stats" id="stats-' + s.id + '" hidden></div>';
+    h += '</div>';   /* .sv-body 結束 */
     card.innerHTML = h;
 
     /* 勾選時即時檢查數量上限 */
@@ -252,6 +292,19 @@
         });
       });
     });
+
+    var fold = card.querySelector('[data-act="fold"]');
+    if (fold) {
+      fold.addEventListener('click', function () {
+        var body = card.querySelector('.sv-body');
+        var willOpen = body.hidden;
+        body.hidden = !willOpen;
+        fold.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        fold.querySelector('.sv-chev').textContent = willOpen ? '▾' : '▸';
+        /* 展開才載入統計（收著的時候不必查） */
+        if (willOpen && myBySurvey[s.id] && s.show_stats) loadStats(s.id);
+      });
+    }
 
     card.querySelector('[data-act="save"]').addEventListener('click', function () {
       saveResponse(s, card);
@@ -338,12 +391,19 @@
    * ============================================================ */
   function loadAdminList() {
     elAdminError.hidden = true;
-    return sb.from('surveys').select('*')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false })
-      .then(function (res) {
-        if (res.error) throw res.error;
-        allSurveys = res.data || [];
+    return Promise.all([
+      sb.from('surveys').select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: false }),
+      /* 每份調查「已填幾人」——列表上一眼就能看出進度 */
+      sb.from('survey_responses').select('survey_id,profile_id')
+    ]).then(function (rs) {
+        if (rs[0].error) throw rs[0].error;
+        allSurveys = rs[0].data || [];
+        fillCount = {};
+        (rs[1].data || []).forEach(function (r) {
+          fillCount[r.survey_id] = (fillCount[r.survey_id] || 0) + 1;
+        });
         renderAdminList();
       })
       .catch(function (err) {
@@ -353,47 +413,88 @@
   }
 
   function renderAdminList() {
-    elAdminList.innerHTML = '';
-    if (!allSurveys.length) { elAdminEmpty.hidden = false; return; }
-    elAdminEmpty.hidden = true;
+    /* 進行中（草稿／填寫中）放「調查管理」；已收回的放「歷史表單區」 */
+    var live = allSurveys.filter(function (s) { return s.status !== 'closed'; });
+    var past = allSurveys.filter(function (s) { return s.status === 'closed'; });
 
-    allSurveys.forEach(function (s) {
-      var li = document.createElement('li');
-      var status = s.status === 'open' ? '開放中' : (s.status === 'closed' ? '已關閉' : '草稿');
-      li.innerHTML = '<div class="ev-main"><div class="ev-title">' + A.esc(s.title)
-        + ' <span class="hint">（' + status + '）</span></div>'
-        + '<div class="ev-meta">' + (s.description ? A.esc(s.description) : '')
-        + (s.deadline ? '　截止：' + A.tzParts(s.deadline).date + ' ' + A.tzParts(s.deadline).time : '')
-        + '</div></div>'
-        + '<div class="ev-actions">'
-        + '<button class="btn" data-act="stat" data-sid="' + s.id + '">統計／匯出</button>'
-        + '<button class="btn" data-act="toggle" data-sid="' + s.id + '">'
-        + (s.status === 'open' ? '關閉' : '開放') + '</button>'
-        /* 刪除是破壞性動作：預設藏起來，要按「⋯」才會出現 —— 這顆鈕太容易誤觸了 */
-        + '<button class="btn btn-ghost" data-act="more" data-sid="' + s.id + '"'
-        + ' aria-expanded="false" title="其他操作">⋯</button>'
-        + '<button class="btn btn-danger" data-act="del" data-sid="' + s.id + '" hidden'
-        + ' title="刪除整場調查（含所有人的作答）">刪除這場調查</button>'
-        + '</div>';
-      li.querySelector('[data-act="stat"]').addEventListener('click', function () { showExport(s); });
-      li.querySelector('[data-act="toggle"]').addEventListener('click', function () { toggleSurvey(s); });
-      li.querySelector('[data-act="more"]').addEventListener('click', function () {
-        var d = li.querySelector('[data-act="del"]');
-        var willShow = d.hidden;
-        d.hidden = !willShow;
-        this.setAttribute('aria-expanded', willShow ? 'true' : 'false');
-        this.textContent = willShow ? '收起' : '⋯';
-      });
-      li.querySelector('[data-act="del"]').addEventListener('click', function () { askDelete(s); });
-      elAdminList.appendChild(li);
-    });
+    elAdminList.innerHTML = '';
+    elAdminEmpty.hidden = !!live.length;
+    live.forEach(function (s) { elAdminList.appendChild(surveyRow(s, false)); });
+
+    elHistList.innerHTML = '';
+    elHistEmpty.hidden = !!past.length;
+    elHistCount.textContent = past.length ? ('共 ' + past.length + ' 份') : '';
+    past.forEach(function (s) { elHistList.appendChild(surveyRow(s, true)); });
   }
 
-  function toggleSurvey(s) {
-    var next = s.status === 'open' ? 'closed' : 'open';
-    sb.from('surveys').update({ status: next }).eq('id', s.id).then(function (res) {
-      if (res.error) { A.toast('更新失敗：' + res.error.message); return; }
-      A.toast(next === 'open' ? '已開放填寫' : '已關閉');
+  /* 管理列表的一列：進行中與歷史共用，差在動作按鈕 */
+  function surveyRow(s, isHistory) {
+    var li = document.createElement('li');
+    var status = s.status === 'open' ? '填寫中' : (s.status === 'closed' ? '已收回' : '草稿');
+    var filled = fillCount[s.id];
+    var progress = (filled === undefined) ? '還沒有人填寫　·　'
+                                          : ('已填 ' + filled + ' 人　·　');
+    li.innerHTML = '<div class="ev-main"><div class="ev-title">' + A.esc(s.title)
+      + ' <span class="hint">（' + status + '）</span></div>'
+      + '<div class="ev-meta">' + progress
+      + (s.deadline ? '截止：' + A.tzParts(s.deadline).date + ' ' + A.tzParts(s.deadline).time + '　·　' : '')
+      + (s.description ? A.esc(s.description) : '')
+      + '</div></div>'
+      + '<div class="ev-actions">'
+      + '<button class="btn" data-act="stat" data-sid="' + s.id + '">'
+      + (isHistory ? '檢視／列印' : '統計／匯出') + '</button>'
+      + (isHistory
+          ? '<button class="btn" data-act="reopen" data-sid="' + s.id + '">重新開放</button>'
+          : '<button class="btn btn-primary" data-act="archive" data-sid="' + s.id + '">收回</button>')
+      /* 刪除是破壞性動作：預設藏起來，要按「⋯」才會出現 —— 這顆鈕太容易誤觸了 */
+      + '<button class="btn btn-ghost" data-act="more" data-sid="' + s.id + '"'
+      + ' aria-expanded="false" title="其他操作">⋯</button>'
+      + '<button class="btn btn-danger" data-act="del" data-sid="' + s.id + '" hidden'
+      + ' title="刪除整場調查（含所有人的作答）">刪除這場調查</button>'
+      + '</div>';
+    li.querySelector('[data-act="stat"]').addEventListener('click', function () { showExport(s); });
+    if (isHistory) {
+      li.querySelector('[data-act="reopen"]').addEventListener('click', function () { reopenSurvey(s); });
+    } else {
+      li.querySelector('[data-act="archive"]').addEventListener('click', function () { archiveSurvey(s); });
+    }
+    li.querySelector('[data-act="more"]').addEventListener('click', function () {
+      var d = li.querySelector('[data-act="del"]');
+      var willShow = d.hidden;
+      d.hidden = !willShow;
+      this.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+      this.textContent = willShow ? '收起' : '⋯';
+    });
+    li.querySelector('[data-act="del"]').addEventListener('click', function () { askDelete(s); });
+    return li;
+  }
+
+  /* 收回＝把調查移進歷史表單區（不是刪除，資料全部保留） */
+  function archiveSurvey(s) {
+    askConfirm(
+      '收回這份調查？',
+      '「' + s.title + '」會從老師的填寫清單移到「歷史表單區」：\n'
+        + '‧ 老師不會再看到，也不能再填寫\n'
+        + '‧ 已經收到的作答完整保留，隨時可以查詢、列印\n'
+        + '‧ 之後想再收件，在歷史表單區按「重新開放」即可\n\n'
+        + '（這不是刪除，資料不會不見）',
+      function () {
+        sb.from('surveys').update({ status: 'closed' }).eq('id', s.id).select()
+          .then(function (res) {
+            if (res.error) { A.toast('收回失敗：' + res.error.message); return; }
+            if (!res.data || !res.data.length) { A.toast('收回失敗：沒有權限'); return; }
+            A.toast('已收回，可在下方歷史表單區找到');
+            loadAdminList();
+            loadTeacherView().catch(function () {});
+          });
+      });
+  }
+
+  function reopenSurvey(s) {
+    sb.from('surveys').update({ status: 'open' }).eq('id', s.id).select().then(function (res) {
+      if (res.error) { A.toast('重新開放失敗：' + res.error.message); return; }
+      if (!res.data || !res.data.length) { A.toast('重新開放失敗：沒有權限'); return; }
+      A.toast('已重新開放填寫');
       loadAdminList();
       loadTeacherView().catch(function () {});
     });

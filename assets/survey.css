@@ -253,3 +253,38 @@
 #confirm-typed input:focus { outline: 2px solid var(--c-primary); outline-offset: 1px; }
 /* 確定鈕在還沒照打之前是灰的，讓人一眼看出「還不能按」 */
 #c-yes:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ============================================================
+   手風琴（多份調查時的收合版面）
+   ============================================================ */
+.sv-accordion { padding: 0; overflow: hidden; }
+
+/* 標題列本身是按钮：整排都可以點，手指好按 */
+.sv-head {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 14px 16px;
+  background: none; border: 0; cursor: pointer;
+  text-align: left; font-family: inherit; color: inherit;
+}
+.sv-head:hover { background: var(--c-surface-2); }
+.sv-head:focus-visible { outline: 2px solid var(--c-primary); outline-offset: -2px; }
+
+.sv-chev { color: var(--c-primary); font-size: 13px; line-height: 1; flex: 0 0 auto; }
+
+.sv-head-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.sv-head-title {
+  font-size: 16px; font-weight: 700; color: var(--c-text); line-height: 1.35;
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+.sv-head-meta { font-size: 12px; color: var(--c-text-2); line-height: 1.5; }
+
+.sv-badge {
+  flex: 0 0 auto; font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+}
+.sv-badge.is-todo { background: #FEF3C7; color: #92400E; }   /* 未填：提醒色 */
+.sv-badge.is-done { background: #D1FAE5; color: #065F46; }   /* 已填：完成色 */
+
+/* 收合後的內容區要真的消失（不能只靠 hidden 屬性，會被 display 規則蓋掉） */
+.sv-body { padding: 0 16px 16px; }
+.sv-body[hidden] { display: none; }
