@@ -264,6 +264,9 @@
     elLogin.hidden = false;
     elMy.hidden = true;
     elAll.hidden = true;
+    /* 沒登入（或 session 失效）→ 頁首身分籤與選單個人操作一併收起來 */
+    $('who-chip').hidden = true;
+    $('menu-user').hidden = true;
     if (msg) {
       var e = $('login-error');
       e.textContent = msg;
@@ -314,6 +317,11 @@
     elMy.hidden = false;
     elAll.hidden = false;
 
+    /* 頁首的身分籤、以及收在漢堡選單裡的個人操作（修改密碼／登出），
+       都只在登入後出現。未登入時整組不佔位。 */
+    $('who-chip').hidden = false;
+    $('menu-user').hidden = false;
+
     $('who').textContent = profile.full_name || profile.email || '（未命名）';
     var roleEl = $('who-role');
     roleEl.hidden = false;
@@ -321,7 +329,9 @@
 
     /* 圓形頭像：沒有照片的人（例如系辦助理不在系網師資名單裡）自動用姓名首字 */
     $('who-avatar').innerHTML =
-      A.avatarHtml(profile.full_name || profile.email, profile.avatar_url, 'avatar-lg');
+      /* 這顆頭像現在放在頁首的身分籤裡 → 用跟 index.html 一致的 md 尺寸
+         （48px 的 lg 會比同列的漢堡鈕還高，把頁首撐高） */
+      A.avatarHtml(profile.full_name || profile.email, profile.avatar_url, 'avatar-md');
 
     refreshLineBind();
 
@@ -358,6 +368,9 @@
       $('record-form').reset();
       resetForm();
       elMy.hidden = true; elAll.hidden = true;
+      /* 頁首身分籤與選單裡的個人操作也要一起收起來 */
+      $('who-chip').hidden = true;
+      $('menu-user').hidden = true;
       showLogin();
       A.toast('已登出');
     });

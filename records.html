@@ -24,14 +24,31 @@
       <a href="index.html" class="tab">行事曆</a>
       <a href="records.html" class="tab is-active" aria-current="page">公差/招生記錄</a>
     </nav>
+
+    <!-- 登入者身分（頭像＋姓名＋角色）。未登入時整塊不佔位。
+         結構與 index.html 一致（index 本來就在頁首，這裡改成一樣）。 -->
+    <span class="who-chip" id="who-chip" hidden>
+      <span class="avatar-slot" id="who-avatar"></span>
+      <span class="who-text">
+        <span class="who-name" id="who">—</span>
+        <span class="who-role" id="who-role" hidden></span>
+      </span>
+    </span>
+
     <!-- 桌機直接顯示；手機收進漢堡選單 -->
     <a class="btn btn-ghost hdr-desktop" href="admin.html">管理後台</a>
     <button class="nav-toggle" id="nav-toggle" type="button"
             aria-label="更多功能" aria-expanded="false" aria-controls="nav-menu">☰</button>
   </div>
 
+  <!-- 手機的漢堡選單。個人帳號操作（修改密碼／登出）也收在這裡，
+       未登入時整組不顯示（見 records.js 的 enter / 登出）。 -->
   <div class="nav-menu" id="nav-menu" hidden>
     <a class="nav-menu-item" href="admin.html">管理後台</a>
+    <span id="menu-user" hidden>
+      <button class="nav-menu-item nav-menu-btn" id="btn-pw" type="button">修改密碼</button>
+      <button class="nav-menu-item nav-menu-btn nav-menu-danger" id="btn-logout" type="button">登出</button>
+    </span>
   </div>
 </header>
 
@@ -73,14 +90,7 @@
 
     <!-- 填寫表單：每個欄位群組用不同顏色分開 -->
     <div class="card" data-sec="gold">
-      <div class="toolbar">
-        <span class="avatar-slot" id="who-avatar"></span>
-        <span class="badge badge-admin" id="who">—</span>
-        <span class="badge" id="who-role" hidden></span>
-        <span class="spacer"></span>
-        <button class="btn" id="btn-pw" type="button">修改密碼</button>
-        <button class="btn btn-danger" id="btn-logout" type="button">登出</button>
-      </div>
+      <!-- 身分頭像已移到頁首、修改密碼／登出已收進漢堡選單（見頁首） -->
 
       <!-- LINE 綁定狀態：綁定後才能用 LINE 一鍵登入 -->
       <div class="line-bind" id="line-bind">

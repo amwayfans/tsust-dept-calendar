@@ -228,6 +228,20 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 .nav-menu-item:hover { background: var(--c-surface-2); }
 .nav-menu-item[hidden] { display: none; }
 
+/* 選單裡的「按鈕版」項目（修改密碼／登出）。
+   <button> 不會繼承 <a> 的排版，沒補這幾條會變成一顆原生灰按鈕。 */
+.nav-menu-btn {
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+.nav-menu-danger { color: #b91c1c; }
+.nav-menu-danger:hover { background: #fee2e2; }
+#menu-user[hidden] { display: none; }
+
 /* ---------- 徽章 ---------- */
 .badge {
   display: inline-flex;
