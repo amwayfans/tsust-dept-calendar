@@ -371,10 +371,39 @@
       #0284C7 34%, #7C3AED 50%, #0284C7 66%,
       var(--c-primary) 82%, var(--c-primary) 100%);
   background-size: 250% 100%;
-  background-position: 150% 0%;
+  /* 安全位置：250% 的底圖只有在 0%~100% 之間才蓋得滿，
+     超出範圍（例如 150%）右邊的字會沒有底圖 → 因為文字透明而整段消失 */
+  background-position: 100% 0%;
   background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
+
+/* 霓虹跑完後的靜態狀態：用純色，保證文字一定看得見 */
+.sv-head-title.sv-todo { color: var(--c-primary); }
+
+/* ============================================================
+   調查表嵌在「目前可填寫的調查」卡片裡 → 做出層次
+   外層是卡片、內層是它的內容，所以內層用更淡的底、不帶陰影。
+   （注意：這裡刻意用單一 class，權重才不會蓋掉 .card.sv-attn 的提示外框）
+   ============================================================ */
+#surveys-wrap { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ⚠️ 內層卡片自己也有 data-sec（.card[data-sec] 權重 0,2,0），
+   所以這裡要用 #surveys-wrap 拉高權重，否則漸層底會蓋掉這一層。 */
+#surveys-wrap .sv-accordion {
+  background: var(--c-surface-2);
+  border-color: var(--c-border-soft);
+  box-shadow: none;
+}
+
+/* 待填的提示外框：權重必須高於上面的內層樣式，不然會被吃掉 */
+#surveys-wrap .card.sv-attn,
+.card.sv-attn {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .28);
+  border-color: rgba(37, 99, 235, .45);
+}
+/* 內層維持淡底（不要因為加了提示外框就變回白色，否則層次會不見） */
+.sv-accordion .sv-head:hover { background: rgba(15, 23, 42, .035); }

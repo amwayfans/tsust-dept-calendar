@@ -94,13 +94,9 @@
         <button class="btn btn-line-sm" type="button" id="btn-line-bind" hidden>綁定 LINE</button>
       </div>
       <h2 style="margin-top:0">目前可填寫的調查</h2>
-      <p class="hint" style="margin-top:-8px" id="survey-intro">載入中…</p>
-    </div>
-
-    <div id="surveys-wrap"></div>
-
-    <div class="card" id="no-survey" data-sec="blue" hidden>
-      <div class="empty">目前沒有開放填寫的調查</div>
+      <!-- 調查表直接列在標題底下（嵌在同一張卡片裡），層次上屬於這張卡片的內容 -->
+      <div id="surveys-wrap"></div>
+      <div class="empty" id="no-survey" hidden>目前沒有開放填寫的調查</div>
     </div>
 
     <div class="error-box" id="my-error" hidden></div>

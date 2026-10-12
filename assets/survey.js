@@ -25,7 +25,7 @@
   var elHistList = $('history-list'), elHistEmpty = $('history-empty'), elHistCount = $('history-count');
   var elAdminCount = $('admin-count');
   var elExportCard = $('export-card'), elExportBody = $('export-body'), elExportTitle = $('export-title');
-  var elIntro = $('survey-intro');
+
 
   var me = null;            // { session, profile, isAdmin }
   var surveys = [];         // 目前開放的調查
@@ -132,11 +132,9 @@
         if (!surveys.length) {
           elWrap.innerHTML = '';
           elNoSurvey.hidden = false;
-          elIntro.textContent = '目前沒有開放填寫的調查。';
           return;
         }
         elNoSurvey.hidden = true;
-        elIntro.textContent = '請勾選您的意願，送出後可以再修改。';
         var ids = surveys.map(function (s) { return s.id; });
         return Promise.all([
           sb.from('survey_options').select('*').in('survey_id', ids).eq('active', true)
@@ -162,16 +160,6 @@
 
   function renderSurveys() {
     elWrap.innerHTML = '';
-    var pending = surveys.filter(function (s) { return !myBySurvey[s.id]; }).length;
-    var many = surveys.length > 1;
-
-    if (many) {
-      elIntro.textContent = '目前有 ' + surveys.length + ' 份調查，其中 '
-        + pending + ' 份還沒填。點標題即可展開填寫。';
-    } else {
-      elIntro.textContent = '請勾選您的意願，送出後可以再修改。';
-    }
-
     surveys.forEach(function (s) {
       /* 不論幾份，一律預設收起 —— 進站先看到清單，要填哪份再點開。
          但已展開的那份（例如剛送出）維持展開，不要突然縮回去。 */
@@ -204,10 +192,19 @@
         var t = c.querySelector('.sv-head-title');
         if (t) {
           t.classList.add('sv-neon');
-          gsap.fromTo(t, { backgroundPosition: '150% 0%' },
-            { backgroundPosition: '-50% 0%', duration: 2.4, repeat: 4,
+          /* ⚠️ background-size 是 250%，百分比定位的安全範圍只有 0%~100%：
+             超出這個範圍底圖就蓋不滿，而文字是透明的（background-clip:text）
+             → 沒被蓋到的字會整段消失。所以只能在這段區間內掃。 */
+          gsap.fromTo(t, { backgroundPosition: '100% 0%' },
+            { backgroundPosition: '0% 0%', duration: 2.4, repeat: 4,
               ease: 'power1.inOut', delay: .7 + i * .15,
-              onComplete: function () { gsap.set(t, { clearProps: 'backgroundPosition' }); } });
+              onComplete: function () {
+                /* 跑完就換成「純色」：不再依賴 background-clip，
+                   文字保證看得見（只是變成藍色，仍看得出這份待填）。 */
+                gsap.set(t, { clearProps: 'backgroundPosition' });
+                t.classList.remove('sv-neon');
+                t.classList.add('sv-todo');
+              } });
         }
       });
     }
@@ -225,7 +222,7 @@
       }
     }
     card.classList.remove('sv-attn');
-    if (t) t.classList.remove('sv-neon');
+    if (t) { t.classList.remove('sv-neon'); t.classList.remove('sv-todo'); }
   }
 
   /* o.collapsible：同時有多份調查時用「手風琴」——平常只看到標題與未填／已填，
