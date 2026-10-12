@@ -149,9 +149,11 @@
           <div class="fblock-title">當日照片（佐證）</div>
           <div class="field" style="margin-bottom:0">
             <label for="f-photo">照片 <span class="hint">（選填，1 張）</span></label>
-            <input type="file" id="f-photo" accept="image/*" capture="environment">
+            <!-- 不要加 capture 屬性：那會強制直接開相機，老師就選不到相簿裡的檔案。
+                 移除後由系統跳出選擇選單（拍照／相簿／檔案），兩種都能用。 -->
+            <input type="file" id="f-photo" accept="image/*">
             <div class="hint" style="margin-top:6px">
-              手機可直接拍照；上傳前會自動縮圖（最長邊 1600px），省空間也省流量。
+              手機可直接拍照，或從相簿選擇已有的照片；上傳前會自動縮圖（最長邊 1600px），省空間也省流量。
             </div>
             <div id="photo-preview-wrap" hidden style="margin-top:10px">
               <img id="photo-preview" alt="照片預覽"
