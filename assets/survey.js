@@ -184,27 +184,48 @@
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var todo = cards.filter(function (c, i) { return !myBySurvey[surveys[i].id]; });
 
+    /* 未填寫的一律先加上醒目外框 —— 即使動畫跑完、或瀏覽器不支援動畫，
+       仍然看得出「這幾份要我填」 */
+    todo.forEach(function (c) { c.classList.add('sv-attn'); });
+
     if (window.gsap && !reduce) {
       gsap.from(cards, { opacity: 0, y: 12, duration: .4, stagger: .07,
                          ease: 'power2.out', clearProps: 'opacity,transform' });
       todo.forEach(function (c, i) {
+        /* ① 卡片外圈的呼吸光暈 */
         gsap.fromTo(c, { boxShadow: '0 0 0 0 rgba(37,99,235,0)' },
-          { boxShadow: '0 0 0 7px rgba(37,99,235,.16)', duration: 1.15, repeat: 5,
-            yoyo: true, ease: 'sine.inOut', delay: .45 + i * .12 });
+          { boxShadow: '0 0 0 10px rgba(37,99,235,.30)', duration: 1.1, repeat: 5,
+            yoyo: true, ease: 'sine.inOut', delay: .4 + i * .12,
+            /* ⚠️ 跑完一定要 clearProps：yoyo 會停在起點的 0 值並留下「行內樣式」，
+               行內優先於 class → 會把 .sv-attn 的持續外框整個蓋掉，
+               結果「動畫跑完反而看不到框」。 */
+            onComplete: function () { gsap.set(c, { clearProps: 'boxShadow' }); } });
+        /* ② 調查名稱的霓虹流光：一束亮光沿著文字掃過去（跑幾輪就停，不一直閃） */
+        var t = c.querySelector('.sv-head-title');
+        if (t) {
+          t.classList.add('sv-neon');
+          gsap.fromTo(t, { backgroundPosition: '150% 0%' },
+            { backgroundPosition: '-50% 0%', duration: 2.4, repeat: 4,
+              ease: 'power1.inOut', delay: .7 + i * .15,
+              onComplete: function () { gsap.set(t, { clearProps: 'backgroundPosition' }); } });
+        }
       });
-    } else {
-      /* 沒有 GSAP、或使用者要求減少動態 → 改用靜態外框，一樣看得出要填哪份 */
-      todo.forEach(function (c) { c.classList.add('sv-attn'); });
     }
   }
 
   /* 點開之後把光暈收掉：使用者已經看到了，不必一直閃 */
   function stopAttention(card) {
+    var t = card.querySelector('.sv-head-title');
     if (window.gsap) {
       gsap.killTweensOf(card);
       gsap.set(card, { clearProps: 'boxShadow' });
+      if (t) {
+        gsap.killTweensOf(t);
+        gsap.set(t, { clearProps: 'backgroundPosition' });
+      }
     }
     card.classList.remove('sv-attn');
+    if (t) t.classList.remove('sv-neon');
   }
 
   /* o.collapsible：同時有多份調查時用「手風琴」——平常只看到標題與未填／已填，
@@ -895,15 +916,23 @@
    * LINE 綁定狀態
    * ============================================================ */
   function refreshLineBind() {
-    var elState = $('line-bind-state'), elBtn = $('btn-line-bind');
-    if (!elState || !A.lineEnabled()) return Promise.resolve();
+    var elRow = $('line-bind'), elState = $('line-bind-state'), elBtn = $('btn-line-bind');
+    if (!elRow || !elState) return Promise.resolve();
+    /* 這個功能沒開就整列不要出現 */
+    if (!A.lineEnabled()) { elRow.hidden = true; return Promise.resolve(); }
     return A.getUser().then(function (user) {
       var has = A.hasLineIdentity(user);
+      /* 已經綁定就整列收掉：使用者早就知道（說不定剛剛才用 LINE 登入），
+         再顯示「已綁定，可用 LINE 一鍵登入」只是多一行雜訊。
+         這一列的用途是「提供綁定這個動作」，綁好了就沒事可做。 */
+      elRow.hidden = has;
       elState.className = 'line-bind-state ' + (has ? 'is-on' : 'is-off');
-      elState.textContent = has ? '已綁定，可用 LINE 一鍵登入' : '尚未綁定（綁定後可用 LINE 一鍵登入）';
+      elState.textContent = has ? '已綁定' : '尚未綁定（綁定後可用 LINE 一鍵登入）';
       elBtn.hidden = has;
       return has;
     }).catch(function () {
+      /* 確認不了就照常顯示，不要讓它消失得不明不白 */
+      elRow.hidden = false;
       elState.className = 'line-bind-state is-off';
       elState.textContent = '無法確認';
     });

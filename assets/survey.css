@@ -352,3 +352,29 @@
 
 /* 沒有 GSAP 或使用者要求減少動態時的靜態突顯 */
 .card.sv-attn { box-shadow: 0 0 0 4px rgba(37, 99, 235, .16); }
+
+/* ============================================================
+   「還沒填寫」的調查：外框 + 標題霓虹流光
+   ============================================================ */
+/* 外框：即使動畫跑完也不消失，一眼就看得出哪幾份要填 */
+.card.sv-attn {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .28);
+  border-color: rgba(37, 99, 235, .45);
+}
+
+/* 標題霓虹：底色是主色藍，一束亮光（青→紫）沿著文字掃過去。
+   用 background-clip:text，所以「文字本身就是那道漸層」。
+   靜止時停在藍色，看得出來這份待填；點開後整個樣式會被移除。 */
+.sv-head-title.sv-neon {
+  background-image: linear-gradient(100deg,
+      var(--c-primary) 0%, var(--c-primary) 18%,
+      #0284C7 34%, #7C3AED 50%, #0284C7 66%,
+      var(--c-primary) 82%, var(--c-primary) 100%);
+  background-size: 250% 100%;
+  background-position: 150% 0%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
