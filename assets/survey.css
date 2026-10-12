@@ -218,3 +218,25 @@
     print-color-adjust: exact;
   }
 }
+
+
+/* ============================================================
+   本次追加
+   ============================================================ */
+
+/* 確認視窗的說明文字要保留換行（JS 是用 textContent 塞的，
+ 不會自己斷行） */
+#confirm-text {
+  white-space: pre-line;
+  line-height: 1.7;
+}
+
+/* 「建立新調查」預設收起來（讓作答頁乾淨一點） */
+#new-survey-wrap[hidden] {
+  display: none;
+}
+
+/* 老師端的「清除我的作答」不要搶過主要動作（送出／修改）的視覺重量 */
+.sv-options + .field + .field-error + .modal-actions .btn-danger {
+  margin-left: auto;
+}

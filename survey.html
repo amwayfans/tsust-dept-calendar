@@ -108,12 +108,18 @@
   <section id="admin-section" hidden>
 
     <div class="card" data-sec="purple">
-      <h2 style="margin-top:0">建立新調查</h2>
-      <p class="hint" style="margin-top:-8px">
-        常用於臨時需求調查（例如：某場研習有誰能參加、下學期想開哪些選修）。
-        填好後把網站連結給老師即可。
+      <div class="toolbar">
+        <h2 style="margin:0">建立新調查</h2>
+        <span class="spacer"></span>
+        <button class="btn" type="button" id="btn-new-toggle"
+                aria-expanded="false" aria-controls="new-survey-wrap">展開 ▾</button>
+      </div>
+      <p class="hint" style="margin-top:10px">
+        平常收起來，不佔用老師作答的畫面。要新增臨時調查時再展開。
       </p>
 
+      <!-- 預設隱藏：問卷頁該讓作答當主角，管理工具收起來就好 -->
+      <div id="new-survey-wrap" hidden>
       <form id="new-survey-form" novalidate>
         <div class="fblock" data-sec="blue">
           <div class="fblock-title">調查主題</div>
@@ -184,6 +190,7 @@
           <button class="btn btn-primary" type="submit" id="ns-save">建立並開放</button>
         </div>
       </form>
+      </div>
     </div>
 
     <div class="card" data-sec="blue">

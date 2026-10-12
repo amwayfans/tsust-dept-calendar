@@ -225,8 +225,13 @@
     h += '<div class="modal-actions" style="justify-content:flex-start">'
       + '<button class="btn btn-primary" type="button" data-act="save" data-sid="' + s.id + '"'
       + (closed || locked ? ' disabled' : '') + '>'
-      + (mine ? '修改我的選擇' : '送出') + '</button>'
-      + '<span class="hint" id="cnt-' + s.id + '" style="align-self:center"></span>'
+      + (mine ? '修改我的選擇' : '送出') + '</button>';
+    /* 已填過的人要能把整筆作答清掉（實習／測試填錯、或想重新填） */
+    if (mine && !locked) {
+      h += '<button class="btn btn-danger" type="button" data-act="clear" data-sid="' + s.id + '">'
+        + '清除我的作答</button>';
+    }
+    h += '<span class="hint" id="cnt-' + s.id + '" style="align-self:center"></span>'
       + '</div>';
 
     h += '<div class="sv-stats" id="stats-' + s.id + '" hidden></div>';
@@ -251,6 +256,11 @@
     card.querySelector('[data-act="save"]').addEventListener('click', function () {
       saveResponse(s, card);
     });
+
+    var clearBtn = card.querySelector('[data-act="clear"]');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () { askClearResponse(s, card); });
+    }
 
     /* 已送出且開放看統計 → 直接載入 */
     if (mine && s.show_stats) loadStats(s.id);
@@ -359,7 +369,8 @@
         + '<button class="btn" data-act="stat" data-sid="' + s.id + '">統計／匯出</button>'
         + '<button class="btn" data-act="toggle" data-sid="' + s.id + '">'
         + (s.status === 'open' ? '關閉' : '開放') + '</button>'
-        + '<button class="btn btn-danger" data-act="del" data-sid="' + s.id + '">刪除</button>'
+        + '<button class="btn btn-danger" data-act="del" data-sid="' + s.id + '"'
+        + ' title="刪除整場調查（含所有人的作答）">刪除這場調查</button>'
         + '</div>';
       li.querySelector('[data-act="stat"]').addEventListener('click', function () { showExport(s); });
       li.querySelector('[data-act="toggle"]').addEventListener('click', function () { toggleSurvey(s); });
@@ -378,28 +389,88 @@
     });
   }
 
-  function askDelete(s) {
-    $('confirm-title').textContent = '確定要刪除這場調查嗎？';
-    $('confirm-text').textContent = '「' + s.title + '」的選項與所有老師的作答都會一起刪除，無法復原。';
+  /* ------------------------------------------------------------
+     共用的確認視窗
+     ⚠️ 本站的 modal 要加 .show 才會顯示（styles.css 的 `.modal.show`）。
+        這裡原本寫的是 classList.add('is-open')，那個 class 根本不存在 →
+        視窗永遠不會出現，症狀就是「按了刪除完全沒反應」。
+        以後新增任何 modal 一律用 'show'。
+     ------------------------------------------------------------ */
+  function askConfirm(title, text, onOk) {
+    $('confirm-title').textContent = title;
+    $('confirm-text').textContent = text;   /* 用 textContent，換行靠 CSS 的 pre-line */
     var modal = $('confirm');
-    modal.classList.add('is-open');
-    var done = function (ok) {
-      modal.classList.remove('is-open');
-      $('c-yes').removeEventListener('click', yes);
-      $('c-no').removeEventListener('click', no);
-      if (!ok) return;
-      sb.from('surveys').delete().eq('id', s.id).then(function (res) {
-        if (res.error) { A.toast('刪除失敗：' + res.error.message); return; }
-        A.toast('已刪除');
-        if (exportSurvey && exportSurvey.id === s.id) { exportSurvey = null; elExportCard.hidden = true; }
-        loadAdminList();
-        loadTeacherView().catch(function () {});
+    var yes = $('c-yes');
+    var no = $('c-no');
+    function close(ok) {
+      modal.classList.remove('show');
+      yes.removeEventListener('click', onYes);
+      no.removeEventListener('click', onNo);
+      if (ok) onOk();
+    }
+    function onYes() { close(true); }
+    function onNo() { close(false); }
+    yes.addEventListener('click', onYes);
+    no.addEventListener('click', onNo);
+    modal.classList.add('show');
+    /* 刪除無法復原 → 焦點放在「取消」，不要讓人順手按 Enter 就刪掉 */
+    setTimeout(function () { no.focus(); }, 60);
+  }
+
+  function askDelete(s) {
+    askConfirm(
+      '確定要刪除這場調查嗎？',
+      '「' + s.title + '」會整場刪除，包括：\n'
+        + '‧ 底下所有選項\n'
+        + '‧ 所有老師的作答紀錄\n\n'
+        + '刪除後無法復原，也無法從系統救回。\n\n'
+        + '如果只是想停止收件，請改按「關閉」——\n'
+        + '資料會完整保留，之後還能重新開放。',
+      function () {
+        sb.from('surveys').delete().eq('id', s.id).then(function (res) {
+          if (res.error) { A.toast('刪除失敗：' + res.error.message); return; }
+          A.toast('已刪除');
+          if (exportSurvey && exportSurvey.id === s.id) { exportSurvey = null; elExportCard.hidden = true; }
+          loadAdminList();
+          loadTeacherView().catch(function () {});
+        });
       });
-    };
-    var yes = function () { done(true); };
-    var no = function () { done(false); };
-    $('c-yes').addEventListener('click', yes);
-    $('c-no').addEventListener('click', no);
+  }
+
+  /* 清除自己的作答（整筆刪除，回到「尚未填寫」） */
+  function askClearResponse(s, card) {
+    askConfirm(
+      '確定要清除您的作答嗎？',
+      '這會把您在「' + s.title + '」的作答整筆刪除：\n'
+        + '‧ 您勾選的選項會被清空，回到「尚未填寫」\n'
+        + '‧ 各校人數統計會跟著減少\n'
+        + '‧ 其他老師的作答完全不受影響\n\n'
+        + '清除後想再填，隨時重新勾選送出即可。',
+      function () {
+        var btn = card.querySelector('[data-act="save"]');
+        if (btn) { btn.disabled = true; btn.textContent = '清除中…'; }
+        sb.from('survey_responses')
+          .delete()
+          .eq('survey_id', s.id)
+          .eq('profile_id', me.profile.id)
+          .select()
+          .then(function (res) {
+            if (btn) btn.textContent = '修改我的選擇';
+            if (res.error) {
+              if (btn) btn.disabled = false;
+              A.toast('清除失敗：' + res.error.message);
+              return;
+            }
+            /* RLS 擋掉時不會回錯、只會回 0 筆 → 一定要自己看筆數 */
+            if (!res.data || !res.data.length) {
+              if (btn) btn.disabled = false;
+              A.toast('清除失敗：沒有權限，或資料已經不存在');
+              return;
+            }
+            A.toast('已清除您的作答');
+            loadTeacherView().catch(function () {});
+          });
+      });
   }
 
   /* 解析「一行一個選項」，支援「標題｜註解」 */
@@ -482,6 +553,16 @@
     loadAdminList();
     loadTeacherView().catch(function () {});
     A.toast('已重新載入');
+  });
+
+  /* 「建立新調查」預設收起來，要用的時候再展開 —— 讓作答頁回歸問卷本質 */
+  $('btn-new-toggle').addEventListener('click', function () {
+    var wrap = $('new-survey-wrap');
+    var willOpen = wrap.hidden;
+    wrap.hidden = !willOpen;
+    this.textContent = willOpen ? '收起 ▴' : '展開 ▾';
+    this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    if (willOpen) { $('ns-title').focus(); }
   });
 
   /* ---------- 統計與匯出 ---------- */
@@ -668,7 +749,7 @@
 
   $('btn-pw').addEventListener('click', function () {
     $('pw-error').hidden = true;
-    $('pw-modal').classList.add('is-open');
+    $('pw-modal').classList.add('show');
   });
   $('pw-cancel').addEventListener('click', function () {
     $('pw-modal').classList.remove('is-open');
@@ -684,7 +765,7 @@
     sb.auth.updateUser({ password: p1 }).then(function (res) {
       btn.disabled = false;
       if (res.error) { errEl.textContent = res.error.message; errEl.hidden = false; return; }
-      $('pw-modal').classList.remove('is-open');
+      $('pw-modal').classList.remove('show');
       $('pw-form').reset();
       A.toast('密碼已更新');
     });
