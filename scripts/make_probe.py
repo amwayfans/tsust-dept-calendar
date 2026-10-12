@@ -55,6 +55,15 @@ STUB = """<script>
        'gte', 'lte', 'gt', 'lt', 'ilike', 'like', 'or', 'filter', 'match',
        'contains', 'containedBy', 'overlaps', 'textSearch'
       ].forEach(function (m) { o[m] = function () { return o; }; });
+      /* 寫入類方法：不真的寫進資料庫，只記錄到 window.__OPS 並回成功。
+         少了這些，程式走到 insert() 會 TypeError，
+         看起來像「功能壞了」，其實是測試頁自己的問題。 */
+      ['insert', 'update', 'upsert', 'delete'].forEach(function (m) {
+        o[m] = function (payload) {
+          window.__OPS.push({ op: m, payload: payload });
+          return o;
+        };
+      });
       o.maybeSingle = function () {
         return Promise.resolve({ data: (res.data && res.data[0]) || null, error: res.error });
       };
@@ -65,11 +74,15 @@ STUB = """<script>
     }
     /* 教師名冊：teacher_roster 有 RLS，匿名／假 session 讀不到，
        所以這裡放一份「順序與真實名冊一致」的清單，版面才會準。 */
+    /* email 也要有：管理員「代輸入」的教師下拉是用 email 當 value，
+       留 null 會讓下拉變空的，測不到存檔流程。
+       這裡用假的 tXXXX@ 位址（不是真的老師信箱）。 */
     var ROSTER = ['楊至誠','龔榮源','張智淵','陳邦家','張旭銘','楊大明','鍾新輝',
                   '張智傑','陳嘉偉','蕭士彥','吳建憲','龔啓良','曾俊龍','盧俊彰',
                   '林哲愷','連永昇','陳坤禾','田偉忠','曹國樑'
                  ].map(function (n, i) {
-                   return { email: null, full_name: n, category: '專任', title: null,
+                   return { email: 't' + String(1000 + i).slice(1) + '@tsust.edu.tw',
+                            full_name: n, category: '專任', title: null,
                             sort_order: i + 1, claimed_by: null };
                  });
     return {

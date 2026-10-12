@@ -27,6 +27,12 @@
   var $ = function (id) { return document.getElementById(id); };
   var elLogin = $('login-card'), elMy = $('my-section'), elAll = $('all-section');
   var elBooting = $('booting'), elForm = $('record-form');
+
+  /* 我的記錄／全部記錄：預設都收起來，點標題才展開。
+     存檔後會自動展開「我的記錄」——老師剛新增完，就是要看那一筆，
+     不該讓他再自己點一次。 */
+  var accMine = App.accordion($('my-list-card'));
+  var accAll = App.accordion($('all-section'));
   var elMyList = $('my-list'), elMyEmpty = $('my-empty'), elMyError = $('my-error');
   var elAllList = $('all-list'), elAllEmpty = $('all-empty'), elAllError = $('all-error');
   var elChartWrap = $('chart-wrap'), elChartEmpty = $('chart-empty'), elChartError = $('chart-error');
@@ -698,6 +704,7 @@
         }
         A.toast(id ? '已更新' : '已新增', 'ok');
         resetForm();
+        if (accMine) accMine.open();      // 新增完直接看到自己的記錄
         loadMyRecords();
         loadAllRecords();
         loadYears();

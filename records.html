@@ -188,11 +188,16 @@
       </form>
     </div>
 
-    <div class="card" data-sec="blue">
-      <h2 style="margin-top:0">我的記錄 <span class="hint" id="my-count"></span></h2>
-      <ul class="ev-list" id="my-list"></ul>
-      <div class="empty" id="my-empty" hidden>尚無記錄</div>
-      <div class="error-box" id="my-error" hidden></div>
+    <div class="card" data-sec="blue" id="my-list-card">
+      <h2 class="acc-head" style="margin-top:0" role="button" tabindex="0" aria-expanded="false">
+        <span class="acc-chev" aria-hidden="true"></span>
+        我的記錄 <span class="hint" id="my-count"></span>
+      </h2>
+      <div class="acc-body" hidden>
+        <ul class="ev-list" id="my-list"></ul>
+        <div class="empty" id="my-empty" hidden>尚無記錄</div>
+        <div class="error-box" id="my-error" hidden></div>
+      </div>
     </div>
 
   </section>
@@ -220,8 +225,12 @@
 
   <!-- ===================== 區塊 C：全部記錄（需登入） ===================== -->
   <section class="card" id="all-section" data-sec="purple" hidden>
-    <h2 style="margin-top:0">全部記錄</h2>
+    <h2 class="acc-head" style="margin-top:0" role="button" tabindex="0" aria-expanded="false">
+      <span class="acc-chev" aria-hidden="true"></span>
+      全部記錄 <span class="hint" id="all-count"></span>
+    </h2>
 
+    <div class="acc-body" hidden>
     <div class="filters">
       <select id="flt-year" aria-label="學年度"></select>
       <select id="flt-type" aria-label="類型">
@@ -231,7 +240,6 @@
       </select>
       <select id="flt-teacher" aria-label="教師"></select>
       <span class="spacer"></span>
-      <span class="hint" id="all-count"></span>
     </div>
 
     <ul class="ev-list" id="all-list"></ul>
@@ -243,6 +251,7 @@
       <span id="pg-info">—</span>
       <button class="btn" id="pg-next" type="button">下一頁 ›</button>
     </div>
+    </div><!-- /.acc-body -->
   </section>
 
   <div class="card" id="booting">

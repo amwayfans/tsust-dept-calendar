@@ -437,6 +437,45 @@
     }, { passive: true });
   })();
 
+  /* ============================================================
+     可收合區塊（手風琴）
+     ------------------------------------------------------------
+     原則：一進頁面要清爽，先看清單，要看內容再點開。
+     所以整區預設「收起來」，點標題才展開。
+     用法：HTML 把標題放 .acc-head、其餘內容放 .acc-body，
+           再呼叫 App.accordion(卡片元素)。
+     ============================================================ */
+  function accordion(card) {
+    if (!card) return null;
+    var head = card.querySelector('.acc-head');
+    var body = card.querySelector('.acc-body');
+    if (!head || !body) return null;
+
+    var open = false;                                  // 預設收起
+
+    function setOpen(v) {
+      open = !!v;
+      body.hidden = !open;
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      card.classList.toggle('acc-open', open);
+    }
+    function toggle() { setOpen(!open); }
+
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggle();
+      }
+    });
+
+    setOpen(false);
+    return { open: function () { setOpen(true); },
+             close: function () { setOpen(false); },
+             toggle: toggle,
+             isOpen: function () { return open; } };
+  }
+
   window.App = {
     cfg: cfg,
     sb: sb,
@@ -466,6 +505,7 @@
     avatarHtml: avatarHtml,
     avatarColor: avatarColor,
     toast: toast,
-    isMissingTable: isMissingTable
+    isMissingTable: isMissingTable,
+    accordion: accordion
   };
 })();
