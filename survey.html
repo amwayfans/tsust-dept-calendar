@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>調查專區 — 機械與自動化工程系</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/records.css">
+<link rel="stylesheet" href="assets/survey.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <h1><span>調查專區</span></h1>
+      <p>系上意向調查 ／ 線上填寫</p>
+    </div>
+    <nav class="site-tabs" aria-label="主要功能">
+      <a href="index.html" class="tab">行事曆</a>
+      <a href="records.html" class="tab">公差/招生記錄</a>
+      <a href="survey.html" class="tab is-active" aria-current="page">調查專區</a>
+    </nav>
+
+    <span class="who-chip" id="who-chip" hidden>
+      <span class="avatar-slot" id="who-avatar"></span>
+      <span class="who-text">
+        <span class="who-name" id="who">—</span>
+        <span class="who-role" id="who-role" hidden></span>
+      </span>
+    </span>
+
+    <a class="btn btn-ghost hdr-desktop" href="admin.html">管理後台</a>
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-label="更多功能" aria-expanded="false" aria-controls="nav-menu">☰</button>
+  </div>
+
+  <div class="nav-menu" id="nav-menu" hidden>
+    <a class="nav-menu-item" href="admin.html">管理後台</a>
+    <span id="menu-user" hidden>
+      <button class="nav-menu-item nav-menu-btn" id="btn-pw" type="button">修改密碼</button>
+      <button class="nav-menu-item nav-menu-btn nav-menu-danger" id="btn-logout" type="button">登出</button>
+    </span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== 登入 ===================== -->
+  <section class="card" id="login-card" data-sec="navy" hidden>
+    <h2 style="margin-top:0">教師登入</h2>
+    <p class="hint" style="margin-top:-8px">
+      帳號由系辦建立。忘記密碼或無法登入請洽系辦（分機 2102）。
+    </p>
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="email">電子郵件</label>
+        <input type="email" id="email" autocomplete="username" placeholder="請輸入學校信箱" required>
+      </div>
+      <div class="field">
+        <label for="password">密碼</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="請輸入密碼" required>
+      </div>
+      <div class="field-error" id="login-error" hidden></div>
+      <div class="modal-actions" style="justify-content:flex-start">
+        <button class="btn btn-primary" type="submit" id="btn-login">登入</button>
+      </div>
+    </form>
+
+    <div class="or-divider"><span>或</span></div>
+    <button class="btn btn-line" type="button" id="btn-line-login">用 LINE 登入</button>
+    <p class="hint" id="line-login-hint" style="margin:10px 0 0">
+      首次使用請先用上方帳密登入一次，完成 LINE 綁定後就能一鍵登入。
+    </p>
+    <p class="hint" id="login-note" style="margin:14px 0 0">
+      ※ 您的選擇只有系辦看得到您的姓名；其他老師只會看到「各校目前人數」，不會看到誰選了什麼。
+    </p>
+  </section>
+
+  <!-- ===================== 老師區：可填寫的調查 ===================== -->
+  <section id="my-section" hidden>
+
+    <!-- LINE 綁定狀態 -->
+    <div class="card" data-sec="gold">
+      <div class="line-bind" id="line-bind">
+        <span class="line-bind-label">LINE 登入</span>
+        <span class="line-bind-state" id="line-bind-state">檢查中…</span>
+        <button class="btn btn-line-sm" type="button" id="btn-line-bind" hidden>綁定 LINE</button>
+      </div>
+      <h2 style="margin-top:0">目前可填寫的調查</h2>
+      <p class="hint" style="margin-top:-8px" id="survey-intro">載入中…</p>
+    </div>
+
+    <div id="surveys-wrap"></div>
+
+    <div class="card" id="no-survey" data-sec="blue" hidden>
+      <div class="empty">目前沒有開放填寫的調查</div>
+    </div>
+
+    <div class="error-box" id="my-error" hidden></div>
+  </section>
+
+  <!-- ===================== 管理員區 ===================== -->
+  <section id="admin-section" hidden>
+
+    <div class="card" data-sec="purple">
+      <h2 style="margin-top:0">建立新調查</h2>
+      <p class="hint" style="margin-top:-8px">
+        常用於臨時需求調查（例如：某場研習有誰能參加、下學期想開哪些選修）。
+        填好後把網站連結給老師即可。
+      </p>
+
+      <form id="new-survey-form" novalidate>
+        <div class="fblock" data-sec="blue">
+          <div class="fblock-title">調查主題</div>
+          <div class="field">
+            <label for="ns-title">標題 <span class="hint">（必填）</span></label>
+            <input type="text" id="ns-title" maxlength="100" placeholder="例：115學年度第2學期選修課程意願調查" required>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label for="ns-desc">說明 <span class="hint">（選填，會顯示在標題下方）</span></label>
+            <textarea id="ns-desc" maxlength="1000" rows="2"
+                      placeholder="例：請勾選您有意願開設的選修課程，可複選。"></textarea>
+          </div>
+        </div>
+
+        <div class="fblock" data-sec="gold">
+          <div class="fblock-title">選項</div>
+          <div class="field" style="margin-bottom:0">
+            <label for="ns-options">一行一個選項 <span class="hint">（必填，最多 50 個）</span></label>
+            <textarea id="ns-options" rows="6" required
+                      placeholder="岡山農工（汽車科）&#10;岡山農工（機械科）&#10;南英工商（汽車科）"></textarea>
+            <div class="hint" style="margin-top:6px">
+              想加註解（例如「目前分配：某某某」）可以寫成：<br>
+              <code>岡山農工（汽車科）｜目前分配：楊大明、龔榮源</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="fblock" data-sec="teal">
+          <div class="fblock-title">填答規則</div>
+          <div class="row2">
+            <div class="field">
+              <label for="ns-multi">可複選？</label>
+              <select id="ns-multi">
+                <option value="yes">可以複選（不限數量）</option>
+                <option value="max">可以複選，但最多幾個</option>
+                <option value="no">只能選 1 個</option>
+              </select>
+            </div>
+            <div class="field" id="wrap-max" hidden>
+              <label for="ns-max">最多幾個</label>
+              <input type="number" id="ns-max" min="1" max="50" value="3">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="ns-deadline">截止時間 <span class="hint">（選填）</span></label>
+              <input type="datetime-local" id="ns-deadline">
+            </div>
+            <div class="field">
+              <label for="ns-stats">老師送出後可否看人數統計？</label>
+              <select id="ns-stats">
+                <option value="yes">可以看（只顯示人數，不顯示姓名）</option>
+                <option value="no">不可以看</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label for="ns-edit">送出後可否修改？</label>
+            <select id="ns-edit">
+              <option value="yes">可以隨時修改</option>
+              <option value="no">送出後鎖定，要改請洽系辦</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-error" id="ns-error" hidden></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" type="submit" id="ns-save">建立並開放</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" data-sec="blue">
+      <div class="toolbar">
+        <h2 style="margin:0">調查管理</h2>
+        <span class="spacer"></span>
+        <button class="btn" id="btn-refresh" type="button">重新載入</button>
+      </div>
+      <ul class="ev-list" id="admin-list"></ul>
+      <div class="empty" id="admin-empty" hidden>還沒有任何調查</div>
+      <div class="error-box" id="admin-error" hidden></div>
+    </div>
+
+    <!-- 匯出預覽（給系主任參考） -->
+    <div class="card" data-sec="teal" id="export-card" hidden>
+      <div class="toolbar">
+        <h2 style="margin:0" id="export-title">統計與匯出</h2>
+        <span class="spacer"></span>
+        <button class="btn" id="btn-export-csv" type="button">匯出 CSV</button>
+        <button class="btn" id="btn-export-print" type="button">列印 / 存 PDF</button>
+      </div>
+      <div id="export-body"></div>
+    </div>
+  </section>
+
+  <div class="card" id="booting">
+    <div class="skeleton" style="width:40%"></div>
+    <div class="skeleton" style="width:65%"></div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div>機械與自動化工程系｜系辦分機 2102</div>
+</footer>
+
+<!-- 刪除確認 -->
+<div class="modal" id="confirm">
+  <div class="modal-box">
+    <h3 id="confirm-title">確定要刪除嗎？</h3>
+    <p id="confirm-text">—</p>
+    <div class="modal-actions">
+      <button class="btn" type="button" id="c-no">取消</button>
+      <button class="btn btn-danger" type="button" id="c-yes">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 修改密碼 -->
+<div class="modal" id="pw-modal">
+  <div class="modal-box">
+    <h3>修改密碼</h3>
+    <form id="pw-form">
+      <div class="field">
+        <label for="pw1">新密碼 <span class="hint">（至少 6 個字元）</span></label>
+        <input type="password" id="pw1" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="pw2">再輸入一次</label>
+        <input type="password" id="pw2" autocomplete="new-password">
+      </div>
+      <div class="field-error" id="pw-error" hidden></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="pw-cancel">取消</button>
+        <button class="btn btn-primary" type="submit" id="pw-save">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/survey.js"></script>
+</body>
+</html>

@@ -16,10 +16,15 @@
 *.local.js
 *.local.css
 
-# 真實資料，不進公開版控
-# seed_roster.sql 含全系教師的信箱，這個 repo 是公開的，所以排除。
+# 真實資料，不進公開版控（這個 repo 是公開的）
+# seed_roster.sql 含全系教師的信箱，所以排除。
 # 需要的人請跟系辦索取，或參考 seed_roster.example.sql 自行填寫。
 supabase/seed_roster.sql
+
+# 深耕調查的種子資料含「目前分配」的教師姓名，比照上一條排除。
+# 要重建請跟系辦索取，或直接看 Supabase 資料庫裡的現況。
+supabase/seed_survey_deepfarm.sql
+supabase/survey_setup_ALL.sql
 
 # 系統 / 編輯器
 .DS_Store

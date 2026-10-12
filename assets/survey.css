@@ -1,0 +1,220 @@
+/* ============================================================
+ * 調查專區（survey.html）
+ * 只放這一頁專用的樣式，其餘沿用 styles.css / records.css。
+ * ============================================================ */
+
+/* ---------- 選項清單 ---------- */
+.sv-options {
+  display: grid;
+  gap: 8px;
+}
+
+.sv-opt {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--c-surface);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+
+.sv-opt:hover {
+  border-color: var(--c-secondary);
+}
+
+/* 已勾選：整列變色，手機上比較容易看出自己選了什麼 */
+.sv-opt.is-checked {
+  border-color: var(--c-secondary);
+  background: #eff6ff;
+}
+
+.sv-opt input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--c-secondary);
+}
+
+.sv-opt input:disabled {
+  cursor: not-allowed;
+}
+
+.sv-opt-body {
+  display: block;
+  min-width: 0;
+}
+
+.sv-opt-label {
+  display: block;
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: 1.45;
+}
+
+.sv-opt-note {
+  display: block;
+  margin-top: 3px;
+  font-size: var(--fs-xs);
+  color: var(--c-muted);
+  line-height: 1.5;
+}
+
+/* ---------- 「您目前的選擇」摘要 ---------- */
+.sv-mine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm, 8px);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.sv-mine-tag {
+  flex: none;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-secondary);
+}
+
+.sv-mine-list {
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* ---------- 統計長條 ---------- */
+.sv-stats {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--c-border-soft);
+}
+
+.sv-stats h3 {
+  margin: 0 0 8px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.sv-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 0;
+}
+
+.sv-stat-label {
+  flex: 0 0 42%;
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+  line-height: 1.4;
+}
+
+.sv-stat-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--c-surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.sv-stat-bar i {
+  display: block;
+  height: 100%;
+  background: var(--c-secondary);
+  border-radius: 99px;
+  transition: width .3s;
+}
+
+.sv-stat-num {
+  flex: 0 0 48px;
+  text-align: right;
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 匯出表格 ---------- */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.sv-table th,
+.sv-table td {
+  border: 1px solid var(--c-border-soft);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.sv-table thead th {
+  background: var(--c-surface-2);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* ---------- 手機 ---------- */
+@media (max-width: 640px) {
+  .sv-opt { padding: 10px 11px; }
+  .sv-stat-label { flex: 0 0 52%; font-size: var(--fs-xs); }
+  .sv-stat-num { flex: 0 0 42px; font-size: var(--fs-xs); }
+  .sv-table th, .sv-table td { padding: 7px 8px; font-size: var(--fs-xs); }
+}
+
+/* ---------- 列印 / 存 PDF（給系主任的紙本）----------
+   列印時把站台介面全部收起來，只留統計與名單。 */
+@media print {
+  .site-header,
+  .site-footer,
+  .nav-menu,
+  #login-card,
+  #my-section > .card[data-sec="gold"],
+  #admin-section > .card:not(#export-card),
+  #booting,
+  .toast,
+  .modal,
+  #btn-export-csv,
+  #btn-export-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .wrap {
+    max-width: none;
+    padding: 0;
+  }
+
+  #export-card {
+    border: none;
+    box-shadow: none;
+  }
+
+  .sv-table th,
+  .sv-table td {
+    border-color: #999;
+  }
+
+  .sv-stat-bar i {
+    background: #444 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
