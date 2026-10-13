@@ -82,9 +82,6 @@
          所以下面那行說明不能省。 -->
     <div class="or-divider"><span>或</span></div>
     <button class="btn btn-line" type="button" id="btn-line-login">用 LINE 登入</button>
-    <p class="hint" id="line-login-hint" style="margin:10px 0 0">
-      首次使用請先用上方帳密登入一次，完成 LINE 綁定後就能一鍵登入。
-    </p>
   </section>
 
   <!-- ===================== 區塊 A：我的記錄 ===================== -->
@@ -203,8 +200,9 @@
 
   </section>
 
-  <!-- ===================== 區塊 B：統計圖表（公開） ===================== -->
-  <section class="card" id="stats-card" data-sec="teal">
+  <!-- ===================== 區塊 B：統計圖表（需登入） =====================
+       含教師姓名與次數，未登入不可見 —— HTML 先 hidden，登入後才打開。 -->
+  <section class="card" id="stats-card" data-sec="teal" hidden>
     <div class="toolbar">
       <h2 style="margin:0">教師招生 ／ 公差次數統計</h2>
       <span class="spacer"></span>
@@ -304,6 +302,6 @@
 
 <script src="assets/config.js?v=044a880c"></script>
 <script src="assets/common.js?v=93f5f6b8"></script>
-<script src="assets/records.js?v=12241bae"></script>
+<script src="assets/records.js?v=d6f050f9"></script>
 </body>
 </html>

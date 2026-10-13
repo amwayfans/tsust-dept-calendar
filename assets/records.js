@@ -26,6 +26,7 @@
   /* ---------- 元素 ---------- */
   var $ = function (id) { return document.getElementById(id); };
   var elLogin = $('login-card'), elMy = $('my-section'), elAll = $('all-section');
+  var elStats = $('stats-card');   // 含教師姓名與次數 → 只在登入後顯示
   var elBooting = $('booting'), elForm = $('record-form');
 
   /* 我的記錄／全部記錄：預設都收起來，點標題才展開。
@@ -175,10 +176,13 @@
      不要留一顆按了會失敗的按鈕給老師。 */
   if (!A.lineEnabled()) A.hideLineUi();
 
-  loadRoster().then(function () {
-    return loadYears();
-  }).then(function () {
-    return A.getSession();
+  /* 名冊與統計要「登入後才抓」—— 統計圖含教師姓名與次數，
+     未登入連資料都不該下載（不只是藏起來）。 */
+  A.getSession().then(function (session) {
+    if (!session || !session.user) return null;
+    return loadRoster().then(function () {
+      return loadYears();
+    }).then(function () { return session; });
   }).then(function (session) {
     elBooting.hidden = true;
     /* 剛剛是不是從 LINE 回來的？讀完就清掉，重整不會再問一次 */
@@ -270,6 +274,7 @@
     elLogin.hidden = false;
     elMy.hidden = true;
     elAll.hidden = true;
+    elStats.hidden = true;        // 未登入不看統計（含教師姓名）
     /* 沒登入（或 session 失效）→ 頁首身分籤與選單個人操作一併收起來 */
     $('who-chip').hidden = true;
     $('menu-user').hidden = true;
@@ -322,6 +327,7 @@
     elLogin.hidden = true;
     elMy.hidden = false;
     elAll.hidden = false;
+    elStats.hidden = false;
 
     /* 頁首的身分籤、以及收在漢堡選單裡的個人操作（修改密碼／登出），
        都只在登入後出現。未登入時整組不佔位。 */
@@ -376,7 +382,7 @@
       me = null;
       $('record-form').reset();
       resetForm();
-      elMy.hidden = true; elAll.hidden = true;
+      elMy.hidden = true; elAll.hidden = true; elStats.hidden = true;
       /* 頁首身分籤與選單裡的個人操作也要一起收起來 */
       $('who-chip').hidden = true;
       $('menu-user').hidden = true;
