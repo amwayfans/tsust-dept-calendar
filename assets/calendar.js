@@ -248,6 +248,24 @@
     return { attendees: att, rest: rest };
   }
 
+  /* HTML 轉義 —— 說明是資料庫來的字，先轉義再處理，避免注入 */
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* 說明裡的網址要能直接點。
+     使用者需求：把雲端連結放進會議說明，方便老師直接進去下載 ——
+     純文字的話老師得自己複製貼上，所以要在這裡變成可點的連結。
+     順序很重要：先 escHtml 再 linkify，否則會被注入。 */
+  function linkify(text) {
+    var urlRe = /(https?:\/\/[^\s<>"）)】。，、；]+)/g;
+    return escHtml(text).replace(urlRe, function (u) {
+      return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>';
+    });
+  }
+
   /* 事件要顯示的出席人員：以獨立欄位為主，沒有才回頭從說明撈 */
   function attendeesOf(r) {
     if (!r) return '';
@@ -656,7 +674,7 @@
     var descWrap = document.getElementById('m-desc-wrap');
     var descText = descWithoutAttendees(r);   /* 名單已移到上面那一列 */
     if (descText) {
-      document.getElementById('m-desc').textContent = descText;
+      document.getElementById('m-desc').innerHTML = linkify(descText);
       descWrap.hidden = false;
     } else { descWrap.hidden = true; }
 
