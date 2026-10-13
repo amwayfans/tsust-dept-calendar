@@ -93,11 +93,14 @@
     var names = Object.keys(rooms).sort();
     if (!state.room || names.indexOf(state.room) < 0) state.room = names[0] || '';
 
-    $('room-picker').innerHTML = names.map(function (n) {
-      return '<button type="button" class="rs-room-btn' + (n === state.room ? ' is-active' : '') +
-             '" data-room="' + A.esc(n) + '">' + A.esc(n) +
-             '<span class="rs-cnt">' + rooms[n] + '</span></button>';
+    // 教室清單一律由資料產生（學期增減教室會自己出現，不寫死）
+    var sel = $('room-select');
+    sel.innerHTML = names.map(function (n) {
+      return '<option value="' + A.esc(n) + '"' + (n === state.room ? ' selected' : '') + '>' +
+             A.esc(n) + '（' + rooms[n] + ' 節）</option>';
     }).join('');
+    sel.value = state.room;
+    $('room-count').textContent = names.length ? '共 ' + names.length + ' 間教室' : '';
   }
 
   /* ---------- 課表 ---------- */
@@ -314,11 +317,8 @@
     });
   });
 
-  $('room-picker').addEventListener('click', function (ev) {
-    var b = ev.target.closest('.rs-room-btn');
-    if (!b) return;
-    state.room = b.getAttribute('data-room');
-    renderPicker();
+  $('room-select').addEventListener('change', function () {
+    state.room = this.value;
     renderGrid();
   });
 

@@ -641,6 +641,58 @@
     if (i) setTimeout(function () { i.focus(); }, 60);
   }
 
+  /* ============================================================
+     未完成的事情
+     ------------------------------------------------------------
+     目前只有「還沒填的調查表」。判定方式：
+       開放中（status='open'）＋ 還沒截止 ＋ 我沒有作答紀錄
+     讀不到資料時一律當作「沒有未完成」——寧可少提醒，
+     也不要讓老師看到一個點進去卻沒東西的紅點。
+     日後若有其他待辦（例如沒填的教學進度表），加在這裡就好。
+     ============================================================ */
+  function fetchPending(profile) {
+    if (!profile || !profile.id) return Promise.resolve([]);
+
+    return sb.from('surveys')
+      .select('id,title,deadline,status,sort_order')
+      .eq('status', 'open')
+      .then(function (r) {
+        if (r.error) throw r.error;
+        var now = Date.now();
+        var list = (r.data || []).filter(function (s) {
+          return !s.deadline || new Date(s.deadline).getTime() > now;
+        });
+        if (!list.length) return [];
+        var ids = list.map(function (s) { return s.id; });
+        return sb.from('survey_responses')
+          .select('survey_id')
+          .eq('profile_id', profile.id)
+          .in('survey_id', ids)
+          .then(function (r2) {
+            var done = {};
+            (r2.data || []).forEach(function (d) { done[d.survey_id] = 1; });
+            return list.filter(function (s) { return !done[s.id]; })
+                       .map(function (s) { return { kind: '調查表', title: s.title, href: 'survey.html' }; });
+          });
+      })
+      .catch(function () { return []; });
+  }
+
+  /** 把未完成件數畫在頭像右上角（紅色圓標，像訊息未讀那樣） */
+  function renderWhoBadge(n) {
+    var slot = document.getElementById('who-avatar');
+    if (!slot) return;
+    var b = slot.querySelector('.who-badge');
+    if (!n) { if (b) b.remove(); return; }
+    if (!b) {
+      b = document.createElement('span');
+      b.className = 'who-badge';
+      slot.appendChild(b);
+    }
+    b.textContent = n > 9 ? '9+' : String(n);
+    b.title = '有 ' + n + ' 件事還沒完成';
+  }
+
   /**
    * 帳號選單：點右上角頭像後出現，提供「修改密碼」與「登出」。
    * 桌機沒有漢堡選單，這裡是電腦上唯一的登出入口，所以一定要有。
@@ -662,6 +714,10 @@
       '    line-height:1;cursor:pointer;z-index:1;">✕</button>',
       '  <h3 id="acct-title">帳號設定</h3>',
       '  <p class="hint" id="acct-who" style="margin-top:-6px"></p>',
+      '  <div class="acct-todo" id="acct-todo" hidden>',
+      '    <div class="acct-todo-head" id="acct-todo-head"></div>',
+      '    <ul class="acct-todo-list" id="acct-todo-list"></ul>',
+      '  </div>',
       '  <div class="acct-actions">',
       '    <button class="btn btn-ghost" type="button" id="acct-pw">修改密碼</button>',
       '    <button class="btn btn-ghost acct-danger" type="button" id="acct-logout">登出</button>',
@@ -672,12 +728,33 @@
     wireModalDismiss();
   }
 
+  var pendingItems = [];      // syncHeaderAuth 查到後放這裡
+
+  function renderPendingInModal() {
+    var box = document.getElementById('acct-todo');
+    var head = document.getElementById('acct-todo-head');
+    var list = document.getElementById('acct-todo-list');
+    if (!box || !head || !list) return;
+
+    if (!pendingItems.length) { box.hidden = true; return; }
+    box.hidden = false;
+    head.innerHTML = '提醒：還有 <b>' + pendingItems.length + '</b> 件事還沒完成';
+    list.innerHTML = pendingItems.map(function (it) {
+      return '<li><a href="' + esc(it.href) + '">'
+        + '<span class="acct-todo-kind">' + esc(it.kind) + '</span>'
+        + '<span class="acct-todo-title">' + esc(it.title) + '</span>'
+        + '<span class="acct-todo-go">前往填寫 ›</span>'
+        + '</a></li>';
+    }).join('');
+  }
+
   function openAccountModal() {
     buildAccountModal();
     wireModalDismiss();
     var who = document.getElementById('acct-who');
     var nm = document.getElementById('who');
     if (who) who.textContent = (nm && nm.textContent) ? (nm.textContent + '　·　選擇要進行的操作') : '';
+    renderPendingInModal();
     openModal(ACCT_MODAL_ID);
   }
 
@@ -712,6 +789,13 @@
         });
       }
     }
+
+    // ③ 未完成的事情：頭像右上角紅標 + 帳號選單裡的提醒
+    fetchPending(profile).then(function (items) {
+      pendingItems = items || [];
+      renderWhoBadge(pendingItems.length);
+      renderPendingInModal();
+    });
 
     // 手機選單裡的「修改密碼」也接同一顆視窗
     var pwBtn = document.getElementById('btn-pw');

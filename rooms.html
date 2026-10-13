@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/styles.css?v=5e4bcd39">
-<link rel="stylesheet" href="assets/rooms.css?v=8fb1262d">
+<link rel="stylesheet" href="assets/styles.css?v=890b4502">
+<link rel="stylesheet" href="assets/rooms.css?v=f72c300b">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -93,7 +93,11 @@
     <!-- ── 教室查詢 ───────────────────────────── -->
     <div id="pane-room">
       <div class="card">
-        <div class="rs-picker" id="room-picker"></div>
+        <div class="rs-picker-row">
+          <label class="rs-picker-label" for="room-select">教室</label>
+          <select class="rs-select" id="room-select" aria-label="選擇教室"></select>
+          <span class="rs-picker-hint" id="room-count"></span>
+        </div>
         <div class="rs-tools">
           <label class="rs-check">
             <input type="checkbox" id="only-free"> 只顯示空堂（這間教室哪幾節沒人用）
@@ -133,7 +137,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="assets/config.js?v=044a880c"></script>
-<script src="assets/common.js?v=4cb3ab08"></script>
-<script src="assets/rooms.js?v=38fb6546"></script>
+<script src="assets/common.js?v=773da899"></script>
+<script src="assets/rooms.js?v=bbfa34cd"></script>
 </body>
 </html>

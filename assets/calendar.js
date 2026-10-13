@@ -835,7 +835,7 @@
     document.getElementById('who-name').textContent = email;
     elWhoChip.hidden = false;
 
-    A.sb.from('profiles').select('full_name,avatar_url,role')
+    A.sb.from('profiles').select('id,full_name,avatar_url,role')
       .eq('id', s.user.id).maybeSingle()
       .then(function (r) {
         var p = (r && !r.error && r.data) || {};

@@ -29,35 +29,50 @@
   font-weight: 600;
 }
 
-/* ── 教室選擇 ───────────────────────────────── */
-.rs-picker {
+/* ── 教室選擇（下拉選單）───────────────────────
+   教室會隨學期增減，用下拉才不會因為教室變多而把版面撐成好幾列。 */
+.rs-picker-row {
   display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 8px;
   margin-bottom: 14px;
 }
-.rs-room-btn {
-  font: inherit;
+.rs-picker-label {
   font-size: 14px;
-  padding: 7px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--line, #d8dee9);
-  background: #fff;
-  color: var(--ink-2, #475569);
-  cursor: pointer;
+  font-weight: 600;
+  color: var(--navy, #1e3a5f);
   white-space: nowrap;
 }
-.rs-room-btn:hover { border-color: var(--navy, #1e3a5f); }
-.rs-room-btn.is-active {
-  background: var(--navy, #1e3a5f);
-  border-color: var(--navy, #1e3a5f);
-  color: #fff;
-  font-weight: 600;
+.rs-select {
+  font: inherit;
+  font-size: 15px;
+  min-width: 190px;
+  max-width: 100%;
+  padding: 9px 34px 9px 12px;
+  border: 1px solid var(--line, #d8dee9);
+  border-radius: 9px;
+  background-color: #fff;
+  color: var(--ink, #1f2937);
+  cursor: pointer;
+  /* 自繪箭頭：各瀏覽器預設外觀差很多，統一畫一個 */
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%231e3a5f' d='M1.4 1.4 6 6l4.6-4.6L12 2.8 6 8 0 2.8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
 }
-.rs-room-btn .rs-cnt {
-  font-size: 11px;
-  opacity: .7;
-  margin-left: 4px;
+.rs-select:focus {
+  outline: none;
+  border-color: var(--navy, #1e3a5f);
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, .12);
+}
+.rs-picker-hint {
+  font-size: 13px;
+  color: #94a3b8;
+}
+@media (max-width: 520px) {
+  .rs-select { flex: 1 1 100%; min-width: 0; }
 }
 
 /* ── 工具列 ─────────────────────────────────── */
