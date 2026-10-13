@@ -515,6 +515,7 @@
     m.setAttribute('aria-labelledby', 'pw-modal-title');
     m.innerHTML = [
       '<div class="modal-box modal-box-sm">',
+      '  <button class="modal-x" type="button" id="pw-x" aria-label="關閉">✕</button>',
       '  <h3 id="pw-modal-title">修改密碼</h3>',
       '  <p class="hint" style="margin-top:-6px">',
       '    新密碼至少 6 個字。改完之後，下次登入請用新密碼。',
@@ -549,6 +550,7 @@
     });
 
     document.getElementById('pw-cancel').addEventListener('click', closePasswordModal);
+    document.getElementById('pw-x').addEventListener('click', closePasswordModal);
 
     document.getElementById('pw-logout').addEventListener('click', function () {
       signOut().then(function () { window.location.reload(); });

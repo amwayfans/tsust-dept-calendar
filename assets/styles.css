@@ -986,26 +986,53 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   inset: 0;
   background: rgba(15, 23, 42, .5);
   display: none;
-  align-items: center;
+  /* 用 flex-start + 盒子 margin:auto —— 空間夠時置中，
+     空間不夠（手機鍵盤彈出、可視高度只剩一半）時整層可以捲，
+     按鈕才不會被推到畫面外點不到。align-items:center 會把上下都切掉。 */
+  align-items: flex-start;
   justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 16px;
   z-index: 50;
 }
 .modal.show { display: flex; animation: fade .18s ease; }
 @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
 .modal-box {
+  position: relative;                 /* 右上角關閉鈕的定位基準 */
   background: var(--c-surface);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 540px;
-  max-height: 88vh;
-  overflow-y: auto;
+  margin: auto;                       /* 配合上面的 flex-start 才會置中 */
   padding: 22px;
   box-shadow: var(--shadow-md);
   animation: pop .2s cubic-bezier(.2, .8, .3, 1);
 }
+
+/* 右上角關閉鈕：不管內容多長、鍵盤有沒有彈出，永遠在第一眼看得到的位置 */
+.modal-x {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.modal-x:hover,
+.modal-x:focus-visible { background: #f1f5f9; color: #0f172a; }
 @keyframes pop { from { transform: translateY(8px) scale(.985); opacity: .6 } to { transform: none; opacity: 1 } }
 .modal-box h3 {
+  padding-right: 36px;                /* 讓標題不會撞到右上角關閉鈕 */
   margin: 0 0 14px;
   font-size: var(--fs-lg);
   font-weight: 700;
