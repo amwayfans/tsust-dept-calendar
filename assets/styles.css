@@ -1013,13 +1013,18 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 /* 事件詳情的「說明」：連結可點、換行要保留 */
 #m-desc {
   /* ⚠️ 沒有這行的話說明裡的換行會被吃掉，整段擠成一團：
-     連結和下一行標題黏在一起，「來源：」也會被接在網址尾巴。 */
-  white-space: pre-line;
+     連結和下一行標題黏在一起，「來源：」也會被接在網址尾巴。
+     用 pre-wrap 而不是 pre-line —— pre-line 會把「行首空白」吃掉，
+     說明裡用來縮排的全形空白（　）就沒作用了。pre-wrap 兩者都保留。 */
+  white-space: pre-wrap;
 }
 #m-desc a {
   color: #1D4ED8;
   text-decoration: underline;
   word-break: break-all;
+  /* 整段（含折行）往內縮，讓網址讀起來是「・簡報」底下的一項。
+     用 padding 而不是 text-indent —— text-indent 對 inline 元素無效。 */
+  padding-left: 1.4em;
 }
 #m-desc a:hover { color: #1E3A8A; }
 #m-desc-wrap { line-height: 1.7; }
