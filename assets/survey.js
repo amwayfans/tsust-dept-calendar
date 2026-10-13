@@ -111,6 +111,9 @@
 
     if (me.isAdmin) elAdmin.hidden = false;
 
+    /* 一般老師不顯示「管理後台」；頭像接上修改密碼視窗 */
+    A.syncHeaderAuth(null, profile);
+
     refreshLineBind();
     if (me.isAdmin) loadAdminList();
     return loadTeacherView();

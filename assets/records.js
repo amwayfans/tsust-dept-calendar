@@ -339,6 +339,9 @@
          （48px 的 lg 會比同列的漢堡鈕還高，把頁首撐高） */
       A.avatarHtml(profile.full_name || profile.email, profile.avatar_url, 'avatar-md');
 
+    /* 一般老師不顯示「管理後台」；頭像接上修改密碼視窗 */
+    A.syncHeaderAuth(null, profile);
+
     refreshLineBind();
 
     /* 姓名不在名冊中 → 不能寫入 */

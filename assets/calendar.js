@@ -24,6 +24,7 @@
   var btnAdd = document.getElementById('btn-add');
   var btnView = document.getElementById('btn-view');
   var linkAdmin = document.getElementById('link-admin');
+  var menuAdmin = document.getElementById('menu-admin');
   var badge = document.getElementById('admin-badge');
   var elWhoChip = document.getElementById('who-chip');
 
@@ -847,6 +848,16 @@
           roleEl.textContent = A.roleLabel(p);
           roleEl.hidden = false;
         }
+
+        /* 管理後台只給系辦（admin／assistant）：一般老師登入後不該看到，
+           所以登入後依角色重新決定顯示與否（匿名時它是「管理員登入」入口）。 */
+        var isMgr = A.isRecordManager(p);
+        linkAdmin.hidden = !isMgr;
+        if (menuAdmin) menuAdmin.hidden = !isMgr;
+        if (isMgr) linkAdmin.textContent = '管理後台';
+
+        /* 頭像接上修改密碼視窗 */
+        A.syncHeaderAuth(s, p);
       });
   });
 

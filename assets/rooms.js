@@ -47,6 +47,8 @@
     var rEl = $('who-role');
     if (role) { rEl.textContent = role; rEl.hidden = false; } else { rEl.hidden = true; }
     $('menu-user').hidden = false;
+    /* 一般老師不顯示「管理後台」；頭像接上修改密碼視窗 */
+    A.syncHeaderAuth(session, profile);
   }
 
   /* ---------- 資料 ---------- */

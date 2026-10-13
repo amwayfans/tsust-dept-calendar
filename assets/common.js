@@ -476,6 +476,163 @@
              isOpen: function () { return open; } };
   }
 
+  /* ============================================================
+     帳號相關的頁首行為（四頁共用）
+     ------------------------------------------------------------
+     ① 一般老師不顯示「管理後台」——只有系辦（admin／assistant）看得到。
+        前端只是不顯示按鈕，真正的把關仍在 RLS／後台。
+     ② 點右上角頭像 → 彈出「修改密碼」視窗。
+     放在 common.js 是為了讓行事曆／記錄／調查／教室課表四頁行為一致，
+     各頁只要在登入後呼叫 App.syncHeaderAuth(session, profile) 即可。
+     ============================================================ */
+
+  var PW_MODAL_ID = 'pw-modal';
+
+  function pwErr(msg) {
+    var e = document.getElementById('pw-error');
+    if (!e) return;
+    if (msg) { e.textContent = msg; e.hidden = false; } else { e.hidden = true; }
+  }
+
+  function closePasswordModal() {
+    var m = document.getElementById(PW_MODAL_ID);
+    if (!m) return;
+    m.classList.remove('show');
+    pwErr('');
+    var f = document.getElementById('pw-form');
+    if (f) f.reset();
+  }
+
+  /** 建立修改密碼視窗（只建一次，之後重複開關） */
+  function buildPasswordModal() {
+    if (document.getElementById(PW_MODAL_ID)) return;
+
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.id = PW_MODAL_ID;
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.setAttribute('aria-labelledby', 'pw-modal-title');
+    m.innerHTML = [
+      '<div class="modal-box modal-box-sm">',
+      '  <h3 id="pw-modal-title">修改密碼</h3>',
+      '  <p class="hint" style="margin-top:-6px">',
+      '    新密碼至少 6 個字。改完之後，下次登入請用新密碼。',
+      '  </p>',
+      '  <form id="pw-form" novalidate>',
+      '    <div class="field">',
+      '      <label for="pw-new">新密碼</label>',
+      '      <input type="password" id="pw-new" autocomplete="new-password"',
+      '             placeholder="請輸入新密碼" required>',
+      '    </div>',
+      '    <div class="field">',
+      '      <label for="pw-new2">再輸入一次</label>',
+      '      <input type="password" id="pw-new2" autocomplete="new-password"',
+      '             placeholder="請再輸入一次新密碼" required>',
+      '    </div>',
+      '    <div class="field-error" id="pw-error" hidden></div>',
+      '    <div class="modal-actions">',
+      '      <button class="btn btn-ghost act-left" type="button" id="pw-logout">登出</button>',
+      '      <button class="btn btn-ghost" type="button" id="pw-cancel">取消</button>',
+      '      <button class="btn btn-primary" type="submit" id="pw-save">儲存新密碼</button>',
+      '    </div>',
+      '  </form>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(m);
+
+    // 點視窗外面的空白處關閉
+    m.addEventListener('click', function (e) { if (e.target === m) closePasswordModal(); });
+    // Esc 關閉
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && m.classList.contains('show')) closePasswordModal();
+    });
+
+    document.getElementById('pw-cancel').addEventListener('click', closePasswordModal);
+
+    document.getElementById('pw-logout').addEventListener('click', function () {
+      signOut().then(function () { window.location.reload(); });
+    });
+
+    document.getElementById('pw-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var a = document.getElementById('pw-new').value;
+      var b = document.getElementById('pw-new2').value;
+      var btn = document.getElementById('pw-save');
+
+      if (a.length < 6) { pwErr('新密碼至少 6 個字。'); return; }
+      if (a !== b) { pwErr('兩次輸入的密碼不一樣，請再確認。'); return; }
+
+      pwErr('');
+      btn.disabled = true;
+      btn.textContent = '儲存中…';
+      sb.auth.updateUser({ password: a }).then(function (r) {
+        btn.disabled = false;
+        btn.textContent = '儲存新密碼';
+        if (r.error) { pwErr('修改失敗：' + r.error.message); return; }
+        closePasswordModal();
+        toast('密碼已更新，下次登入請用新密碼。', 'ok');
+      }).catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = '儲存新密碼';
+        pwErr('修改失敗：' + (err.message || err));
+      });
+    });
+  }
+
+  function openPasswordModal() {
+    buildPasswordModal();
+    pwErr('');
+    var m = document.getElementById(PW_MODAL_ID);
+    m.classList.add('show');
+    var i = document.getElementById('pw-new');
+    if (i) setTimeout(function () { i.focus(); }, 60);
+  }
+
+  /**
+   * 登入後呼叫：整理頁首（隱藏管理後台、把頭像接上修改密碼）。
+   * profile 為 null 時視為一般老師 —— 寧可不顯示，也不要誤給權限。
+   */
+  function syncHeaderAuth(session, profile) {
+    var manager = isRecordManager(profile);
+
+    // ① 管理後台只給系辦（桌機按鈕與手機選單都在這裡一起處理）
+    Array.prototype.forEach.call(
+      document.querySelectorAll('a[href="admin.html"]'),
+      function (a) { a.hidden = !manager; }
+    );
+
+    // ② 頭像 → 修改密碼
+    var chip = document.getElementById('who-chip');
+    if (chip) {
+      chip.classList.add('who-clickable');
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('tabindex', '0');
+      chip.title = '帳號設定（修改密碼）';
+      if (!chip.dataset.pwWired) {
+        chip.dataset.pwWired = '1';
+        chip.addEventListener('click', openPasswordModal);
+        chip.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            openPasswordModal();
+          }
+        });
+      }
+    }
+
+    // 手機選單裡的「修改密碼」也接同一顆視窗
+    var pwBtn = document.getElementById('btn-pw');
+    if (pwBtn && !pwBtn.dataset.pwWired) {
+      pwBtn.dataset.pwWired = '1';
+      pwBtn.addEventListener('click', function () {
+        var menu = document.getElementById('nav-menu');
+        if (menu) menu.hidden = true;
+        openPasswordModal();
+      });
+    }
+  }
+
   window.App = {
     cfg: cfg,
     sb: sb,
@@ -506,6 +663,8 @@
     avatarColor: avatarColor,
     toast: toast,
     isMissingTable: isMissingTable,
-    accordion: accordion
+    accordion: accordion,
+    syncHeaderAuth: syncHeaderAuth,
+    openPasswordModal: openPasswordModal
   };
 })();

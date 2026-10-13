@@ -38,7 +38,7 @@
     </span>
 
     <!-- 桌機直接顯示；手機收進漢堡選單 -->
-    <a class="btn btn-ghost hdr-desktop" href="admin.html">管理後台</a>
+    <a class="btn btn-ghost hdr-desktop" href="admin.html" hidden>管理後台</a>
     <button class="nav-toggle" id="nav-toggle" type="button"
             aria-label="更多功能" aria-expanded="false" aria-controls="nav-menu">☰</button>
   </div>
@@ -46,7 +46,7 @@
   <!-- 手機的漢堡選單。個人帳號操作（修改密碼／登出）也收在這裡，
        未登入時整組不顯示（見 records.js 的 enter / 登出）。 -->
   <div class="nav-menu" id="nav-menu" hidden>
-    <a class="nav-menu-item" href="admin.html">管理後台</a>
+    <a class="nav-menu-item" href="admin.html" hidden>管理後台</a>
     <span id="menu-user" hidden>
       <button class="nav-menu-item nav-menu-btn" id="btn-pw" type="button">修改密碼</button>
       <button class="nav-menu-item nav-menu-btn nav-menu-danger" id="btn-logout" type="button">登出</button>

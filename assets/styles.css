@@ -972,6 +972,15 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
 @keyframes sk { 0% { background-position: 100% 50% } 100% { background-position: 0 50% } }
 
 /* ---------- Modal ---------- */
+/* 頭像可點（點了開修改密碼視窗） */
+.who-chip.who-clickable {
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background .15s;
+}
+.who-chip.who-clickable:hover,
+.who-chip.who-clickable:focus-visible { background: rgba(255, 255, 255, .12); }
+
 .modal {
   position: fixed;
   inset: 0;
