@@ -145,7 +145,7 @@ STUB = """<script>
 </script>
 """
 
-needle = '<script src="assets/config.js"></script>'
+needle = '<script src="assets/config.js'
 if needle not in src:
     sys.exit("找不到注入點：config.js 的 script 標籤")
 out = src.replace(needle, STUB + needle, 1)

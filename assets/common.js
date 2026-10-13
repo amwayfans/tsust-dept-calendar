@@ -487,6 +487,7 @@
      ============================================================ */
 
   var PW_MODAL_ID = 'pw-modal';
+  var ACCT_MODAL_ID = 'acct-modal';
 
   function pwErr(msg) {
     var e = document.getElementById('pw-error');
@@ -494,13 +495,74 @@
     if (msg) { e.textContent = msg; e.hidden = false; } else { e.hidden = true; }
   }
 
-  function closePasswordModal() {
-    var m = document.getElementById(PW_MODAL_ID);
+  /* ── 開啟／關閉視窗 ────────────────────────────────────────
+     關閉的路徑刻意做好幾條：✕、取消、點視窗外空白處、Esc、瀏覽器上一頁。
+     任何一條被擋住（快取到舊檔、有東西蓋在上面、DOM 被換掉）都還關得掉 ——
+     使用者卡在視窗裡是最糟的體驗，寧可多留幾個出口。 */
+  function openModal(id) {
+    var m = document.getElementById(id);
     if (!m) return;
+    m.classList.add('show');
+    try {
+      // 讓瀏覽器「上一頁」也能關掉這個視窗
+      if (!history.state || !history.state.__modal) history.pushState({ __modal: id }, '');
+    } catch (e) { /* 不允許 pushState 的環境：其餘出口照常運作 */ }
+  }
+
+  function closeModal(id) {
+    var m = document.getElementById(id);
+    if (!m || !m.classList.contains('show')) return;
     m.classList.remove('show');
-    pwErr('');
-    var f = document.getElementById('pw-form');
-    if (f) f.reset();
+    if (id === PW_MODAL_ID) {
+      pwErr('');
+      var f = document.getElementById('pw-form');
+      if (f) f.reset();
+    }
+    /* 注意：這裡刻意「不要」呼叫 history.back()。
+       history.back() 觸發的 popstate 是非同步的，會晚一步才執行，
+       正好插在「關掉帳號選單 → 開修改密碼視窗」中間，把剛開好的視窗一起關掉。
+       歷史紀錄只在開啟時推一次，按上一頁時由 popstate 負責關閉。 */
+  }
+
+  function closePasswordModal() { closeModal(PW_MODAL_ID); }
+
+  /* 關閉行為用 document 層級的事件代理接一次就好：
+     即使某顆按鈕的監聽沒接上，關閉照樣有效。 */
+  var modalDismissWired = false;
+  function wireModalDismiss() {
+    if (modalDismissWired) return;
+    modalDismissWired = true;
+
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+
+      if (t.closest('#pw-x, #pw-cancel')) { closeModal(PW_MODAL_ID); return; }
+      if (t.closest('#acct-x, #acct-close')) { closeModal(ACCT_MODAL_ID); return; }
+      if (t.closest('#acct-pw')) { closeModal(ACCT_MODAL_ID); openPasswordModal(); return; }
+      if (t.closest('#acct-logout')) { signOut().then(function () { location.reload(); }); return; }
+
+      // 點到遮罩層本身（＝視窗外的空白處）
+      if (t.classList && t.classList.contains('modal') && t.classList.contains('show')) {
+        closeModal(t.id);
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      [PW_MODAL_ID, ACCT_MODAL_ID].forEach(function (id) {
+        var m = document.getElementById(id);
+        if (m && m.classList.contains('show')) closeModal(id);
+      });
+    });
+
+    // 瀏覽器「上一頁」＝ 關掉視窗（卡住時最直覺的逃生口）
+    window.addEventListener('popstate', function () {
+      [PW_MODAL_ID, ACCT_MODAL_ID].forEach(function (id) {
+        var m = document.getElementById(id);
+        if (m && m.classList.contains('show')) m.classList.remove('show');
+      });
+    });
   }
 
   /** 建立修改密碼視窗（只建一次，之後重複開關） */
@@ -515,7 +577,10 @@
     m.setAttribute('aria-labelledby', 'pw-modal-title');
     m.innerHTML = [
       '<div class="modal-box modal-box-sm">',
-      '  <button class="modal-x" type="button" id="pw-x" aria-label="關閉">✕</button>',
+      '  <button class="modal-x" type="button" id="pw-x" aria-label="關閉"',
+      '    style="position:absolute;top:10px;right:10px;width:34px;height:34px;border:0;',
+      '    border-radius:8px;background:rgba(255,255,255,.9);color:#475569;font-size:18px;',
+      '    line-height:1;cursor:pointer;z-index:1;">✕</button>',
       '  <h3 id="pw-modal-title">修改密碼</h3>',
       '  <p class="hint" style="margin-top:-6px">',
       '    新密碼至少 6 個字。改完之後，下次登入請用新密碼。',
@@ -533,7 +598,6 @@
       '    </div>',
       '    <div class="field-error" id="pw-error" hidden></div>',
       '    <div class="modal-actions">',
-      '      <button class="btn btn-ghost act-left" type="button" id="pw-logout">登出</button>',
       '      <button class="btn btn-ghost" type="button" id="pw-cancel">取消</button>',
       '      <button class="btn btn-primary" type="submit" id="pw-save">儲存新密碼</button>',
       '    </div>',
@@ -541,20 +605,7 @@
       '</div>'
     ].join('');
     document.body.appendChild(m);
-
-    // 點視窗外面的空白處關閉
-    m.addEventListener('click', function (e) { if (e.target === m) closePasswordModal(); });
-    // Esc 關閉
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && m.classList.contains('show')) closePasswordModal();
-    });
-
-    document.getElementById('pw-cancel').addEventListener('click', closePasswordModal);
-    document.getElementById('pw-x').addEventListener('click', closePasswordModal);
-
-    document.getElementById('pw-logout').addEventListener('click', function () {
-      signOut().then(function () { window.location.reload(); });
-    });
+    wireModalDismiss();          // 關閉一律走共用機制（✕／取消／空白處／Esc／上一頁）
 
     document.getElementById('pw-form').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -585,10 +636,49 @@
   function openPasswordModal() {
     buildPasswordModal();
     pwErr('');
-    var m = document.getElementById(PW_MODAL_ID);
-    m.classList.add('show');
+    openModal(PW_MODAL_ID);
     var i = document.getElementById('pw-new');
     if (i) setTimeout(function () { i.focus(); }, 60);
+  }
+
+  /**
+   * 帳號選單：點右上角頭像後出現，提供「修改密碼」與「登出」。
+   * 桌機沒有漢堡選單，這裡是電腦上唯一的登出入口，所以一定要有。
+   */
+  function buildAccountModal() {
+    if (document.getElementById(ACCT_MODAL_ID)) return;
+
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.id = ACCT_MODAL_ID;
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.setAttribute('aria-labelledby', 'acct-title');
+    m.innerHTML = [
+      '<div class="modal-box modal-box-sm">',
+      '  <button class="modal-x" type="button" id="acct-x" aria-label="關閉"',
+      '    style="position:absolute;top:10px;right:10px;width:34px;height:34px;border:0;',
+      '    border-radius:8px;background:rgba(255,255,255,.9);color:#475569;font-size:18px;',
+      '    line-height:1;cursor:pointer;z-index:1;">✕</button>',
+      '  <h3 id="acct-title">帳號設定</h3>',
+      '  <p class="hint" id="acct-who" style="margin-top:-6px"></p>',
+      '  <div class="acct-actions">',
+      '    <button class="btn btn-ghost" type="button" id="acct-pw">修改密碼</button>',
+      '    <button class="btn btn-ghost acct-danger" type="button" id="acct-logout">登出</button>',
+      '  </div>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(m);
+    wireModalDismiss();
+  }
+
+  function openAccountModal() {
+    buildAccountModal();
+    wireModalDismiss();
+    var who = document.getElementById('acct-who');
+    var nm = document.getElementById('who');
+    if (who) who.textContent = (nm && nm.textContent) ? (nm.textContent + '　·　選擇要進行的操作') : '';
+    openModal(ACCT_MODAL_ID);
   }
 
   /**
@@ -610,14 +700,14 @@
       chip.classList.add('who-clickable');
       chip.setAttribute('role', 'button');
       chip.setAttribute('tabindex', '0');
-      chip.title = '帳號設定（修改密碼）';
+      chip.title = '帳號設定（修改密碼／登出）';
       if (!chip.dataset.pwWired) {
         chip.dataset.pwWired = '1';
-        chip.addEventListener('click', openPasswordModal);
+        chip.addEventListener('click', openAccountModal);
         chip.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
             e.preventDefault();
-            openPasswordModal();
+            openAccountModal();
           }
         });
       }

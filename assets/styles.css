@@ -1010,6 +1010,22 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   animation: pop .2s cubic-bezier(.2, .8, .3, 1);
 }
 
+/* 帳號選單（點頭像後）：兩顆大按鈕，手機也好按 */
+.acct-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+.acct-actions .btn {
+  justify-content: flex-start;
+  padding: 13px 16px;
+  font-size: 15px;
+  text-align: left;
+}
+.acct-actions .acct-danger { color: #b91c1c; border-color: #fecaca; }
+.acct-actions .acct-danger:hover { background: #fef2f2; border-color: #fca5a5; }
+
 /* 右上角關閉鈕：不管內容多長、鍵盤有沒有彈出，永遠在第一眼看得到的位置 */
 .modal-x {
   position: absolute;
