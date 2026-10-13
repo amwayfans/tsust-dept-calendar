@@ -144,6 +144,18 @@
 
         <div class="fblock" data-sec="teal">
           <div class="fblock-title">填答規則</div>
+          <div class="field">
+            <label for="ns-audience">誰需填寫？</label>
+            <select id="ns-audience">
+              <option value="all">全體（老師＋系務人員）</option>
+              <option value="teacher">僅老師</option>
+              <option value="assistant">僅系務人員</option>
+            </select>
+            <div class="hint" style="margin-top:6px">
+              只影響「提醒誰要填」與老師端看到的清單；<br>
+              系辦的管理與統計畫面一律看得到全部。
+            </div>
+          </div>
           <div class="row2">
             <div class="field">
               <label for="ns-multi">可複選？</label>
@@ -292,7 +304,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="assets/config.js?v=044a880c"></script>
-<script src="assets/common.js?v=773da899"></script>
-<script src="assets/survey.js?v=fab54888"></script>
+<script src="assets/common.js?v=549047fd"></script>
+<script src="assets/survey.js?v=6aa84fdb"></script>
 </body>
 </html>

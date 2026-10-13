@@ -125,13 +125,19 @@
   function loadTeacherView() {
     elMyError.hidden = true;
     return sb.from('surveys')
-      .select('id,title,description,status,multi,max_choices,show_stats,allow_edit,deadline,sort_order')
+      .select('*')          // 用 * 才不會因為舊資料庫還沒有 audience 欄位而整頁壞掉
       .eq('status', 'open')
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
       .then(function (res) {
         if (res.error) throw res.error;
-        surveys = res.data || [];
+        var myRole = (me.profile && me.profile.role) || '';
+        /* 只顯示「需要我填」的──系務人員就不會看到「僅老師」的調查。
+           沒有 audience 欄位（舊資料）或值看不懂時，audienceMatches 一律回 true，
+           寧可多顯示也不要讓該填的人漏填。 */
+        surveys = (res.data || []).filter(function (s) {
+          return A.audienceMatches(s.audience, myRole);
+        });
         if (!surveys.length) {
           elWrap.innerHTML = '';
           elNoSurvey.hidden = false;
@@ -246,6 +252,9 @@
     var meta = [];
     meta.push(s.multi ? (s.max_choices ? '可複選，最多 ' + s.max_choices + ' 個' : '可複選，不限數量') : '單選');
     if (s.deadline) meta.push('截止：' + A.tzParts(s.deadline).date + ' ' + A.tzParts(s.deadline).time);
+    if (s.audience && s.audience !== 'all' && A.AUDIENCE_LABEL[s.audience]) {
+      meta.push(A.AUDIENCE_LABEL[s.audience] + '填寫');
+    }
     meta.push(mine ? '已於 ' + A.tzParts(mine.updated_at).date + ' 送出' : '尚未填寫');
     if (closed) meta.push('已截止');
     else if (locked) meta.push('送出後鎖定');
@@ -503,7 +512,8 @@
     var filled = fillCount[s.id];
     var progress = (filled === undefined) ? '還沒有人填寫' : ('已填 ' + filled + ' 人');
     var metaTxt = progress
-      + (s.deadline ? '　·　截止：' + A.tzParts(s.deadline).date + ' ' + A.tzParts(s.deadline).time : '');
+      + (s.deadline ? '　·　截止：' + A.tzParts(s.deadline).date + ' ' + A.tzParts(s.deadline).time : '')
+      + (s.audience && A.AUDIENCE_LABEL[s.audience] ? '　·　' + A.AUDIENCE_LABEL[s.audience] + '填寫' : '');
     li.innerHTML = '<button type="button" class="sv-head ev-head" data-act="fold-row" aria-expanded="false">'
       + '<span class="sv-chev">▸</span>'
       + '<span class="sv-head-body">'
@@ -732,12 +742,19 @@
       deadline: dl ? A.tzToIso(dl + ':00') : null,
       sort_order: 0
     };
+    var audience = ($('ns-audience') && $('ns-audience').value) || 'all';
+    survey.audience = audience;
 
     var btn = $('ns-save');
     btn.disabled = true;
     btn.textContent = '建立中…';
 
     sb.from('surveys').insert(survey).select().single().then(function (res) {
+      // 若資料庫還沒跑 migration（沒有 audience 欄位），退回不含該欄位再送一次
+      if (res.error && /audience/i.test(res.error.message || '')) {
+        delete survey.audience;
+        return sb.from('surveys').insert(survey).select().single();
+      }
       if (res.error) throw res.error;
       var sid = res.data.id;
       var rows = opts.map(function (o, i) {

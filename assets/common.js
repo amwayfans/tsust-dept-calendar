@@ -642,6 +642,26 @@
   }
 
   /* ============================================================
+     「誰需填寫」（survey.audience）
+     ------------------------------------------------------------
+       all       = 全體（老師＋系務人員）
+       teacher   = 僅老師
+       assistant = 僅系務人員
+     讀不到欄位（舊資料／還沒跑 migration）一律當作 all，
+     看不懂的值也當作 all —— 寧可多顯示，不要讓該填的人漏填。
+     管理中樞（系辦端的管理與統計）不受這個欄位影響，永遠看得到全部。
+     ============================================================ */
+  var AUDIENCE_LABEL = { all: '全體', teacher: '僅老師', assistant: '僅系務人員' };
+
+  function audienceMatches(audience, role) {
+    var a = audience || 'all';
+    if (a === 'all') return true;
+    if (a === 'teacher') return role === 'teacher';
+    if (a === 'assistant') return role === 'assistant';
+    return true;
+  }
+
+  /* ============================================================
      未完成的事情
      ------------------------------------------------------------
      目前只有「還沒填的調查表」。判定方式：
@@ -654,13 +674,15 @@
     if (!profile || !profile.id) return Promise.resolve([]);
 
     return sb.from('surveys')
-      .select('id,title,deadline,status,sort_order')
+      .select('*')
       .eq('status', 'open')
       .then(function (r) {
         if (r.error) throw r.error;
         var now = Date.now();
+        var role = (profile && profile.role) || '';
         var list = (r.data || []).filter(function (s) {
-          return !s.deadline || new Date(s.deadline).getTime() > now;
+          if (s.deadline && new Date(s.deadline).getTime() <= now) return false;   // 已截止
+          return audienceMatches(s.audience, role);                                // 誰需填寫
         });
         if (!list.length) return [];
         var ids = list.map(function (s) { return s.id; });
@@ -841,6 +863,8 @@
     isMissingTable: isMissingTable,
     accordion: accordion,
     syncHeaderAuth: syncHeaderAuth,
+    AUDIENCE_LABEL: AUDIENCE_LABEL,
+    audienceMatches: audienceMatches,
     openPasswordModal: openPasswordModal
   };
 })();
