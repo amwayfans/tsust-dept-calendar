@@ -701,9 +701,18 @@
   }
 
   /** 把未完成件數畫在頭像右上角（紅色圓標，像訊息未讀那樣） */
+  var whoBadgeTries = 0;
   function renderWhoBadge(n) {
     var slot = document.getElementById('who-avatar');
-    if (!slot) return;
+    if (!slot) {
+      /* 未完成查詢常常比頁首 render 還快回來 —— 這時候頭像還不存在，
+         紅標會直接畫到空氣裡。改成稍後重試（最多 10 次 ×200ms）。 */
+      if (whoBadgeTries++ < 10) {
+        setTimeout(function () { renderWhoBadge(n); }, 200);
+      }
+      return;
+    }
+    whoBadgeTries = 0;
     var b = slot.querySelector('.who-badge');
     if (!n) { if (b) b.remove(); return; }
     if (!b) {
@@ -776,6 +785,7 @@
     var who = document.getElementById('acct-who');
     var nm = document.getElementById('who');
     if (who) who.textContent = (nm && nm.textContent) ? (nm.textContent + '　·　選擇要進行的操作') : '';
+    renderWhoBadge(pendingItems.length);   // 第二道保險：此時頭像一定存在
     renderPendingInModal();
     openModal(ACCT_MODAL_ID);
   }
