@@ -179,6 +179,16 @@
 /* ---------- 列印 / 存 PDF（給系主任的紙本）----------
    列印時把站台介面全部收起來，只留統計與名單。 */
 @media print {
+  /* 列印顏色：Chrome 列印對話框的「背景圖形」預設是【不勾】的，
+     結果統計長條、標籤、色塊全部被壓成黑白。
+     明確指定 exact，就等於強制用原色列印（不受那個勾勾影響）。 */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   .site-header,
   .site-footer,
   .nav-menu,
@@ -212,10 +222,14 @@
     border-color: #999;
   }
 
+  /* 統計長條：用原本的副色（藍）印出來。
+     這裡以前被寫成 #444，所以印出來是灰的。 */
+  .sv-stat-bar {
+    background: var(--c-surface-2) !important;
+  }
+
   .sv-stat-bar i {
-    background: #444 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    background: var(--c-secondary) !important;
   }
 }
 
