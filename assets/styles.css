@@ -1010,6 +1010,20 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   animation: pop .2s cubic-bezier(.2, .8, .3, 1);
 }
 
+/* 事件詳情的「說明」：連結可點、換行要保留 */
+#m-desc {
+  /* ⚠️ 沒有這行的話說明裡的換行會被吃掉，整段擠成一團：
+     連結和下一行標題黏在一起，「來源：」也會被接在網址尾巴。 */
+  white-space: pre-line;
+}
+#m-desc a {
+  color: #1D4ED8;
+  text-decoration: underline;
+  word-break: break-all;
+}
+#m-desc a:hover { color: #1E3A8A; }
+#m-desc-wrap { line-height: 1.7; }
+
 /* 事件詳情的「出席人員」：獨立在說明之上，淡底比較好掃讀 */
 #m-att {
   display: inline-block;
