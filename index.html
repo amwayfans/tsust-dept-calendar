@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/styles.css?v=890b4502">
+<link rel="stylesheet" href="assets/styles.css?v=78e4ad50">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -106,6 +106,7 @@
     <p><strong>時間：</strong><span id="m-time">—</span></p>
     <p><strong>類別：</strong><span id="m-cat">—</span></p>
     <p id="m-loc-wrap"><strong>地點：</strong><span id="m-loc">—</span></p>
+    <p id="m-att-wrap" hidden><strong>出席人員：</strong><span id="m-att" class="m-att"></span></p>
     <p id="m-desc-wrap"><strong>說明：</strong><br><span id="m-desc">—</span></p>
     <div class="modal-actions">
       <!-- 刪除放最左邊、跟其他鈕隔開：破壞性動作不要跟「關閉」擠在一起，
@@ -178,8 +179,14 @@
       </div>
 
       <div class="field">
+        <label for="a-attendees">出席人員 <span class="hint">（選填，一行一位或一段列出）</span></label>
+        <textarea id="a-attendees" rows="3"
+                  placeholder="例：主持人：楊至誠院長&#10;委員：徐金全主任、陳建良主任&#10;列席人員：邱炳儒主任"></textarea>
+      </div>
+
+      <div class="field">
         <label for="a-description">說明 <span class="hint">（選填）</span></label>
-        <textarea id="a-description" placeholder="補充說明、與會人員、備註…"></textarea>
+        <textarea id="a-description" placeholder="補充說明、討論議題、備註…"></textarea>
       </div>
 
       <div class="field-error" id="a-error" hidden></div>
@@ -208,6 +215,6 @@
 </script>
 <script src="assets/config.js?v=044a880c"></script>
 <script src="assets/common.js?v=93f5f6b8"></script>
-<script src="assets/calendar.js?v=2ba1ee27"></script>
+<script src="assets/calendar.js?v=040a346b"></script>
 </body>
 </html>

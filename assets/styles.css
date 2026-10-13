@@ -1010,6 +1010,18 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   animation: pop .2s cubic-bezier(.2, .8, .3, 1);
 }
 
+/* 事件詳情的「出席人員」：獨立在說明之上，淡底比較好掃讀 */
+#m-att {
+  display: inline-block;
+  white-space: normal;
+  line-height: 1.65;
+  background: #f1f5f9;
+  border-left: 3px solid #94a3b8;
+  border-radius: 6px;
+  padding: 7px 11px;
+  margin-top: 2px;
+}
+
 /* 頭像右上角的紅色未完成標記（像訊息未讀那樣） */
 .who-chip .avatar-slot { position: relative; }
 .who-badge {

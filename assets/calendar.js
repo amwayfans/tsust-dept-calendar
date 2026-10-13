@@ -146,20 +146,144 @@
     ['工程學院院長', '楊至誠']
   ];
 
-  function deptAttendees(r) {
-    if (!r || !r.description) return [];
-    var m = /出席[：:]([^\n。]*)/.exec(r.description);
-    if (!m) return [];
-    var out = [];
-    m[1].split(/[、,，;；\/]/).forEach(function (raw) {
-      var seg = raw.trim();
-      if (!seg) return;
-      var hit = MEMBERS.filter(function (n) { return seg.indexOf(n) >= 0; });
-      if (!hit.length) {
-        hit = TITLE_MAP.filter(function (t) { return seg.indexOf(t[0]) >= 0; })
-                       .map(function (t) { return t[1]; });
+  /* ---------- 從說明欄把「出席人員」抽出來（顯示用）----------
+     新的事件會把名單放在獨立的 attendees 欄位；舊事件的名單還埋在說明裡，
+     這裡負責把它們撈出來單獨顯示，讓說明欄乾淨好讀。
+
+     與 supabase/extract_attendees.py 用同一套規則（標籤／停止字），
+     但這裡**唯讀**：只影響畫面，不改資料。 */
+  var ATT_LABELS = ['列席人員', '出席人員', '與會人員', '參加人員', '主持人', '出席', '列席', '主席', '委員'];
+  var ATT_STOPS = ['來源', '討論議題', '討論事項', '聯絡', '開會事由', '提案', '備註', '議題',
+                   '說明', '附件', '開會通知', '時間', '地點'];
+  var ATT_EXCEPTIONS = { '提案': ['單位'] };
+  var ATT_ORDER = ['主持人', '主席', '出席', '出席人員', '與會人員', '參加人員', '委員', '列席', '列席人員'];
+
+  function extractAttendees(desc) {
+    if (!desc) return '';
+    var text = String(desc).replace(/\u3000/g, ' ');
+    var hits = [], taken = [];
+    ATT_LABELS.forEach(function (label) {
+      var re = new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[：:]', 'g'), m;
+      while ((m = re.exec(text)) !== null) {
+        var s = m.index;
+        if (taken.some(function (t) { return s >= t[0] && s < t[1]; })) continue;
+        var e = text.length, nl = text.indexOf('\n\n', m.index + m[0].length);
+        if (nl !== -1) e = Math.min(e, nl);
+        (ATT_LABELS.concat(ATT_STOPS)).forEach(function (other) {
+          var re2 = new RegExp(other.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[：:]?', 'g'), m2;
+          re2.lastIndex = m.index + m[0].length;
+          while ((m2 = re2.exec(text)) !== null) {
+            var pos = m2.index;
+            var tail = text.substr(pos + other.length, 4);
+            if ((ATT_EXCEPTIONS[other] || []).some(function (x) { return tail.indexOf(x) === 0; })) continue;
+            if (text.substr(pos + other.length, 1) !== '：' &&
+                text.substr(pos + other.length, 1) !== ':') continue;
+            e = Math.min(e, pos);
+            break;
+          }
+        });
+        if (e <= m.index + m[0].length) continue;
+        taken.push([s, e]);
+        var val = text.slice(m.index + m[0].length, e).replace(/\s*\n\s*/g, ' ')
+                    .replace(/\s{2,}/g, ' ').replace(/^[ 。，、;；]+|[ 。，、;；]+$/g, '');
+        if (val) hits.push([label, val]);
       }
-      hit.forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+    });
+    if (!hits.length) return '';
+    hits.sort(function (a, b) {
+      var ia = ATT_ORDER.indexOf(a[0]), ib = ATT_ORDER.indexOf(b[0]);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    return hits.map(function (h) { return h[0] + '：' + h[1]; }).join('\n');
+  }
+
+  /* 把說明拆成「出席人員」與「剩下的說明」。
+     使用者要的是：名單單獨一列，說明欄只留事由／議題／來源。
+
+     與 supabase/extract_attendees.py 同一套規則（含「剩下太短就不要拆」），
+     所以畫面上看到的、跟之後資料搬移的結果會一致。 */
+  function splitAttendees(desc) {
+    if (!desc) return { attendees: '', rest: desc || '' };
+    var att = extractAttendees(desc);
+    if (!att) return { attendees: '', rest: desc };
+
+    /* 逐段移除名單：找出每一段「標籤：值」的起訖，再從後往前刪。
+       這裡用與 extractAttendees 相同的掃描，確保兩者一致。 */
+    var text = String(desc).replace(/\u3000/g, ' ');
+    var spans = [];
+    ATT_LABELS.forEach(function (label) {
+      var re = new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[：:]', 'g'), m;
+      while ((m = re.exec(text)) !== null) {
+        var s = m.index;
+        if (spans.some(function (t) { return s >= t[0] && s < t[1]; })) continue;
+        var e = text.length, nl = text.indexOf('\n\n', m.index + m[0].length);
+        if (nl !== -1) e = Math.min(e, nl);
+        (ATT_LABELS.concat(ATT_STOPS)).forEach(function (other) {
+          var re2 = new RegExp(other.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[：:]?', 'g'), m2;
+          re2.lastIndex = m.index + m[0].length;
+          while ((m2 = re2.exec(text)) !== null) {
+            var pos = m2.index;
+            var tail = text.substr(pos + other.length, 4);
+            if ((ATT_EXCEPTIONS[other] || []).some(function (x) { return tail.indexOf(x) === 0; })) continue;
+            if (text.substr(pos + other.length, 1) !== '：' &&
+                text.substr(pos + other.length, 1) !== ':') continue;
+            e = Math.min(e, pos);
+            break;
+          }
+        });
+        if (e <= m.index + m[0].length) continue;
+        spans.push([s, e]);
+      }
+    });
+
+    var rest = String(desc);
+    spans.sort(function (a, b) { return b[0] - a[0]; }).forEach(function (sp) {
+      rest = rest.slice(0, sp[0]) + rest.slice(sp[1]);
+    });
+    rest = rest.replace(/\u3000/g, ' ').replace(/[ \t]{2,}/g, ' ')
+               .replace(/\n{3,}/g, '\n\n').trim();
+
+    /* 剩下的太少＝整段本來就只是名單 → 不要拆，維持原樣最安全 */
+    if (rest.length < 20) return { attendees: '', rest: desc };
+    return { attendees: att, rest: rest };
+  }
+
+  /* 事件要顯示的出席人員：以獨立欄位為主，沒有才回頭從說明撈 */
+  function attendeesOf(r) {
+    if (!r) return '';
+    if (r.attendees && String(r.attendees).trim()) return String(r.attendees).trim();
+    return splitAttendees(r.description).attendees;
+  }
+
+  /* 說明欄要顯示的內容：若名單是從說明撈出來的，就把它從說明拿掉 */
+  function descWithoutAttendees(r) {
+    if (!r) return '';
+    if (r.attendees && String(r.attendees).trim()) return r.description || '';
+    return splitAttendees(r.description).rest;
+  }
+
+  /* 出席名單的來源：新欄位優先，沒有才從說明撈。
+     逐行找（主持人／委員／列席人員…都可能是本系的人），
+     不再只認第一個「出席：」——院務會議的本系委員寫在「委員：」那行。 */
+  var ATT_LINE_RE = /(?:列席人員|出席人員|與會人員|參加人員|主持人|出席|列席|委員)[：:](.*)$/;
+
+  function deptAttendees(r) {
+    var src = attendeesOf(r);
+    if (!src) return [];
+    var out = [];
+    src.split('\n').forEach(function (line) {
+      var m = ATT_LINE_RE.exec(line);
+      if (!m) return;
+      (m[1] || '').split(/[、,，;；\/]/).forEach(function (raw) {
+        var seg = raw.trim();
+        if (!seg) return;
+        var hit = MEMBERS.filter(function (n) { return seg.indexOf(n) >= 0; });
+        if (!hit.length) {
+          hit = TITLE_MAP.filter(function (t) { return seg.indexOf(t[0]) >= 0; })
+                         .map(function (t) { return t[1]; });
+        }
+        hit.forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+      });
     });
     return out;
   }
@@ -515,9 +639,24 @@
       locWrap.hidden = false;
     } else { locWrap.hidden = true; }
 
+    /* 出席人員單獨一列（不再擠在說明裡）。
+       新事件讀 attendees 欄位；舊事件還沒補資料時，即時從說明撈出來顯示。 */
+    var attWrap = document.getElementById('m-att-wrap');
+    var attText = attendeesOf(r);
+    if (attText) {
+      var attEl = document.getElementById('m-att');
+      attEl.textContent = '';
+      attText.split('\n').forEach(function (line, i) {
+        if (i) attEl.appendChild(document.createElement('br'));
+        attEl.appendChild(document.createTextNode(line));
+      });
+      attWrap.hidden = false;
+    } else { attWrap.hidden = true; }
+
     var descWrap = document.getElementById('m-desc-wrap');
-    if (r.description) {
-      document.getElementById('m-desc').textContent = r.description;
+    var descText = descWithoutAttendees(r);   /* 名單已移到上面那一列 */
+    if (descText) {
+      document.getElementById('m-desc').textContent = descText;
       descWrap.hidden = false;
     } else { descWrap.hidden = true; }
 
@@ -574,6 +713,7 @@
     endDate: document.getElementById('a-end-date'),
     endTime: document.getElementById('a-end-time'),
     location: document.getElementById('a-location'),
+    attendees: document.getElementById('a-attendees'),
     description: document.getElementById('a-description'),
     error: document.getElementById('a-error')
   };
@@ -651,7 +791,8 @@
     af.endTime.value = e.time;
 
     af.location.value = r.location || '';
-    af.description.value = r.description || '';
+    af.attendees.value = attendeesOf(r);       /* 舊事件：名單從說明搬到這裡，直接編輯 */
+    af.description.value = descWithoutAttendees(r);   /* 說明只留事由／議題／來源 */
     af.error.hidden = true;
 
     document.getElementById('a-heading').textContent = '修改事件';
@@ -704,6 +845,7 @@
       start_at: startIso,
       end_at: endIso,
       location: af.location.value.trim() || null,
+      attendees: af.attendees.value.trim() || null,
       description: af.description.value.trim() || null
     };
 
@@ -719,6 +861,17 @@
       : A.sb.from('events').insert(payload);
 
     q.select().then(function (res) {
+      /* 資料庫還沒跑 attendees 的 migration 時，退回不含該欄位再送一次，
+         免得為了這個選填欄位讓整個「新增事件」壞掉。 */
+      if (res.error && /attendees/i.test(res.error.message || '')) {
+        delete payload.attendees;
+        var q2 = isEdit
+          ? A.sb.from('events').update(payload).eq('id', editingId)
+          : A.sb.from('events').insert(payload);
+        return q2.select();
+      }
+      return res;
+    }).then(function (res) {
       btn.disabled = false;
 
       if (res.error) {
