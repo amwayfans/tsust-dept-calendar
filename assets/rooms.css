@@ -1,0 +1,227 @@
+/* ============================================================
+ * 教室課表 — 樣式
+ * 沿用站上既有的設計語言（卡片、navy/gold 色系），
+ * 另外處理「手機只看一天」的版面。
+ * ============================================================ */
+
+.rs-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.rs-mode {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #d8dee9);
+  background: #fff;
+  color: var(--ink-2, #475569);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.rs-mode:hover { border-color: var(--navy, #1e3a5f); color: var(--navy, #1e3a5f); }
+.rs-mode.is-active {
+  background: var(--navy, #1e3a5f);
+  border-color: var(--navy, #1e3a5f);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── 教室選擇 ───────────────────────────────── */
+.rs-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.rs-room-btn {
+  font: inherit;
+  font-size: 14px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line, #d8dee9);
+  background: #fff;
+  color: var(--ink-2, #475569);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rs-room-btn:hover { border-color: var(--navy, #1e3a5f); }
+.rs-room-btn.is-active {
+  background: var(--navy, #1e3a5f);
+  border-color: var(--navy, #1e3a5f);
+  color: #fff;
+  font-weight: 600;
+}
+.rs-room-btn .rs-cnt {
+  font-size: 11px;
+  opacity: .7;
+  margin-left: 4px;
+}
+
+/* ── 工具列 ─────────────────────────────────── */
+.rs-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.rs-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ink-2, #475569);
+  cursor: pointer;
+}
+.rs-now {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy, #1e3a5f);
+  background: #eef4fb;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.rs-now[hidden] { display: none; }
+
+/* ── 課表格線 ───────────────────────────────── */
+.rs-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.rs-grid {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 620px;
+  font-size: 13px;
+}
+.rs-grid th,
+.rs-grid td {
+  border: 1px solid var(--line, #dde3ec);
+  padding: 6px 8px;
+  vertical-align: top;
+  text-align: left;
+}
+.rs-grid thead th {
+  background: #f4f7fb;
+  color: var(--navy, #1e3a5f);
+  font-weight: 600;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.rs-grid tbody th {
+  background: #f8fafc;
+  color: var(--ink-2, #475569);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  width: 74px;
+}
+.rs-grid td.rs-empty { background: #fff; }
+
+/* 一堂課 */
+.rs-course {
+  display: block;
+  margin-bottom: 6px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #eef4fb;
+  border-left: 3px solid var(--navy, #1e3a5f);
+  line-height: 1.45;
+}
+.rs-course:last-child { margin-bottom: 0; }
+.rs-course b { display: block; color: var(--navy, #1e3a5f); font-size: 13.5px; }
+.rs-course span { display: block; color: #64748b; font-size: 12px; }
+.rs-course .rs-cls { color: #0f766e; }
+
+/* 現在這一節：整格加底色 */
+.rs-grid td.rs-now {
+  background: #fff7e6;
+  box-shadow: inset 0 0 0 2px var(--gold, #d4a017);
+}
+
+/* 空堂模式 */
+.rs-grid td.rs-free { background: #f0fdf4; }
+.rs-grid td.rs-free::after {
+  content: '空堂';
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── 手機：只看一天 ─────────────────────────── */
+.rs-daytabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.rs-daytabs button {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line, #d8dee9);
+  background: #fff;
+  cursor: pointer;
+}
+.rs-daytabs button.is-active {
+  background: var(--navy, #1e3a5f);
+  border-color: var(--navy, #1e3a5f);
+  color: #fff;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .rs-grid { min-width: 0; }
+  /* 只留選取的那一天 */
+  .rs-grid td[data-day]:not(.rs-show),
+  .rs-grid th[data-day]:not(.rs-show) { display: none; }
+  .rs-grid td.rs-empty::after { content: '空堂'; }
+}
+
+/* ── 我的課表 / 搜尋結果 ────────────────────── */
+.rs-h3 { margin: 0 0 12px; font-size: 17px; color: var(--navy, #1e3a5f); }
+.rs-list { list-style: none; padding: 0; margin: 0; }
+.rs-list li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line, #eef2f7);
+  font-size: 14px;
+}
+.rs-list li:last-child { border-bottom: 0; }
+.rs-when {
+  flex: 0 0 auto;
+  min-width: 116px;
+  font-weight: 600;
+  color: var(--navy, #1e3a5f);
+  font-size: 13px;
+}
+.rs-what { flex: 1 1 auto; }
+.rs-what b { color: var(--ink, #1f2937); }
+.rs-what span { display: block; color: #64748b; font-size: 12.5px; margin-top: 2px; }
+.rs-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef4fb;
+  color: var(--navy, #1e3a5f);
+  margin-left: 6px;
+}
+.rs-badge.is-free { background: #f0fdf4; color: #15803d; }
+.rs-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2, #475569);
+  margin: 18px 0 6px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #eef2f7;
+}
+.rs-group-title:first-child { margin-top: 0; }
+.rs-none { color: #94a3b8; font-size: 14px; padding: 8px 0; }

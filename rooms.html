@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>教室課表 — 機械與自動化工程系</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/rooms.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <h1><span>教室課表</span></h1>
+      <p>查教室空堂 ／ 查老師在哪間教室上課</p>
+    </div>
+    <nav class="site-tabs" aria-label="主要功能">
+      <a href="index.html" class="tab">行事曆</a>
+      <a href="records.html" class="tab">公差/招生記錄</a>
+      <a href="survey.html" class="tab">調查專區</a>
+      <a href="rooms.html" class="tab is-active" aria-current="page">教室課表</a>
+    </nav>
+
+    <span class="who-chip" id="who-chip" hidden>
+      <span class="avatar-slot" id="who-avatar"></span>
+      <span class="who-text">
+        <span class="who-name" id="who">—</span>
+        <span class="who-role" id="who-role" hidden></span>
+      </span>
+    </span>
+
+    <a class="btn btn-ghost hdr-desktop" href="admin.html">管理後台</a>
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-label="更多功能" aria-expanded="false" aria-controls="nav-menu">☰</button>
+  </div>
+
+  <div class="nav-menu" id="nav-menu" hidden>
+    <a class="nav-menu-item" href="admin.html">管理後台</a>
+    <span id="menu-user" hidden>
+      <button class="nav-menu-item nav-menu-btn" id="btn-pw" type="button">修改密碼</button>
+      <button class="nav-menu-item nav-menu-btn nav-menu-danger" id="btn-logout" type="button">登出</button>
+    </span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== 登入 ===================== -->
+  <section class="card" id="login-card" data-sec="navy" hidden>
+    <h2 style="margin-top:0">教師登入</h2>
+    <p class="hint" style="margin-top:-8px">
+      教室課表需登入後才能查詢。帳號由系辦建立，忘記密碼請洽系辦（分機 2102）。
+    </p>
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="email">電子郵件</label>
+        <input type="email" id="email" autocomplete="username" placeholder="請輸入學校信箱" required>
+      </div>
+      <div class="field">
+        <label for="password">密碼</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="請輸入密碼" required>
+      </div>
+      <div class="field-error" id="login-error" hidden></div>
+      <div class="modal-actions" style="justify-content:flex-start">
+        <button class="btn btn-primary" type="submit" id="btn-login">登入</button>
+      </div>
+    </form>
+    <div class="or-divider"><span>或</span></div>
+    <button class="btn btn-line" type="button" id="btn-line-login">用 LINE 登入</button>
+    <p class="hint" id="line-login-hint" style="margin:10px 0 0">
+      首次使用請先用上方帳密登入一次，完成 LINE 綁定後就能一鍵登入。
+    </p>
+  </section>
+
+  <!-- ===================== 主內容 ===================== -->
+  <section id="app" hidden>
+
+    <div class="card" data-sec="navy">
+      <h2 style="margin-top:0">教室課表查詢</h2>
+      <p class="hint" style="margin-top:-8px" id="semester-hint">載入中…</p>
+      <div class="rs-modes" role="tablist">
+        <button class="rs-mode is-active" data-mode="room" type="button">教室查詢</button>
+        <button class="rs-mode" data-mode="mine" type="button">我的課表</button>
+        <button class="rs-mode" data-mode="find" type="button">找老師／課程</button>
+      </div>
+    </div>
+
+    <!-- ── 教室查詢 ───────────────────────────── -->
+    <div id="pane-room">
+      <div class="card">
+        <div class="rs-picker" id="room-picker"></div>
+        <div class="rs-tools">
+          <label class="rs-check">
+            <input type="checkbox" id="only-free"> 只顯示空堂（這間教室哪幾節沒人用）
+          </label>
+          <span class="rs-now" id="now-label"></span>
+        </div>
+        <div class="rs-daytabs" id="day-tabs" hidden></div>
+        <div class="rs-grid-wrap">
+          <table class="rs-grid" id="grid"></table>
+        </div>
+        <p class="hint" id="room-note"></p>
+      </div>
+    </div>
+
+    <!-- ── 我的課表 ───────────────────────────── -->
+    <div id="pane-mine" hidden>
+      <div class="card">
+        <h3 class="rs-h3" id="mine-title">我的課表</h3>
+        <div id="mine-body"></div>
+      </div>
+    </div>
+
+    <!-- ── 找老師／課程 ───────────────────────── -->
+    <div id="pane-find" hidden>
+      <div class="card">
+        <div class="field">
+          <label for="find-q">輸入老師姓名或課程名稱</label>
+          <input type="search" id="find-q" placeholder="例：盧俊彰、CNC銑床、材料力學" autocomplete="off">
+        </div>
+        <div id="find-body"></div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/rooms.js"></script>
+</body>
+</html>
