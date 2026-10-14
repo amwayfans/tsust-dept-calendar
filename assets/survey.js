@@ -578,7 +578,8 @@
             loadAdminList();
             loadTeacherView().catch(function () {});
           });
-      });
+      },
+      { okText: '確定收回', danger: false });   /* 收回只是移進歷史表單區，資料不會不見 → 用藍鈕 */
   }
 
   function reopenSurvey(s) {
@@ -607,6 +608,15 @@
     var no = $('c-no');
     var typed = $('confirm-typed');
     var input = $('confirm-input');
+
+    /* 按鈕文字與顏色要依「動作性質」決定，不能寫死。
+       原本 HTML 寫死「確定刪除」＋紅色，結果按「收回」（安全動作、資料不會不見）
+       也顯示「確定刪除」，使用者會以為要刪資料而不敢按。
+       刪除類 → 紅底「確定刪除」；收回／重新開放這類 → 藍底「確定收回」。 */
+    var isDanger = opts.danger !== false;
+    yes.textContent = opts.okText || (isDanger ? '確定刪除' : '確定');
+    yes.classList.toggle('btn-danger', isDanger);
+    yes.classList.toggle('btn-primary', !isDanger);
 
     /* 高風險操作（例如刪掉整場調查）→ 要求照打一次名稱，確定鈕才會亮。
        在手機上誤觸的機率遠高於桌機，「多一步」比「跳警告」有效得多。 */
@@ -658,7 +668,7 @@
           loadTeacherView().catch(function () {});
         });
       },
-      { typeToConfirm: s.title });   /* 要照打一次調查名稱才能刪 */
+      { typeToConfirm: s.title, okText: '確定刪除', danger: true });   /* 要照打一次調查名稱才能刪 */
   }
 
   /* 清除自己的作答（整筆刪除，回到「尚未填寫」） */
@@ -694,7 +704,8 @@
             A.toast('已清除您的作答');
             loadTeacherView().catch(function () {});
           });
-      });
+      },
+      { okText: '確定清除', danger: true });   /* 會刪掉自己的作答 → 紅鈕 */
   }
 
   /* 解析「一行一個選項」，支援「標題｜註解」 */
