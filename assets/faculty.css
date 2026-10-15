@@ -1,0 +1,166 @@
+/* ============================================================
+ * 教師通訊錄 — 樣式
+ *   沿用 styles.css 的變數與 .card / .avatar 等既有樣式
+ * ============================================================ */
+
+/* ---------- 分頁鈕 ---------- */
+.fac-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fac-mode {
+  min-height: 38px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2, #475569);
+  background: var(--surface-2, #f1f5f9);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.fac-mode:hover { background: #e2e8f0; }
+.fac-mode.is-active {
+  color: #fff;
+  background: var(--brand, #1e3a8a);
+  border-color: var(--brand, #1e3a8a);
+}
+.fac-mode:focus-visible { outline: 2px solid var(--brand, #1e3a8a); outline-offset: 2px; }
+
+/* ---------- 群組標題 ---------- */
+.fac-group {
+  margin: 22px 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-2, #475569);
+  letter-spacing: .02em;
+}
+.fac-group::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 15px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border-radius: 2px;
+  background: var(--brand, #1e3a8a);
+}
+
+/* ---------- 卡片格線 ---------- */
+.fac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.fac-card {
+  padding: 14px 16px !important;
+  margin: 0 !important;
+}
+
+.fac-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.fac-avatar { flex: 0 0 auto; }
+.fac-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.fac-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+.fac-badge {
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.fac-badge-full { color: #1e3a8a; background: #dbeafe; }
+.fac-badge-adj  { color: #92400e; background: #fef3c7; }
+.fac-sub {
+  flex: 1 0 100%;
+  font-size: 12.5px;
+  color: var(--ink-3, #64748b);
+  overflow-wrap: anywhere;
+}
+
+.fac-meta {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--ink-3, #64748b);
+  overflow-wrap: anywhere;
+}
+
+.fac-contacts {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line, #e2e8f0);
+  display: grid;
+  gap: 5px;
+}
+.fac-line {
+  display: flex;
+  gap: 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  align-items: baseline;
+}
+.fac-k {
+  flex: 0 0 34px;
+  color: var(--ink-3, #64748b);
+  font-size: 12px;
+}
+.fac-line a {
+  color: var(--brand, #1e3a8a);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.fac-line a:hover { text-decoration: underline; }
+.fac-muted { color: var(--ink-3, #64748b); }
+
+.fac-none {
+  margin: 0;
+  padding: 12px 0;
+  color: var(--ink-3, #64748b);
+  text-align: center;
+}
+
+/* ---------- 手機 ---------- */
+@media (max-width: 640px) {
+  .fac-grid { grid-template-columns: 1fr; gap: 10px; }
+  /* 三個分頁鈕排成一列（2+1 看起來像破版） */
+  .fac-modes { flex-wrap: nowrap; }
+  .fac-mode {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 6px;
+    font-size: 12.5px;
+    white-space: nowrap;
+  }
+  .fac-k { flex-basis: 32px; }
+}
+
+/* ---------- 列印 ---------- */
+@media print {
+  .fac-modes, #fac-q, .site-tabs, .nav-toggle, .nav-menu, .toast { display: none !important; }
+  .fac-grid { grid-template-columns: repeat(2, 1fr); }
+  .fac-card { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
+/* ---------- 動效降級 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .fac-mode { transition: none; }
+}
