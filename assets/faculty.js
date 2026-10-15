@@ -118,6 +118,43 @@
     }).catch(function () { return {}; });
   }
 
+  /* ---------- 排序：先職級、再姓名筆畫 ---------- */
+  /* 使用者指示（2026-10-15）：先依職級（教授→副教授→助理教授→講師）排，
+     同職級再按姓名筆畫 —— 採「教育部《國字標準字體筆順學習網》」
+     逐字查得的筆畫數（98 字全查過；93 字與 Unihan 相同，
+     陳 11／淵 11 與 Unihan 不同，已採教育部值；啓樑羣 3 個異體字
+     教育部未收錄，沿用 Unihan）。
+     新增教師時若姓名出現表裡沒有的字，會 console.warn 並排到最後 ——
+     看到警告就重跑 scripts/gen_faculty_strokes.py 重生這張表。 */
+  var STROKE = { '中':4, '仁':4, '俊':9, '保':9, '偉':11, '傑':12, '光':6, '全':6, '勝':12, '博':12, '吳':7, '周':8, '哲':10, '啓':11, '嘉':14, '國':11, '坤':8, '堂':11, '士':3, '大':3, '宋':7, '宏':7, '家':10, '峻':10, '崴':12, '川':3, '建':9, '張':11, '彥':9, '彰':14, '德':15, '忠':8, '怡':8, '愷':13, '慶':15, '憲':16, '承':8, '捷':11, '新':13, '方':4, '旭':6, '昇':8, '明':8, '景':12, '智':12, '曹':11, '曾':12, '木':4, '朱':6, '李':7, '村':7, '東':8, '松':8, '林':8, '梁':11, '楊':13, '榮':14, '樑':15, '正':5, '永':5, '泓':8, '淵':11, '源':13, '王':4, '玲':9, '田':5, '盧':16, '禾':5, '羣':13, '義':13, '翔':12, '耀':20, '至':6, '良':7, '華':12, '蕭':16, '薛':17, '誠':13, '謙':17, '謝':17, '輝':15, '迪':9, '連':11, '邦':7, '郭':11, '銘':14, '鍾':17, '鐘':20, '長':8, '陳':11, '隆':12, '雄':12, '雯':12, '震':15, '鶴':21, '黃':12, '龍':16, '龔':22 };
+
+  var TITLE_RANK = { '教授': 1, '副教授': 2, '助理教授': 3, '講師': 4 };
+
+  function titleRank(t) {
+    return TITLE_RANK[t] || 9;      // 兼任／未標職稱者排最後
+  }
+
+  function strokeKey(name) {
+    var k = '';
+    for (var i = 0; i < name.length; i++) {
+      var s = STROKE[name[i]];
+      if (s === undefined) {
+        console.warn('[faculty] 姓名筆畫表缺字：' + name[i] + '（' + name + '）');
+        s = 999;
+      }
+      k += ('000' + s).slice(-3);
+    }
+    return k;
+  }
+
+  function cmpRows(a, b) {
+    var ra = titleRank(a.badge), rb = titleRank(b.badge);
+    if (ra !== rb) return ra - rb;
+    var ka = strokeKey(a.name), kb = strokeKey(b.name);
+    if (ka !== kb) return ka < kb ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  }
+
   /* ---------- 顯示 ---------- */
   function matches(row, q) {
     if (!q) return true;
@@ -228,6 +265,7 @@
       })
       .then(function (res) {
         state.rows = res[0].concat(res[1]);
+        state.rows.sort(cmpRows);   // 先職級、再姓名筆畫
         state.avatars = res[2] || {};
         var nFull = state.rows.filter(function (r) { return r.kind === 'full'; }).length;
         var nAdj = state.rows.filter(function (r) { return r.kind === 'adj'; }).length;
