@@ -345,8 +345,11 @@
          （48px 的 lg 會比同列的漢堡鈕還高，把頁首撐高） */
       A.avatarHtml(profile.full_name || profile.email, profile.avatar_url, 'avatar-md');
 
-    /* 一般老師不顯示「管理後台」；頭像接上修改密碼視窗 */
-    A.syncHeaderAuth(null, profile);
+    /* 一般老師不顯示「管理後台」；頭像接上修改密碼視窗。
+       ⚠️ session 一定要傳真的進去 —— 漢堡選單裡的「教師通訊錄」是
+       `a.hidden = !session`（fail-closed）。這裡以前傳 null，
+       結果這一頁的漢堡選單永遠看不到「教師通訊錄」（115/10/15 使用者回報）。 */
+    A.syncHeaderAuth(session, profile);
 
     refreshLineBind();
 

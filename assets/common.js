@@ -805,9 +805,13 @@
 
     // ①-b 手機漢堡選單裡的「教師通訊錄」：登入後才顯示（fail-closed）
     //      HTML 先 hidden，這裡確認有 session 才放行 —— 未登入不露出這個入口。
+    //      ⚠️ 判斷寫成 `session || profile`：有些頁面（records／survey）的呼叫端
+    //      拿得到 profile 卻沒有把 session 傳進來 → 只認 session 的話，
+    //      那幾頁的選單會永遠少這一項（115/10/15 實際發生）。
+    //      兩個都是 null 才代表未登入（enter() 根本不會被呼叫），仍舊 fail-closed。
     Array.prototype.forEach.call(
       document.querySelectorAll('[data-menu-login-only]'),
-      function (a) { a.hidden = !session; }
+      function (a) { a.hidden = !(session || profile); }
     );
 
     // ② 頭像 → 修改密碼
