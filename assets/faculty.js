@@ -97,12 +97,23 @@
       });
   }
 
-  /** 頭像：從 profiles 取（只有有帳號的老師有） */
+  /** 頭像：從 profiles 取（只有有帳號的老師有）
+   *  配對用「兩種鍵」：
+   *    1) 完整 email —— 名片上的信箱就是他的登入信箱時可用
+   *    2) `#職號` —— profile 的 email 若不是職號（如 yuan@、csmoo@），
+   *       以及**名片上根本沒有信箱**的老師（如陳邦家），只有職號配得到
+   *  兩者取聯集才不會漏人（實測單用 email 或單用職號都只配到 16/19）。 */
   function fetchAvatars() {
     return SB.from('profiles').select('email,avatar_url').then(function (r) {
       if (r.error) return {};          // 取不到就算了，不影響通訊錄
       var m = {};
-      (r.data || []).forEach(function (p) { if (p.email) m[p.email.toLowerCase()] = p.avatar_url; });
+      (r.data || []).forEach(function (p) {
+        if (!p.email || !p.avatar_url) return;
+        var e = p.email.toLowerCase();
+        m[e] = p.avatar_url;
+        var local = e.split('@')[0];             // t20049@tsust.edu.tw → t20049
+        if (local) m['#' + local] = p.avatar_url;
+      });
       return m;
     }).catch(function () { return {}; });
   }
@@ -147,7 +158,9 @@
   }
 
   function card(r, avatars) {
-    var av = avatars[(r.email || '').toLowerCase()] || '';
+    // 先用名片信箱配，配不到再用職號配（陳邦家等名片沒信箱的老師靠這條）
+    var av = avatars[(r.email || '').toLowerCase()] ||
+             avatars['#' + (r.emp || '').toLowerCase()] || '';
     var sub = [r.nameEn, r.titleEn].filter(Boolean).join('　·　');
     var meta = [];
     if (r.unit && r.kind === 'adj') meta.push(r.unit);

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/styles.css?v=27d86b33">
+<link rel="stylesheet" href="assets/styles.css?v=57ed3607">
 <link rel="stylesheet" href="assets/faculty.css?v=62b68dfe">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
@@ -24,7 +24,7 @@
       <a href="records.html" class="tab">公差/招生記錄</a>
       <a href="survey.html" class="tab">調查專區</a>
       <a href="rooms.html" class="tab">教室課表</a>
-      <a href="faculty.html" class="tab is-active" aria-current="page">教師通訊錄</a>
+      <a href="faculty.html" class="tab is-active" aria-current="page" data-mobile-hide>教師通訊錄</a>
     </nav>
 
     <span class="who-chip" id="who-chip" hidden>
@@ -43,6 +43,7 @@
   <div class="nav-menu" id="nav-menu" hidden>
     <a class="nav-menu-item" href="admin.html" hidden>管理後台</a>
     <span id="menu-user" hidden>
+      <a class="nav-menu-item" data-menu-login-only href="faculty.html" hidden>教師通訊錄</a>
       <button class="nav-menu-item nav-menu-btn" id="btn-pw" type="button">修改密碼</button>
       <button class="nav-menu-item nav-menu-btn nav-menu-danger" id="btn-logout" type="button">登出</button>
     </span>
@@ -101,7 +102,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="assets/config.js?v=044a880c"></script>
-<script src="assets/common.js?v=93f5f6b8"></script>
-<script src="assets/faculty.js?v=8ac53dac"></script>
+<script src="assets/common.js?v=49333032"></script>
+<script src="assets/faculty.js?v=30b42f8d"></script>
 </body>
 </html>

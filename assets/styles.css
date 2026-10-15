@@ -1288,25 +1288,26 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   }
   .brand p { display: none; }        /* 副標題省掉，省下整整一列 */
 
-  /* 功能頁籤換到第二列。頁籤數量會隨功能增加（目前 5 個），
-     手機寬度放不下時**自動換行**，不要橫向溢出（會出現水平卷軸、最後一個頁籤被切掉）。
-     原本寫 flex:1 且不換行 —— 5 個頁籤實測總寬 448px，
-     在 320／360／375／390／414px 全部溢出，故改為可換行。 */
+  /* 功能頁籤換到第二列。
+     「教師通訊錄」在手機**收進漢堡選單**（桌機仍保留頁籤），
+     所以手機只剩 4 個頁籤 → 一列就排得下，不必再換行。
+     原本 5 個頁籤實測總寬 448px，在 320／360／375／390／414px 全部溢出。 */
   .site-tabs {
     order: 10;
     flex: 1 0 100%;
     flex-wrap: wrap;
   }
+  .site-tabs .tab[data-mobile-hide] { display: none; }
   .site-tabs .tab {
-    /* 3+2 排列：每個頁籤約佔 1/3 寬，長標籤（公差/招生記錄）自行折行，
-       窄機（320px）也排得下，不會出現「最後一個頁籤獨占一列」的歪版。 */
-    flex: 1 1 calc(33.333% - 6px);
+    /* 依內容寬度分配（不是等寬）：390px 一列排得下、文字不必折行。
+       white-space:nowrap 讓頁籤不會被壓到比文字還窄 ——
+       窄機（320px）時整顆頁籤換到下一列，而不是把「記錄」拆成兩行。 */
+    flex: 1 1 auto;
     min-height: var(--touch);
-    padding: 8px 6px;
+    padding: 8px 8px;
     font-size: 13px;
     line-height: 1.25;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
   }
 
   /* 其餘功能（管理後台／新增事件／管理員徽章）收進漢堡選單 */

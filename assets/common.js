@@ -803,6 +803,13 @@
       function (a) { a.hidden = !manager; }
     );
 
+    // ①-b 手機漢堡選單裡的「教師通訊錄」：登入後才顯示（fail-closed）
+    //      HTML 先 hidden，這裡確認有 session 才放行 —— 未登入不露出這個入口。
+    Array.prototype.forEach.call(
+      document.querySelectorAll('[data-menu-login-only]'),
+      function (a) { a.hidden = !session; }
+    );
+
     // ② 頭像 → 修改密碼
     var chip = document.getElementById('who-chip');
     if (chip) {
