@@ -726,6 +726,7 @@
     title: document.getElementById('a-title-input'),
     category: document.getElementById('a-category'),
     allday: document.getElementById('a-allday'),
+    lineNotify: document.getElementById('a-line-notify'),
     startDate: document.getElementById('a-start-date'),
     startTime: document.getElementById('a-start-time'),
     endDate: document.getElementById('a-end-date'),
@@ -771,6 +772,7 @@
     addForm.reset();
     af.category.value = 'meeting';
     af.allday.checked = false;
+    af.lineNotify.checked = true;      /* LINE 通知預設打勾 */
     af.startDate.value = dateStr;
     af.endDate.value = dateStr;
     af.startTime.value = '09:00';
@@ -801,6 +803,9 @@
     af.title.value = r.title || '';
     af.category.value = r.category || 'meeting';
     af.allday.checked = !!r.all_day;
+    /* 舊資料（欄位還沒加之前）一律視為要通知，不要因為 undefined 就變成不通知 */
+    af.lineNotify.checked = (r.line_notify === undefined || r.line_notify === null)
+      ? true : !!r.line_notify;
 
     var s = A.tzParts(r.start_at), e = A.tzParts(r.end_at);
     af.startDate.value = s.date;
@@ -864,7 +869,8 @@
       end_at: endIso,
       location: af.location.value.trim() || null,
       attendees: af.attendees.value.trim() || null,
-      description: af.description.value.trim() || null
+      description: af.description.value.trim() || null,
+      line_notify: af.lineNotify.checked
     };
 
     var btn = document.getElementById('a-save');

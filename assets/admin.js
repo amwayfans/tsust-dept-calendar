@@ -32,6 +32,7 @@
     startTime: document.getElementById('f-start-time'),
     endDate: document.getElementById('f-end-date'),
     endTime: document.getElementById('f-end-time'),
+    lineNotify: document.getElementById('f-line-notify'),
     location: document.getElementById('f-location'),
     description: document.getElementById('f-description')
   };
@@ -142,6 +143,7 @@
     f.category.value = 'meeting';
     f.visibility.value = 'department';
     f.allday.checked = false;
+    f.lineNotify.checked = true;       /* LINE 通知預設打勾 */
     var today = A.tzParts(new Date().toISOString()).date;
     f.startDate.value = today;
     f.endDate.value = today;
@@ -258,6 +260,8 @@
     f.category.value = r.category || 'other';
     f.visibility.value = r.visibility || 'department';
     f.allday.checked = !!r.all_day;
+    f.lineNotify.checked = (r.line_notify === undefined || r.line_notify === null)
+      ? true : !!r.line_notify;
     f.startDate.value = s.date;
     f.startTime.value = s.time;
     f.endDate.value = e.date;
@@ -309,7 +313,8 @@
       start_at: startIso,
       end_at: endIso,
       location: f.location.value.trim() || null,
-      description: f.description.value.trim() || null
+      description: f.description.value.trim() || null,
+      line_notify: f.lineNotify.checked
     };
 
     var btn = document.getElementById('btn-save');
