@@ -240,3 +240,57 @@
 }
 .rs-group-title:first-child { margin-top: 0; }
 .rs-none { color: #94a3b8; font-size: 14px; padding: 8px 0; }
+
+/* ⚠️ 下面這些元素自己有 display 規則，會蓋掉瀏覽器預設的 [hidden] { display: none }。
+   沒補這條，未登入／非系辦的人照樣看得到編輯介面（權限 UI 失效）。 */
+.rs-manage[hidden],
+#mine-picker[hidden] { display: none; }
+
+/* ── 管理員（系辦）才看到的編輯介面 ─────────────────────── */
+.rs-manage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--c-border, #cbd5e1);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.rs-manage-hint { font-size: 13px; color: #475569; }
+
+/* 可編輯的課程格：滑過／聚焦時給明確回饋，右下角加一支小鉛筆 */
+.rs-course.rs-editable { cursor: pointer; position: relative; }
+.rs-course.rs-editable:hover { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 6px; }
+.rs-course.rs-editable:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 6px; }
+.rs-course.rs-editable::after {
+  content: '✎';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 11px;
+  line-height: 1;
+  color: #2563eb;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 刪除確認的內文要保留換行 */
+#rs-del-text { white-space: pre-line; margin: 6px 0 16px; font-size: 14px; color: #334155; }
+
+/* 我的課表：管理員的老師下拉 */
+#mine-picker { margin: 4px 0 14px; }
+#mine-picker select { max-width: 320px; }
+
+@media (max-width: 720px) {
+  .rs-manage { font-size: 13px; }
+  #mine-picker select { max-width: 100%; }
+}

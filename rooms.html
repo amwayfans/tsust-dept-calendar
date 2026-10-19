@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/styles.css?v=57ed3607">
-<link rel="stylesheet" href="assets/rooms.css?v=f72c300b">
+<link rel="stylesheet" href="assets/rooms.css?v=58a8ea7c">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -104,6 +104,12 @@
           <span class="rs-now" id="now-label"></span>
         </div>
         <div class="rs-daytabs" id="day-tabs" hidden></div>
+
+        <!-- 管理員才看得到（HTML 先 hidden，確認角色後才顯示 —— fail-closed） -->
+        <div class="rs-manage" id="manage-bar" hidden>
+          <span class="rs-manage-hint">管理員模式：點課表裡的課程可以直接修改、調教室</span>
+          <button class="btn btn-primary" id="btn-add-course" type="button">＋ 新增課程</button>
+        </div>
         <div class="rs-grid-wrap">
           <table class="rs-grid" id="grid"></table>
         </div>
@@ -115,6 +121,11 @@
     <div id="pane-mine" hidden>
       <div class="card">
         <h3 class="rs-h3" id="mine-title">我的課表</h3>
+        <!-- 管理員可以選任何一位老師（HTML 先 hidden，確認角色後才顯示） -->
+        <div class="field" id="mine-picker" hidden>
+          <label for="mine-teacher">查看哪位老師的課表</label>
+          <select class="rs-select" id="mine-teacher"></select>
+        </div>
         <div id="mine-body"></div>
       </div>
     </div>
@@ -135,8 +146,98 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ===================== 教室課表：修改／新增（管理員） ===================== -->
+<div class="modal" id="rs-edit-modal">
+  <div class="modal-box modal-box-form">
+    <h3 id="rs-e-title">修改課程</h3>
+    <p class="hint" style="margin-top:-6px" id="rs-e-sub">調課或換教室就在這裡改。</p>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="rs-e-semester">學期</label>
+        <input type="text" id="rs-e-semester" placeholder="例：115-1">
+      </div>
+      <div class="field">
+        <label for="rs-e-room">教室</label>
+        <input type="text" id="rs-e-room" list="rs-room-list" placeholder="例：機302">
+        <datalist id="rs-room-list"></datalist>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="rs-e-day">星期</label>
+        <select id="rs-e-day">
+          <option value="1">週一</option><option value="2">週二</option>
+          <option value="3">週三</option><option value="4">週四</option>
+          <option value="5">週五</option><option value="6">週六</option>
+          <option value="7">週日</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="rs-e-period">節次</label>
+        <select id="rs-e-period"></select>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="rs-e-period-label">節次顯示文字</label>
+        <input type="text" id="rs-e-period-label" placeholder="例：3 或 A">
+      </div>
+      <div class="field">
+        <label for="rs-e-start">開始時間</label>
+        <input type="text" id="rs-e-start" placeholder="例：10:10">
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="rs-e-end">結束時間</label>
+        <input type="text" id="rs-e-end" placeholder="例：11:00">
+      </div>
+      <div class="field">
+        <label for="rs-e-course">課程名稱</label>
+        <input type="text" id="rs-e-course" placeholder="例：機械製圖">
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="rs-e-teacher">授課老師</label>
+        <input type="text" id="rs-e-teacher" list="rs-teacher-list" placeholder="例：盧俊彰">
+        <datalist id="rs-teacher-list"></datalist>
+      </div>
+      <div class="field">
+        <label for="rs-e-class">班級</label>
+        <input type="text" id="rs-e-class" placeholder="例：四技機自二甲（可留空）">
+      </div>
+    </div>
+
+    <div class="field-error" id="rs-e-error" hidden></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-danger act-left" id="rs-e-delete" type="button" hidden>刪除</button>
+      <button class="btn" id="rs-e-cancel" type="button">取消</button>
+      <button class="btn btn-primary" id="rs-e-save" type="button">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 刪除確認（刪掉就沒了，一定要再問一次） -->
+<div class="modal" id="rs-del-modal">
+  <div class="modal-box modal-box-sm">
+    <h3>刪除這筆課程</h3>
+    <p id="rs-del-text">—</p>
+    <div class="modal-actions">
+      <button class="btn" id="rs-del-cancel" type="button">取消</button>
+      <button class="btn btn-danger-solid" id="rs-del-ok" type="button">確定刪除</button>
+    </div>
+  </div>
+</div>
+
 <script src="assets/config.js?v=044a880c"></script>
 <script src="assets/common.js?v=69001e34"></script>
-<script src="assets/rooms.js?v=bbfa34cd"></script>
+<script src="assets/rooms.js?v=a8d4cbf5"></script>
 </body>
 </html>
