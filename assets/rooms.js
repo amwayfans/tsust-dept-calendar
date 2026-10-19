@@ -537,6 +537,8 @@
   $('rs-e-cancel').addEventListener('click', function () { closeModal('rs-edit-modal'); });
   $('rs-e-delete').addEventListener('click', askDelete);
   $('rs-del-cancel').addEventListener('click', function () { closeModal('rs-del-modal'); });
+  $('rs-e-x').addEventListener('click', function () { closeModal('rs-edit-modal'); });
+  $('rs-del-x').addEventListener('click', function () { closeModal('rs-del-modal'); });
   $('rs-del-ok').addEventListener('click', doDelete);
 
   /* 換節次時自動帶入那個節次的時間（同一天已有的為準），讓調課少打幾個字 */

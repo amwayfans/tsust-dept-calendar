@@ -40,7 +40,7 @@ def main():
     from playwright.sync_api import sync_playwright
     with sync_playwright() as pw:
         b = pw.chromium.launch()
-        pg = b.new_page(viewport={'width': 390, 'height': 844})
+        pg = b.new_page(viewport={'width': 1280, 'height': 900})
         pg.route(re.compile(r'.*supabase-js.*'),
                  lambda r: r.fulfill(status=200, content_type='application/javascript', body=body))
         pg.goto(f'http://127.0.0.1:{PORT}/rooms.html', wait_until='networkidle')
@@ -61,7 +61,11 @@ def main():
             const r = b.getBoundingClientRect();
             return b.textContent.trim() + '[' + Math.round(r.top) + ',' + Math.round(r.bottom) + '|vw=' + window.innerHeight + '|看得見=' + (r.top >= 0 && r.bottom <= window.innerHeight) + ']';
         })"""))
-        pg.screenshot(path='/data/tmp/folder_work/rooms_mobile2.png', full_page=False)
+        pg.evaluate("() => { const m=document.getElementById('rs-edit-modal'); m.scrollTop = 0; }")
+        pg.wait_for_timeout(300)
+        pg.screenshot(path='/data/tmp/folder_work/rooms_desktop_modal.png', full_page=False)
+        pg.click('#rs-e-cancel'); pg.wait_for_timeout(400)
+        pg.screenshot(path='/data/tmp/folder_work/rooms_desktop_list.png', full_page=False)
         b.close()
     srv.shutdown()
 
