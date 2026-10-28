@@ -41,6 +41,7 @@
   var f = {
     id: $('f-id'), type: $('f-type'), date: $('f-date'), desc: $('f-desc'),
     loc: $('f-loc'), note: $('f-note'), teacher: $('f-teacher'),
+    school: $('f-school-need'),
     photo: $('f-photo')
   };
 
@@ -568,6 +569,7 @@
     f.desc.value = '';
     f.loc.value = '';
     f.note.value = '';
+    f.school.value = '無';        /* 選填，預設「無」（使用者 2026-10-28 指定） */
     if (me && me.manager) f.teacher.value = '';
 
     /* 照片狀態一起清掉，否則編輯完的照片會殘留到下一筆 */
@@ -693,6 +695,8 @@
         description: f.desc.value.trim(),
         location: f.loc.value.trim() || null,
         note: f.note.value.trim() || null,
+        /* 對接學校之需求：空白就寫「無」，不要送 null —— 欄位是 NOT NULL default '無' */
+        school_need: f.school.value.trim() || '無',
         entered_by_admin: enteredByAdmin,
         photo_path: photo.path
         /* teacher_name / academic_year 由資料庫 trigger 決定，這裡不送 */
@@ -801,6 +805,8 @@
           '｜' + esc(r.academic_year) + ' 學年度' +
           (r.location ? '｜' + esc(r.location) : '') +
           (r.note ? '｜' + esc(r.note) : '') +
+          (r.school_need && r.school_need !== '無'
+            ? '｜對接學校需求：' + esc(r.school_need) : '') +
           (r.entered_by_admin ? ' <span class="tag-admin">由管理員代輸入</span>' : '') +
         '</small>' + photoHtml(r, photoUrls) +
       '</div>' + acts + '</li>';
@@ -836,6 +842,7 @@
       f.desc.value = r.description;
       f.loc.value = r.location || '';
       f.note.value = r.note || '';
+      f.school.value = r.school_need || '無';
 
       /* 既有照片：只做預覽，pendingPhoto 保持 null —— 沒換檔就沿用舊的，不重複上傳 */
       pendingPhoto = null;
