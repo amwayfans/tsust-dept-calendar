@@ -64,6 +64,7 @@
 
   /* 目前登入者（null = 未登入）。雙擊新增事件時要用它判斷權限。 */
   var session = null;
+  var myProfile = null;          /* 登入者的 profiles（含 role），決定能不能編事件 */
 
   /* 圖例 */
   var lg = document.getElementById('legend');
@@ -691,7 +692,7 @@
     /* 修改／刪除只給管理員看。
        不是管理員就算按了也寫不進去（RLS 會擋），
        與其讓他填完一輪才失敗，不如一開始就不要出現這顆鈕。 */
-    var canEdit = A.isAdmin(session);
+    var canEdit = A.canEditEvents(session, myProfile);
     document.getElementById('m-edit').hidden = !canEdit;
     document.getElementById('m-delete').hidden = !canEdit;
 
@@ -789,8 +790,8 @@
   function openAddModal(dateStr) {
     /* 沒登入（或不是管理員）不開表單 —— 就算開了，寫入也會被資料庫的
        RLS 擋掉，不如當下就講清楚，不要讓使用者填完才失敗。 */
-    if (!A.isAdmin(session)) {
-      A.toast('新增事件需要管理員權限，請先從右上角登入。', 'error');
+    if (!A.canEditEvents(session, myProfile)) {
+      A.toast('新增事件需要系務人員權限（系辦），請先從右上角登入。', 'error');
       return;
     }
 
@@ -822,8 +823,8 @@
   /* 修改：同一個表單，欄位帶入原本的值。
      日期時間要換算成台北時間再填 —— 資料庫存的是 UTC。 */
   function openEditModal(r) {
-    if (!A.isAdmin(session)) {
-      A.toast('修改事件需要管理員權限，請先從右上角登入。', 'error');
+    if (!A.canEditEvents(session, myProfile)) {
+      A.toast('修改事件需要系務人員權限（系辦），請先從右上角登入。', 'error');
       return;
     }
 
@@ -951,8 +952,8 @@
   var pendingDelete = null;
 
   function openDelModal(r) {
-    if (!A.isAdmin(session)) {
-      A.toast('刪除事件需要管理員權限，請先從右上角登入。', 'error');
+    if (!A.canEditEvents(session, myProfile)) {
+      A.toast('刪除事件需要系務人員權限（系辦），請先從右上角登入。', 'error');
       return;
     }
     pendingDelete = r;
@@ -1032,11 +1033,6 @@
     if (!s || !s.user) return;
 
     var email = s.user.email || '';
-    if (A.isAdmin(s)) {
-      btnAdd.hidden = false;
-      badge.hidden = false;
-      linkAdmin.textContent = '管理後台';
-    }
 
     /* 在行事曆最上方顯示登入者與頭像。
        姓名與照片取自 profiles（跟公差/招生記錄頁同一份資料），
@@ -1056,6 +1052,16 @@
           var roleEl = document.getElementById('who-role');
           roleEl.textContent = A.roleLabel(p);
           roleEl.hidden = false;
+        }
+
+        myProfile = p;
+
+        /* 「＋新增事件」與「管理員」標籤給系務人員（admin／assistant）。
+           判斷與 RLS 的 can_edit_events() 一致，避免畫面可以按、存檔卻被擋。 */
+        if (A.canEditEvents(s, p)) {
+          btnAdd.hidden = false;
+          badge.hidden = false;
+          linkAdmin.textContent = '管理後台';
         }
 
         /* 管理後台只給系辦（admin／assistant）：一般老師登入後不該看到，

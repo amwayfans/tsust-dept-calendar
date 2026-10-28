@@ -237,6 +237,16 @@
     return r === 'admin' || r === 'assistant';
   }
 
+  /**
+   * 是否可新增／修改／刪除「事件」。
+   * 管理員（寫死在 config 的信箱）或系務人員（profiles.role = admin/assistant）。
+   * 前端只用於顯示按鈕，真正把關在 RLS 的 can_edit_events()。
+   */
+  function canEditEvents(session, profile) {
+    if (isAdmin(session)) return true;
+    return isRecordManager(profile);
+  }
+
   /** 角色顯示名稱 */
   function roleLabel(profile) {
     var r = profile && profile.role;
@@ -875,6 +885,7 @@
     hideLineUi: hideLineUi,
     isAdmin: isAdmin,
     isRecordManager: isRecordManager,
+    canEditEvents: canEditEvents,
     roleLabel: roleLabel,
     signedUrls: signedUrls,
     esc: esc,

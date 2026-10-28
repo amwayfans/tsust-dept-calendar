@@ -49,11 +49,22 @@
   /* LINE 登入還沒開通（provider 未設定）→ 把按鈕與分隔線一起收起來 */
   if (!A.lineEnabled()) A.hideLineUi();
 
+  /* 能不能進事件管理：管理員或系務人員（profiles.role = admin/assistant） */
+  function loadProfile(session) {
+    return A.sb.from('profiles').select('id,full_name,role')
+      .eq('id', session.user.id).maybeSingle()
+      .then(function (r) { return (r && !r.error && r.data) || {}; });
+  }
+
   A.getSession().then(function (session) {
     elBooting.hidden = true;
-    if (A.isAdmin(session)) {
-      showPanel(session);
-    } else if (A.takeOauthIntent() === 'login') {
+    if (session && session.user) {
+      return loadProfile(session).then(function (p) {
+        if (A.canEditEvents(session, p)) showPanel(session, p);
+        else showLogin('這個帳號沒有事件管理權限（需為系務人員）。');
+      });
+    }
+    if (A.takeOauthIntent() === 'login') {
       /* 從 LINE 回來但沒有 session ＝ 這個 LINE 帳號還沒綁定過任何帳號 */
       showLogin('這個 LINE 帳號還沒綁定過。請先用上方帳密登入一次，完成綁定後就能用 LINE 一鍵登入。');
     } else {
@@ -84,10 +95,12 @@
     });
   });
 
-  function showPanel(session) {
+  function showPanel(session, profile) {
     elLogin.hidden = true;
     elPanel.hidden = false;
-    elWho.textContent = session.user.email;
+    var name = (profile && profile.full_name) || session.user.email;
+    var role = profile && profile.role;
+    elWho.textContent = name + (role ? '（' + A.roleLabel(profile) + '）' : '');
     resetForm();
     loadList();
   }
@@ -104,15 +117,17 @@
     var pass = document.getElementById('password').value;
 
     A.signIn(email, pass).then(function (session) {
-      if (!A.isAdmin(session)) {
-        /* 不是管理員 → 立刻登出，不留在半登入狀態 */
-        return A.signOut().then(function () {
-          throw new Error('這個帳號沒有管理權限。');
-        });
-      }
-      document.getElementById('password').value = '';
-      showPanel(session);
-      A.toast('登入成功', 'ok');
+      return loadProfile(session).then(function (p) {
+        if (!A.canEditEvents(session, p)) {
+          /* 不是系務人員 → 立刻登出，不留在半登入狀態 */
+          return A.signOut().then(function () {
+            throw new Error('這個帳號沒有事件管理權限（需為系務人員）。');
+          });
+        }
+        document.getElementById('password').value = '';
+        showPanel(session, p);
+        A.toast('登入成功', 'ok');
+      });
     }).catch(function (err) {
       errEl.textContent = friendlyAuthError(err);
       errEl.hidden = false;
