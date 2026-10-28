@@ -651,6 +651,16 @@
     document.getElementById('m-time').textContent = A.fmtRange(r);
     document.getElementById('m-cat').textContent = A.cat(r.category).label;
 
+    /* 可見範圍：只有「系務人員」與「僅管理員」才顯示 —— 一般公開事件不必多一行 */
+    var visWrap = document.getElementById('m-vis-wrap');
+    if (r.visibility === 'assistant') {
+      document.getElementById('m-vis').textContent = '只有系務人員（系主任、系助理）';
+      visWrap.hidden = false;
+    } else if (r.visibility === 'private') {
+      document.getElementById('m-vis').textContent = '僅管理員';
+      visWrap.hidden = false;
+    } else { visWrap.hidden = true; }
+
     var locWrap = document.getElementById('m-loc-wrap');
     if (r.location) {
       document.getElementById('m-loc').textContent = r.location;
@@ -722,6 +732,24 @@
    * ============================================================ */
   var elAddModal = document.getElementById('add-modal');
   var addForm = document.getElementById('add-form');
+
+  /* 可見範圍（單選）
+     visValue()：目前選了哪一個（都沒選＝null，代表沿用 editingVisibility）
+     setVis()  ：帶入值；'private' 是舊資料才有的值，兩個選項都不勾，
+                 避免管理者一按儲存就把「僅管理員」默默改成公開。 */
+  function visRadios() {
+    return addForm.querySelectorAll('input[name="a-visibility"]');
+  }
+  function visValue() {
+    var c = addForm.querySelector('input[name="a-visibility"]:checked');
+    return c ? c.value : null;
+  }
+  function setVis(v) {
+    visRadios().forEach(function (r) { r.checked = (r.value === v); });
+    var note = document.getElementById('a-vis-note');
+    if (note) note.hidden = (v !== 'private');
+  }
+
   var af = {
     title: document.getElementById('a-title-input'),
     category: document.getElementById('a-category'),
@@ -779,6 +807,9 @@
     af.endTime.value = '10:00';
     af.error.hidden = true;
 
+    editingVisibility = 'department';   /* 新增預設：全體人員都可查看 */
+    setVis('department');
+
     document.getElementById('a-heading').textContent = '新增事件';
     document.getElementById('a-when').textContent = dateLabel(dateStr);
     document.getElementById('a-save').textContent = '新增';
@@ -798,6 +829,7 @@
 
     editingId = r.id;
     editingVisibility = r.visibility || 'department';
+    setVis(editingVisibility);          /* assistant→系務人員；private→兩個都不勾 */
 
     addForm.reset();
     af.title.value = r.title || '';
@@ -863,7 +895,7 @@
     var payload = {
       title: title,
       category: af.category.value,
-      visibility: editingVisibility,   /* 新增＝系上公開；修改＝沿用原本的 */
+      visibility: visValue() || editingVisibility,   /* 單選優先；舊的 private 事件沒選就沿用 */
       all_day: allDay,
       start_at: startIso,
       end_at: endIso,

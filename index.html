@@ -107,6 +107,7 @@
     <h3 id="m-title">—</h3>
     <p><strong>時間：</strong><span id="m-time">—</span></p>
     <p><strong>類別：</strong><span id="m-cat">—</span></p>
+    <p id="m-vis-wrap" hidden><strong>可見範圍：</strong><span id="m-vis">—</span></p>
     <p id="m-loc-wrap"><strong>地點：</strong><span id="m-loc">—</span></p>
     <p id="m-att-wrap" hidden><strong>出席人員：</strong><span id="m-att" class="m-att"></span></p>
     <p id="m-desc-wrap"><strong>說明：</strong><br><span id="m-desc">—</span></p>
@@ -148,6 +149,24 @@
       <div class="field">
         <label for="a-category">類別</label>
         <select id="a-category"></select>
+      </div>
+
+      <!-- 可見範圍：預設「全體人員」（沿用 visibility='department'）；
+           選「只有系務人員」則存 visibility='assistant'，由 RLS 擋掉一般老師與未登入者。 -->
+      <div class="field">
+        <label>誰可以看到這個事件</label>
+        <label class="check-line" for="a-vis-public">
+          <input type="radio" name="a-visibility" id="a-vis-public" value="department" checked>
+          全體人員都可查看
+        </label>
+        <label class="check-line" for="a-vis-staff">
+          <input type="radio" name="a-visibility" id="a-vis-staff" value="assistant">
+          只有系務人員可以查看
+          <span class="hint">（系主任、系助理；一般老師與未登入者看不到）</span>
+        </label>
+        <p class="hint" id="a-vis-note" hidden style="margin:6px 0 0">
+          此事件目前設定為「僅管理員」。改選上面任一項再儲存，可見範圍就會跟著改變。
+        </p>
       </div>
 
       <div class="field">
@@ -224,6 +243,6 @@
 </script>
 <script src="assets/config.js?v=044a880c"></script>
 <script src="assets/common.js?v=69001e34"></script>
-<script src="assets/calendar.js?v=0e3ae3b8"></script>
+<script src="assets/calendar.js?v=a2a3ca21"></script>
 </body>
 </html>

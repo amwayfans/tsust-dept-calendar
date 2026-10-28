@@ -223,7 +223,8 @@
     var small = document.createElement('small');
     small.textContent = A.fmtRange(r) + '｜' + c.label +
       (r.location ? '｜' + r.location : '') +
-      (r.visibility === 'private' ? '｜private' : '');
+      (r.visibility === 'assistant' ? '｜系務人員' : '') +
+      (r.visibility === 'private' ? '｜僅管理員' : '');
     main.appendChild(strong);
     main.appendChild(small);
 
