@@ -13,7 +13,8 @@ import pathlib
 import re
 
 ROOT = pathlib.Path('/data/Hermes/folder/dept_calendar')
-PAGES = ['index.html', 'records.html', 'survey.html', 'rooms.html', 'admin.html']
+PAGES = ['index.html', 'records.html', 'survey.html', 'rooms.html', 'admin.html',
+         'faculty.html', 'recruit.html']
 ASSET_RE = re.compile(r'(assets/[A-Za-z0-9_.\-]+\.(?:js|css))(\?v=[0-9a-f]+)?')
 
 
