@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>招生負責學校 — 機械與自動化工程系</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/recruit.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <h1><span>招生負責學校</span></h1>
+      <p>老師 ↔ 學校 對照查詢</p>
+    </div>
+    <nav class="site-tabs" aria-label="主要功能">
+      <a href="index.html" class="tab">行事曆</a>
+      <a href="records.html" class="tab">公差/招生記錄</a>
+      <a href="survey.html" class="tab">調查專區</a>
+      <a href="rooms.html" class="tab">教室課表</a>
+      <a href="faculty.html" class="tab" data-mobile-hide>教師通訊錄</a>
+      <a href="recruit.html" class="tab is-active" aria-current="page" data-mobile-hide>招生負責學校</a>
+    </nav>
+
+    <span class="who-chip" id="who-chip" hidden>
+      <span class="avatar-slot" id="who-avatar"></span>
+      <span class="who-text">
+        <span class="who-name" id="who">—</span>
+        <span class="who-role" id="who-role" hidden></span>
+      </span>
+    </span>
+
+    <a class="btn btn-ghost hdr-desktop" href="admin.html" hidden>管理後台</a>
+    <button class="nav-toggle" id="nav-toggle" type="button"
+            aria-label="更多功能" aria-expanded="false" aria-controls="nav-menu">☰</button>
+  </div>
+
+  <div class="nav-menu" id="nav-menu" hidden>
+    <a class="nav-menu-item" href="admin.html" hidden>管理後台</a>
+    <span id="menu-user" hidden>
+      <a class="nav-menu-item" data-menu-login-only href="faculty.html" hidden>教師通訊錄</a>
+      <a class="nav-menu-item" data-menu-login-only href="recruit.html" hidden>招生負責學校</a>
+      <button class="nav-menu-item nav-menu-btn" id="btn-pw" type="button">修改密碼</button>
+      <button class="nav-menu-item nav-menu-btn nav-menu-danger" id="btn-logout" type="button">登出</button>
+    </span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== 登入 ===================== -->
+  <section class="card" id="login-card" data-sec="navy" hidden>
+    <h2 style="margin-top:0">教師登入</h2>
+    <p class="hint" style="margin-top:-8px">
+      招生負責學校需登入後才能查看。帳號由系辦建立，忘記密碼請洽系辦（分機 2102）。
+    </p>
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="email">電子郵件</label>
+        <input type="email" id="email" autocomplete="username" placeholder="請輸入學校信箱" required>
+      </div>
+      <div class="field">
+        <label for="password">密碼</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="請輸入密碼" required>
+      </div>
+      <div class="field-error" id="login-error" hidden></div>
+      <div class="modal-actions" style="justify-content:flex-start">
+        <button class="btn btn-primary" type="submit" id="btn-login">登入</button>
+      </div>
+    </form>
+    <div class="or-divider"><span>或</span></div>
+    <button class="btn btn-line" type="button" id="btn-line-login">用 LINE 登入</button>
+  </section>
+
+  <!-- ===================== 主內容 ===================== -->
+  <section id="app" hidden>
+
+    <!-- 查詢列 -->
+    <div class="card no-print" data-sec="blue">
+      <div class="toolbar" style="margin-bottom:12px">
+        <h2 style="margin:0">查詢</h2>
+        <span class="spacer"></span>
+        <span class="hint" id="summary">—</span>
+      </div>
+
+      <div class="grid2">
+        <div class="field" style="margin-bottom:0">
+          <label for="t-select">依老師查
+            <span class="hint">（選一位老師，看他負責哪些學校）</span></label>
+          <select id="t-select"></select>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="s-search">依學校查
+            <span class="hint">（同一所學校的多個科會合併在一起）</span></label>
+          <input type="search" id="s-search" placeholder="輸入學校關鍵字，例：岡山、農工">
+          <select id="s-select" style="margin-top:8px"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 老師結果 -->
+    <div class="card" id="teacher-card" data-sec="gold" hidden>
+      <div class="toolbar">
+        <h2 style="margin:0" id="t-title">—</h2>
+        <span class="spacer"></span>
+        <button class="btn no-print" id="t-clear" type="button">清除</button>
+      </div>
+      <div id="t-body"></div>
+    </div>
+
+    <!-- 學校結果 -->
+    <div class="card" id="school-card" data-sec="teal" hidden>
+      <div class="toolbar">
+        <h2 style="margin:0" id="s-title">—</h2>
+        <span class="spacer"></span>
+        <button class="btn no-print" id="s-clear" type="button">清除</button>
+      </div>
+      <div id="s-body"></div>
+    </div>
+
+    <!-- 總表 -->
+    <div class="card" data-sec="purple">
+      <h2 class="acc-head" style="margin-top:0" role="button" tabindex="0" aria-expanded="false">
+        <span class="acc-chev" aria-hidden="true"></span>
+        全部對照表 <span class="hint" id="all-count"></span>
+      </h2>
+      <div class="acc-body" hidden>
+        <div class="toolbar no-print" style="margin-bottom:10px">
+          <span class="hint">依學校筆畫排序；同一所學校的多個科已合併</span>
+          <span class="spacer"></span>
+          <button class="btn" id="btn-print" type="button">列印</button>
+        </div>
+        <div id="all-body"></div>
+        <div class="error-box" id="all-error" hidden></div>
+      </div>
+    </div>
+
+    <div class="card" id="booting">
+      <div class="skeleton" style="width:40%"></div>
+      <div class="skeleton" style="width:65%"></div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div>機械與自動化工程系｜系辦分機 2102</div>
+</footer>
+
+<!-- 修改密碼 -->
+<div class="modal" id="pw-modal">
+  <div class="modal-box">
+    <h3>修改密碼</h3>
+    <form id="pw-form">
+      <div class="field">
+        <label for="pw1">新密碼 <span class="hint">（至少 6 個字元）</span></label>
+        <input type="password" id="pw1" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="pw2">再輸入一次</label>
+        <input type="password" id="pw2" autocomplete="new-password">
+      </div>
+      <div class="field-error" id="pw-error" hidden></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="pw-cancel">取消</button>
+        <button class="btn btn-primary" type="submit" id="pw-save">儲存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/recruit.js"></script>
+</body>
+</html>

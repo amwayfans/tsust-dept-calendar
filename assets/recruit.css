@@ -1,0 +1,153 @@
+/* ============================================================
+ * 招生負責學校 — 頁面專用樣式
+ *   沿用 styles.css 的變數與 .card／.toolbar／.grid2 版面，
+ *   這裡只補「學校／科別標籤、老師列表、對照表」等元的樣式。
+ * ============================================================ */
+
+.rc-meta {
+  color: var(--c-text-2);
+  font-size: var(--fs-sm, 14px);
+  margin: 0 0 12px;
+}
+
+/* 學校卡片：一所學校一列，科別用標籤排在後面 */
+.rc-school-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.rc-school-list > li {
+  border: 1px solid var(--c-border-soft);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--c-surface);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.rc-school-name {
+  font-weight: 700;
+  font-size: var(--fs-md, 16px);
+  color: var(--c-text);
+}
+
+/* 科別標籤 */
+.rc-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: var(--fs-xs, 13px);
+  line-height: 1.7;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border-soft);
+  color: var(--c-text-2);
+  white-space: nowrap;
+}
+
+.rc-chip--none {
+  background: transparent;
+  border-style: dashed;
+  color: var(--c-muted-fg);
+}
+
+/* 老師卡片：一位老師一列 */
+.rc-teacher-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.rc-teacher-list > li {
+  border: 1px solid var(--c-border-soft);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--c-surface);
+}
+
+.rc-teacher-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rc-teacher-name {
+  font-weight: 700;
+  font-size: var(--fs-md, 16px);
+}
+
+.rc-teacher-emp {
+  color: var(--c-muted-fg);
+  font-size: var(--fs-xs, 13px);
+}
+
+.rc-teacher-depts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 對照表 */
+.rc-table-wrap {
+  overflow-x: auto;
+}
+
+table.rc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm, 14px);
+}
+
+table.rc-table th,
+table.rc-table td {
+  border: 1px solid var(--c-border-soft);
+  padding: 8px 10px;
+  vertical-align: top;
+  text-align: left;
+}
+
+table.rc-table th {
+  background: var(--c-surface-2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+table.rc-table td.rc-col-school {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+table.rc-table tbody tr:nth-child(even) {
+  background: #fbfcfe;
+}
+
+.rc-empty {
+  color: var(--c-muted-fg);
+  margin: 6px 0 0;
+}
+
+/* 手機：查詢欄位上下排、表格字小一點 */
+@media (max-width: 640px) {
+  .rc-school-list > li,
+  .rc-teacher-list > li { padding: 9px 10px; }
+  table.rc-table { font-size: 13px; }
+  table.rc-table th, table.rc-table td { padding: 6px 8px; }
+}
+
+/* 列印：只留內容，導覽與按鈕不要印 */
+@media print {
+  .site-header, .site-footer, .no-print, #login-card { display: none !important; }
+  .card { border: none !important; box-shadow: none !important; margin: 0 0 10px !important; }
+  .wrap { padding: 0 !important; max-width: none !important; }
+  .acc-body[hidden] { display: block !important; }
+  table.rc-table th { background: #eee !important; }
+  a { text-decoration: none; color: inherit; }
+}
