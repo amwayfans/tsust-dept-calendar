@@ -995,6 +995,7 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   -webkit-overflow-scrolling: touch;
   padding: 16px;
   z-index: 50;
+  overscroll-behavior: contain;      /* 捲到底不要連鎖捲動底層頁面（手機） */
 }
 .modal.show { display: flex; animation: fade .18s ease; }
 @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
@@ -1319,7 +1320,11 @@ a { color: var(--c-secondary); text-underline-offset: 2px; }
   .toolbar .btn { flex: 1; }
   .row2 { grid-template-columns: 1fr; }
   .card { border-radius: var(--radius); }
-  .modal-box { max-height: 92vh; padding: 17px; }
+  /* ⚠️ 這裡原本有 max-height: 92vh —— 但 .modal-box 沒有 overflow，
+     內容一超過 92vh 就會「溢出白色底」，下方欄位看起來像浮在遮罩上、
+     背景的行事曆與頁尾文字整個透出來（2026-10-28 手機回報）。
+     改成不限制高度，讓外層 .modal（已有 overflow-y:auto）負責捲動。 */
+  .modal-box { padding: 17px; }
   .modal-actions .btn { flex: 1; }
   .ev-list li { flex-wrap: wrap; }
   .ev-actions { width: 100%; justify-content: flex-end; }
