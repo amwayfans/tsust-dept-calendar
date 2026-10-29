@@ -215,3 +215,12 @@
   .fac-table { font-size: 13px; }
   .fac-table th, .fac-table td { padding: 8px 6px; }
 }
+
+/* 卡片內的個資值：等寬數字、淡底標示，方便對照 */
+.fac-pii-val {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: #fff7ed;
+  border-radius: 4px;
+  padding: 0 4px;
+}

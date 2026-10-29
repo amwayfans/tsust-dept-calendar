@@ -267,6 +267,24 @@
     return out.join('');
   }
 
+  /** 卡片裡的個資（只有系辦人員勾「顯示完整」時才出現）
+   *  使用者回饋：勾了開關卻只在「個資」分頁生效，在「全部」清單看不到 → 改成卡片也顯示 */
+  function piiLines(r) {
+    if (!(state.staff && state.reveal)) return '';
+    var p = state.pii && state.pii[r.emp];
+    if (!p) return '';
+    var out = '';
+    if (p.id_number) {
+      out += '<div class="fac-line"><span class="fac-k">身分證</span>' +
+             '<span class="fac-pii-val">' + A.esc(p.id_number) + '</span></div>';
+    }
+    if (p.birth_date) {
+      out += '<div class="fac-line"><span class="fac-k">生日</span>' +
+             '<span class="fac-pii-val">' + A.esc(p.birth_date) + '</span></div>';
+    }
+    return out;
+  }
+
   function card(r, avatars) {
     // 先用名片信箱配，配不到再用職號配（陳邦家等名片沒信箱的老師靠這條）
     var av = avatars[(r.email || '').toLowerCase()] ||
@@ -287,7 +305,7 @@
                '</span>' +
              '</div>' +
              (meta.length ? '<div class="fac-meta">' + A.esc(meta.join('　·　')) + '</div>' : '') +
-             '<div class="fac-contacts">' + contactLines(r) + '</div>' +
+             '<div class="fac-contacts">' + contactLines(r) + piiLines(r) + '</div>' +
            '</div>';
   }
 
@@ -422,7 +440,8 @@
   if (revealBox) {
     revealBox.addEventListener('change', function () {
       state.reveal = !!this.checked;
-      if (state.kind === 'pii') render();
+      render();          // 任何分頁都要重繪（卡片也會顯示個資）
+      A.toast(state.reveal ? '已顯示完整個資，請留意螢幕與截圖' : '已隱藏個資');
     });
   }
 
