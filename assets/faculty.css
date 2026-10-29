@@ -164,3 +164,54 @@
 @media (prefers-reduced-motion: reduce) {
   .fac-mode { transition: none; }
 }
+
+/* ---------- 個資表（僅系辦人員） ---------- */
+.fac-pii-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--surface-2, #f1f5f9);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+}
+.fac-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2, #475569);
+  cursor: pointer;
+}
+.fac-check input { width: 16px; height: 16px; }
+
+.fac-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.fac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.fac-table th,
+.fac-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line, #e2e8f0);
+  text-align: left;
+  vertical-align: top;
+}
+.fac-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-2, #f1f5f9);
+  font-weight: 700;
+  color: var(--ink-2, #475569);
+  white-space: nowrap;
+}
+.fac-table tbody tr:hover { background: #f8fafc; }
+.fac-nowrap { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) {
+  .fac-table { font-size: 13px; }
+  .fac-table th, .fac-table td { padding: 8px 6px; }
+}

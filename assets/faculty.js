@@ -5,7 +5,10 @@
  * 安全原則：
  *   1. 未登入「完全不抓資料」——先確認登入，登入後才發請求。
  *   2. 版面 fail-closed：HTML 先 hidden，確認登入後才 hidden = false。
- *   3. 只讀檢視表（不含身分證／生日）。
+ *   3. 通訊錄只讀 teacher_contacts／adjunct_teacher_contacts（不含身分證／生日）。
+ *   4. 個資（身分證、生日）另讀 v_teacher_pii —— RLS 只放行 admin／assistant，
+ *      一般老師即使打開這個分頁也抓回 0 筆，前端只是「多一個分頁」而非權限來源。
+ *      前端另外預設遮蔽（S120****22），要看完整得自己勾「顯示完整」。
  * ============================================================ */
 (function () {
   'use strict';
@@ -17,9 +20,12 @@
 
   var state = {
     rows: [],          // 正規化後的通訊錄
-    kind: 'all',       // all | full | adj
+    kind: 'all',       // all | full | adj | pii
     q: '',
-    me: null
+    me: null,
+    staff: false,      // admin／assistant
+    pii: {},           // 職號 → { id_number, birth_date, note }
+    reveal: false      // 是否顯示完整身分證
   };
 
   /* ---------- 登入 ---------- */
@@ -118,6 +124,22 @@
     }).catch(function () { return {}; });
   }
 
+  /** 個資：v_teacher_pii（RLS 只放行 admin／assistant；老師會拿回 0 筆）
+   *  取不到（例如資料表還沒建）就回空物件，不讓整個頁面壞掉。 */
+  function fetchPii() {
+    return SB.from('v_teacher_pii').select('emp_no,id_number,birth_date,note').then(function (r) {
+      if (r.error) {
+        console.warn('[faculty] 個資讀取失敗：' + (r.error.message || r.error));
+        return {};
+      }
+      var m = {};
+      (r.data || []).forEach(function (x) {
+        m[x.emp_no] = x;
+      });
+      return m;
+    }).catch(function () { return {}; });
+  }
+
   /* ---------- 排序：先職級、再姓名筆畫 ---------- */
   /* 使用者指示（2026-10-15）：先依職級（教授→副教授→助理教授→講師）排，
      同職級再按姓名筆畫 —— 採「教育部《國字標準字體筆順學習網》」
@@ -166,9 +188,60 @@
   function filtered() {
     var q = state.q.trim().toLowerCase();
     return state.rows.filter(function (r) {
-      if (state.kind !== 'all' && r.kind !== state.kind) return false;
+      if (state.kind !== 'all' && state.kind !== 'pii' && r.kind !== state.kind) return false;
       return matches(r, q);
     });
+  }
+
+  /* ---------- 個資表（僅系辦） ---------- */
+  function maskId(v) {
+    v = (v || '').trim();
+    if (!v) return '—';
+    return v.length >= 6 ? v.slice(0, 4) + '****' + v.slice(-2) : '****';
+  }
+
+  function piiCell(v) {
+    return v ? A.esc(v) : '<span class="fac-muted">—</span>';
+  }
+
+  function renderPii(rows) {
+    var body = $('fac-body');
+    var pii = state.pii || {};
+    var withPii = rows.filter(function (r) { return pii[r.emp]; });
+    if (!rows.length) {
+      body.innerHTML = '<div class="card"><p class="fac-none">目前沒有資料。</p></div>';
+      $('fac-count').textContent = '';
+      return;
+    }
+    if (!withPii.length) {
+      body.innerHTML = '<div class="card"><p class="fac-none">查無個資資料（或您沒有檢視權限）。</p></div>';
+      $('fac-count').textContent = '';
+      return;
+    }
+    var trs = withPii.map(function (r) {
+      var p = pii[r.emp] || {};
+      var idTxt = state.reveal ? (p.id_number || '—') : maskId(p.id_number);
+      var note = p.note ? '<div class="fac-muted" style="font-size:12px">' + A.esc(p.note) + '</div>' : '';
+      return '<tr>' +
+        '<td class="fac-nowrap">' + A.esc(r.emp || '') + '</td>' +
+        '<td class="fac-nowrap">' + A.esc(r.name || '') + '</td>' +
+        '<td class="fac-nowrap">' + A.esc(r.badge || '') + '</td>' +
+        '<td class="fac-nowrap">' + (r.mobile ? A.esc(r.mobile) : '<span class="fac-muted">—</span>') + '</td>' +
+        '<td class="fac-nowrap">' + A.esc(idTxt) + note + '</td>' +
+        '<td class="fac-nowrap">' + piiCell(p.birth_date) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    body.innerHTML = '<div class="card">' +
+      '<h3 class="fac-group">教師個資（僅系辦人員）</h3>' +
+      '<div class="fac-table-wrap"><table class="fac-table">' +
+      '<thead><tr><th>職號</th><th>姓名</th><th>職級</th><th>手機</th><th>身分證字號</th><th>出生年月日</th></tr></thead>' +
+      '<tbody>' + trs + '</tbody></table></div>' +
+      '<p class="hint">身分證預設遮蔽，勾選上方「顯示完整」才會展開；' +
+      '本表由資料庫權限（RLS）控管，只有 admin／assistant 讀得到。</p>' +
+      '</div>';
+    $('fac-count').textContent = '個資 ' + withPii.length + ' 筆' +
+      (rows.length > withPii.length ? '（另 ' + (rows.length - withPii.length) + ' 位未建個資）' : '');
   }
 
   function contactLines(r) {
@@ -231,6 +304,8 @@
     var avatars = state.avatars || {};
     var body = $('fac-body');
 
+    if (state.kind === 'pii') { renderPii(rows); return; }
+
     if (!rows.length) {
       body.innerHTML = '<div class="card"><p class="fac-none">' +
         (state.q ? '找不到符合「' + A.esc(state.q) + '」的老師。' : '目前沒有資料。') +
@@ -260,13 +335,19 @@
       .then(function (r) {
         state.me = (r.data) || null;
         setWho(session, state.me);
+        state.staff = !!((state.me && (state.me.role === 'admin' || state.me.role === 'assistant')) ||
+                         A.isAdmin(session));
+        // 系辦人員才顯示「個資」分頁（權限本體在資料庫，這裡只是不要讓人白點）
+        if ($('fac-mode-pii')) $('fac-mode-pii').hidden = !state.staff;
+        if ($('fac-pii-bar')) $('fac-pii-bar').hidden = !state.staff;
         // 登入確認後才開始抓資料
-        return Promise.all([fetchFull(), fetchAdj(), fetchAvatars()]);
+        return Promise.all([fetchFull(), fetchAdj(), fetchAvatars(), state.staff ? fetchPii() : Promise.resolve({})]);
       })
       .then(function (res) {
         state.rows = res[0].concat(res[1]);
         state.rows.sort(cmpRows);   // 先職級、再姓名筆畫
         state.avatars = res[2] || {};
+        state.pii = res[3] || {};
         var nFull = state.rows.filter(function (r) { return r.kind === 'full'; }).length;
         var nAdj = state.rows.filter(function (r) { return r.kind === 'adj'; }).length;
         $('fac-hint').textContent = '專任 ' + nFull + ' 位、兼任 ' + nAdj + ' 位' +
@@ -274,6 +355,10 @@
         // 分頁鈕顯示數量
         Array.prototype.forEach.call(document.querySelectorAll('.fac-mode'), function (b) {
           var k = b.getAttribute('data-kind');
+          if (k === 'pii') {
+            b.textContent = '個資（系辦）' + (state.staff ? '（' + Object.keys(state.pii).length + '）' : '');
+            return;
+          }
           var n = k === 'all' ? state.rows.length : state.rows.filter(function (r) {
             return r.kind === k;
           }).length;
@@ -331,6 +416,15 @@
     state.q = this.value;
     render();
   });
+
+  // 「顯示完整身分證字號」開關：預設關閉（遮蔽），勾了才展開
+  var revealBox = $('fac-pii-reveal');
+  if (revealBox) {
+    revealBox.addEventListener('change', function () {
+      state.reveal = !!this.checked;
+      if (state.kind === 'pii') render();
+    });
+  }
 
   boot();
 })();

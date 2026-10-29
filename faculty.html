@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/styles.css?v=2c35f27f">
-<link rel="stylesheet" href="assets/faculty.css?v=62b68dfe">
+<link rel="stylesheet" href="assets/faculty.css?v=99b72a0a">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
@@ -88,12 +88,17 @@
         <button class="fac-mode is-active" data-kind="all" type="button">全部</button>
         <button class="fac-mode" data-kind="full" type="button">專任教師</button>
         <button class="fac-mode" data-kind="adj" type="button">兼任教師</button>
+        <button class="fac-mode" data-kind="pii" id="fac-mode-pii" type="button" hidden>個資（系辦）</button>
       </div>
       <div class="field" style="margin-top:14px">
         <label for="fac-q">搜尋</label>
         <input type="search" id="fac-q" placeholder="例：盧俊彰、Kung、岡山農工" autocomplete="off">
       </div>
       <p class="hint" id="fac-count" style="margin-bottom:0"></p>
+      <div class="fac-pii-bar" id="fac-pii-bar" hidden>
+        <label class="fac-check"><input type="checkbox" id="fac-pii-reveal"> 顯示完整身分證字號</label>
+        <span class="hint" style="margin:0">僅系辦人員可見（admin／assistant），由資料庫權限控管</span>
+      </div>
     </div>
 
     <div id="fac-body"></div>
@@ -105,6 +110,6 @@
 
 <script src="assets/config.js?v=044a880c"></script>
 <script src="assets/common.js?v=0b84c471"></script>
-<script src="assets/faculty.js?v=35e26954"></script>
+<script src="assets/faculty.js?v=1b318dc5"></script>
 </body>
 </html>
