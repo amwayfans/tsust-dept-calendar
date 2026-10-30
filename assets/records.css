@@ -146,3 +146,52 @@
   .avatar-sm { width: 30px; height: 30px; font-size: 14px; margin-right: 8px; }
   .ev-list li { padding: 12px 9px; }
 }
+
+/* ---------- 勾選列（是否公共事務中心指派） ---------- */
+.check-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+  color: var(--ink-2, #475569);
+  cursor: pointer;
+}
+.check-line input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--sec, #2563EB);
+}
+
+/* ---------- 公共事務中心指派統計 ---------- */
+.pa-stats { margin-top: 18px; }
+.pa-stats-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-2, #475569);
+}
+.pa-stats-body { overflow-x: auto; }
+.pa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.pa-table th, .pa-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line, #e2e8f0);
+  text-align: left;
+  white-space: nowrap;
+}
+.pa-table thead th { background: var(--surface-2, #f1f5f9); font-weight: 700; }
+.pa-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.pa-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c2d12;
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+}

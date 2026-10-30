@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/styles.css?v=2c35f27f">
-<link rel="stylesheet" href="assets/records.css?v=7875f7d5">
+<link rel="stylesheet" href="assets/records.css?v=af2573a6">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
@@ -132,6 +132,15 @@
               <input type="date" id="f-date" required>
             </div>
           </div>
+          <div class="field" style="margin-top:12px;margin-bottom:0">
+            <label class="check-line" for="f-pa-assigned">
+              <input type="checkbox" id="f-pa-assigned">
+              <span>是否「公共事務中心」指派的活動</span>
+            </label>
+            <div class="hint" style="margin-top:4px">
+              勾選後會列入「公共事務中心指派活動」出席統計（老師自行填寫或系務人員代輸入皆可）
+            </div>
+          </div>
         </div>
 
         <div class="fblock" data-sec="gold">
@@ -228,6 +237,12 @@
       <canvas id="chart" height="320"></canvas>
     </div>
     <div class="empty" id="chart-empty" hidden>本學年度尚無記錄</div>
+
+    <div class="pa-stats" id="pa-stats" hidden>
+      <h3 class="pa-stats-title">公共事務中心指派活動 出席統計</h3>
+      <div class="pa-stats-body" id="pa-stats-body"></div>
+    </div>
+
     <div class="error-box" id="chart-error" hidden></div>
   </section>
 
@@ -311,6 +326,6 @@
 
 <script src="assets/config.js?v=5b5a2b84"></script>
 <script src="assets/common.js?v=0b84c471"></script>
-<script src="assets/records.js?v=51cd925b"></script>
+<script src="assets/records.js?v=c0dd7153"></script>
 </body>
 </html>

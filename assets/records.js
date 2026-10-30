@@ -42,6 +42,7 @@
     id: $('f-id'), type: $('f-type'), date: $('f-date'), desc: $('f-desc'),
     loc: $('f-loc'), note: $('f-note'), teacher: $('f-teacher'),
     school: $('f-school-need'),
+    pa: $('f-pa-assigned'),
     photo: $('f-photo')
   };
 
@@ -465,6 +466,8 @@
     if (!statsRows.length || !hasData) {
       elChartWrap.hidden = true;
       elChartEmpty.hidden = false;
+      var paBox0 = $('pa-stats');
+      if (paBox0) paBox0.hidden = true;
       if (chart) { chart.destroy(); chart = null; }
       return;
     }
@@ -533,15 +536,50 @@
         }
       }
     });
+
+    renderPaStats();
+  }
+
+  /* 公共事務中心指派活動：各老師出席次數（只列有被指派過的老師，依次數排序） */
+  function renderPaStats() {
+    var box = $('pa-stats'), body = $('pa-stats-body');
+    if (!box || !body) return;
+    var rows = statsRows.filter(function (r) { return (r.pa_count || 0) > 0; })
+      .sort(function (a, b) {
+        return (b.pa_count - a.pa_count) || String(a.teacher_name).localeCompare(String(b.teacher_name));
+      });
+    if (!rows.length) {
+      box.hidden = true;
+      body.innerHTML = '';
+      return;
+    }
+    var totalPa = rows.reduce(function (s, r) { return s + (r.pa_count || 0); }, 0);
+    var trs = rows.map(function (r, i) {
+      return '<tr>' +
+        '<td class="num">' + (i + 1) + '</td>' +
+        '<td>' + esc(r.teacher_name) + '</td>' +
+        '<td class="num">' + (r.pa_count || 0) + '</td>' +
+        '<td class="num">' + (r.total_count || 0) + '</td>' +
+        '</tr>';
+    }).join('');
+    body.innerHTML =
+      '<table class="pa-table"><thead><tr>' +
+        '<th>#</th><th>教師</th><th>公共事務中心指派（次）</th><th>該師總記錄（次）</th>' +
+      '</tr></thead><tbody>' + trs + '</tbody>' +
+      '<tfoot><tr><th></th><th>合計 ' + rows.length + ' 位</th>' +
+        '<th class="num">' + totalPa + '</th><th></th></tr></tfoot>' +
+      '</table>';
+    box.hidden = false;
   }
 
   /* ---------- CSV 匯出（UTF-8 BOM，Excel 開中文不亂碼） ---------- */
   $('btn-csv').addEventListener('click', function () {
     if (!statsRows.length) { A.toast('目前沒有可匯出的資料', 'error'); return; }
     var year = elYear.value;
-    var lines = [['教師姓名', '招生次數', '公差次數', '合計']];
+    var lines = [['教師姓名', '招生次數', '公差次數', '公共事務中心指派次數', '合計']];
     statsRows.forEach(function (r) {
-      lines.push([r.teacher_name, r.enrollment_count, r.duty_count, r.total_count]);
+      lines.push([r.teacher_name, r.enrollment_count, r.duty_count,
+                  r.pa_count || 0, r.total_count]);
     });
     var csv = lines.map(function (row) {
       return row.map(function (c) {
@@ -570,6 +608,7 @@
     f.loc.value = '';
     f.note.value = '';
     f.school.value = '無';        /* 選填，預設「無」（使用者 2026-10-28 指定） */
+    if (f.pa) f.pa.checked = false;   /* 是否公共事務中心指派，預設不勾 */
     if (me && me.manager) f.teacher.value = '';
 
     /* 照片狀態一起清掉，否則編輯完的照片會殘留到下一筆 */
@@ -697,6 +736,8 @@
         note: f.note.value.trim() || null,
         /* 對接學校之需求：空白就寫「無」，不要送 null —— 欄位是 NOT NULL default '無' */
         school_need: f.school.value.trim() || '無',
+        /* 是否「公共事務中心」指派的活動（老師自填或系務人員代輸入） */
+        pa_assigned: !!(f.pa && f.pa.checked),
         entered_by_admin: enteredByAdmin,
         photo_path: photo.path
         /* teacher_name / academic_year 由資料庫 trigger 決定，這裡不送 */
@@ -807,6 +848,7 @@
           (r.note ? '｜' + esc(r.note) : '') +
           (r.school_need && r.school_need !== '無'
             ? '｜對接學校需求：' + esc(r.school_need) : '') +
+          (r.pa_assigned ? ' <span class="pa-badge">公共事務中心指派</span>' : '') +
           (r.entered_by_admin ? ' <span class="tag-admin">由管理員代輸入</span>' : '') +
         '</small>' + photoHtml(r, photoUrls) +
       '</div>' + acts + '</li>';
@@ -843,6 +885,7 @@
       f.loc.value = r.location || '';
       f.note.value = r.note || '';
       f.school.value = r.school_need || '無';
+      if (f.pa) f.pa.checked = !!r.pa_assigned;
 
       /* 既有照片：只做預覽，pendingPhoto 保持 null —— 沒換檔就沿用舊的，不重複上傳 */
       pendingPhoto = null;
