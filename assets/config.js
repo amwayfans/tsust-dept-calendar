@@ -22,8 +22,9 @@ window.APP_CONFIG = {
   // 時區：資料庫存 UTC，畫面一律顯示這個時區
   TIMEZONE: 'Asia/Taipei',
 
-  // 一週起始日：1 = 星期一
-  WEEK_STARTS_ON: 1,
+  // 一週起始日：0 = 星期日（使用者指定 2026-10-30 起改為週日起算）
+  // FullCalendar 的 firstDay：0=日、1=一 … 6=六
+  WEEK_STARTS_ON: 0,
 
   // 管理員信箱（僅用於畫面提示，真正的判斷在資料庫的 is_admin()）
   // 助理的判斷不看這裡，一律以資料庫 profiles.role 為準
